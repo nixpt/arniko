@@ -1,0 +1,6 @@
+[advisories]
+ignore = [
+    # rsa — RUSTSEC-2023-0071 (Marvin timing attack)
+    # No fix available upstream. Transitive dep. Risk accepted.
+    "RUSTSEC-2023-0071",
+]
