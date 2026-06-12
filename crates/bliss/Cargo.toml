@@ -1,0 +1,31 @@
+[package]
+name = "bliss"
+version = "0.2.99"
+description = "High-level APIs for rendering HTML with Bliss"
+documentation = "https://docs.rs/bliss"
+license = "MIT OR Apache-2.0"
+edition = "2024"
+rust-version = "1.85.0"
+
+[features]
+default = ["net"]
+net = ["dep:tokio", "dep:url", "dep:bliss-net"]
+tracing = ["bliss-shell/tracing"]
+
+[dependencies]
+# Bliss dependencies
+anyrender_vello = "0.7"
+bliss-traits = { path = "../bliss-traits" }
+bliss-dom = { path = "../bliss-dom" }
+bliss-html = { path = "../bliss-html" }
+bliss-shell = { path = "../bliss-shell" }
+bliss-paint = { path = "../bliss-paint" }
+bliss-net = { path = "../bliss-net", optional = true }
+
+# IO & Networking
+url = { version = "2.5.0", features = ["serde"], optional = true }
+tokio = { version = "1.42", features = ["rt-multi-thread"], optional = true }
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]

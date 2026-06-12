@@ -1,0 +1,45 @@
+[package]
+name = "mustang"
+version = "0.1.0"
+authors = ["The Exosphere Authors"]
+edition = "2024"
+description = "Mustang: GPU-Accelerated Effect Compositor for Exosphere"
+license = "MIT OR Apache-2.0"
+
+[features]
+default = []
+gpu = ["dep:anyrender", "dep:anyrender_vello", "dep:wgpu", "dep:kurbo", "dep:peniko"]
+animation = ["dep:boa_engine"]
+full = ["gpu", "animation"]
+
+[dependencies]
+# Core dependencies
+anyhow = "1.0"
+tracing = "0.1"
+
+# Animation dependencies (optional)
+boa_engine = { version = "0.21", optional = true }
+
+# GPU dependencies (optional)
+[dependencies.anyrender]
+version = "0.7"
+optional = true
+
+[dependencies.anyrender_vello]
+version = "0.7"
+optional = true
+
+[dependencies.wgpu]
+version = "27"
+optional = true
+
+[dependencies.kurbo]
+version = "0.13"
+optional = true
+
+[dependencies.peniko]
+version = "0.6"
+optional = true
+
+[dev-dependencies]
+tokio-test = "0.4"

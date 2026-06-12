@@ -1,0 +1,16 @@
+[package]
+name = "bliss-html"
+version = "0.2.99"
+description = "Bliss HTML parser"
+documentation = "https://docs.rs/bliss-html"
+license = "MIT OR Apache-2.0"
+edition = "2024"
+rust-version = "1.85.0"
+
+[dependencies]
+bliss-dom = { path = "../bliss-dom" }
+bliss-traits = { path = "../bliss-traits" }
+
+# Servo dependencies
+html5ever = "0.37.0"
+xml5ever = "0.37.0"

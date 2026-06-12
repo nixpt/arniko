@@ -1,0 +1,27 @@
+[package]
+name = "bliss-net"
+version = "0.2.99"
+description = "Bliss networking"
+documentation = "https://docs.rs/bliss-net"
+license = "MIT OR Apache-2.0"
+edition = "2024"
+rust-version = "1.85.0"
+
+[features]
+default = []
+http2 = ["reqwest/http2"]
+cookies = ["reqwest/cookies"]
+multipart = ["reqwest/multipart", "reqwest/stream"]
+cache = ["dep:reqwest-middleware", "dep:http-cache-reqwest", "dep:directories"]
+debug_log = []
+
+[dependencies]
+bliss-traits = { path = "../bliss-traits" }
+tokio = { version = "1.42", features = ["rt", "sync"] }
+reqwest = { version = "0.12", default-features = false, features = ["charset", "rustls-tls"] }
+data-url = "0.3.1"
+
+# Caching (optional)
+reqwest-middleware = { version = "0.4.2", default-features = false, optional = true }
+http-cache-reqwest = { version = "=1.0.0-alpha.2", default-features = false, features = ["manager-cacache"], optional = true }
+directories = { version = "6.0.0", optional = true }

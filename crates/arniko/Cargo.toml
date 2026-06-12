@@ -1,0 +1,60 @@
+[package]
+name = "arniko"
+version = "0.1.0"
+authors = ["The Exosphere Authors"]
+edition = "2024"
+description = "Arniko: Unified UI framework for Exosphere capsules"
+license = "MIT OR Apache-2.0"
+
+[features]
+default = ["html", "components"]
+html = []                    # HTML string generation
+components = ["html"]        # UI components
+gpu = ["mustang/gpu"]        # GPU acceleration via Mustang
+networking = ["exo-bliss-net"]        # Exosphere networking
+full = ["html", "components", "gpu", "networking"]
+
+[dependencies]
+# Core dependencies
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+anyhow = "1.0"
+url = "2"
+
+# Mustang GPU compositor (optional)
+[dependencies.mustang]
+path = "../mustang"
+optional = true
+
+# Component dependencies (minimal for HTML-only mode)
+# Components are defined in src/components/
+
+# GPU dependencies (optional) - now provided by mustang
+# [dependencies.anyrender]
+# version = "0.7"
+# optional = true
+#
+# [dependencies.anyrender_vello]
+# version = "0.7"
+# optional = true
+#
+# [dependencies.wgpu]
+# version = "26.0"
+# optional = true
+#
+# [dependencies.kurbo]
+# version = "0.13"
+# optional = true
+#
+# [dependencies.peniko]
+# version = "0.6"
+# optional = true
+
+# Networking dependencies (optional)
+[dependencies.exo-bliss-net]
+path = "../../../exosphere/crates/platform/sdk/exo-bliss-net"
+optional = true
+
+
+[dev-dependencies]
+tokio-test = "0.4"
