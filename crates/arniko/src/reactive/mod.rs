@@ -4,7 +4,10 @@ mod signal;
 mod sink;
 mod view;
 
-pub use app::launch_reactive;
+// Re-export renderer types needed to write set_scene_effects hooks.
+pub use anyrender_vello::{VelloScenePainter, VelloWindowRenderer};
+
+pub use app::{launch_reactive, launch_reactive_configured};
 pub use reactor::Reactor;
 pub use signal::Signal;
 pub use sink::{ArnikoEventSink, EventRouter, event_router};

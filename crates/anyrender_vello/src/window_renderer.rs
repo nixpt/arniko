@@ -86,6 +86,12 @@ pub struct VelloWindowRenderer {
 
     /// Overlay scenes to composite on top of the main scene (e.g. web content)
     overlay_scenes: Vec<SceneOverlay>,
+
+    /// Optional post-paint effect hook — called after all draw commands and overlays are
+    /// composited, immediately before the scene is submitted to wgpu. Use this to apply
+    /// GPU effects (e.g. blur via mustang) without coupling this crate to a specific
+    /// effect compositor.
+    scene_effects: Option<Box<dyn FnMut(&mut VelloScene, u32, u32) + Send>>,
 }
 impl VelloWindowRenderer {
     #[allow(clippy::new_without_default)]
@@ -110,7 +116,29 @@ impl VelloWindowRenderer {
             scene: VelloScene::new(),
             custom_paint_sources: FxHashMap::default(),
             overlay_scenes: Vec::new(),
+            scene_effects: None,
         }
+    }
+
+    /// Register a post-paint effect hook.
+    ///
+    /// The closure is called every frame after all draw commands and overlay scenes
+    /// have been composited into the Vello scene, and before the scene is handed off
+    /// to wgpu for GPU rendering. Use it to apply GPU effects (blur, transforms, …)
+    /// by wrapping the `VelloScene` in a `VelloScenePainter` and calling your effect
+    /// compositor of choice.
+    ///
+    /// Only one hook is active at a time; calling this again replaces the previous one.
+    pub fn set_scene_effects<F>(&mut self, f: F)
+    where
+        F: FnMut(&mut VelloScene, u32, u32) + Send + 'static,
+    {
+        self.scene_effects = Some(Box::new(f));
+    }
+
+    /// Remove any registered effect hook.
+    pub fn clear_scene_effects(&mut self) {
+        self.scene_effects = None;
     }
 
     pub fn current_device_handle(&self) -> Option<&DeviceHandle> {
@@ -262,6 +290,13 @@ impl WindowRenderer for VelloWindowRenderer {
             }
         }
         timer.record_time("cmd");
+
+        // Apply GPU effects (blur, transforms, …) registered via set_scene_effects.
+        // Runs after all paint commands and overlays are composited, before wgpu submission.
+        let effect_viewport = (render_surface.config.width, render_surface.config.height);
+        if let Some(hook) = &mut self.scene_effects {
+            hook(&mut self.scene, effect_viewport.0, effect_viewport.1);
+        }
 
         let texture_view = render_surface.target_texture_view();
         state

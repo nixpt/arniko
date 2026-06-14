@@ -109,8 +109,37 @@ impl ApplicationHandler for ReactiveApplication {
 ///
 /// The reactor flushes automatically after every input event, so `signal.set()` in a click
 /// handler triggers a DOM patch + redraw on the next event.
+///
+/// For GPU effects (blur, transforms, …), use [`launch_reactive_configured`] instead.
 pub fn launch_reactive(
     setup: impl FnOnce(&mut bliss::dom::DocumentMutator, &mut Reactor, &mut EventRouter, usize),
+) {
+    launch_reactive_configured(setup, |_| {});
+}
+
+/// Launch a reactive arniko application with renderer configuration.
+///
+/// Like [`launch_reactive`], but also accepts a `configure_renderer` closure that receives
+/// `&mut VelloWindowRenderer` before the event loop starts. Use this to register GPU effects
+/// via [`VelloWindowRenderer::set_scene_effects`]:
+///
+/// ```rust,ignore
+/// launch_reactive_configured(
+///     |mutator, reactor, router, root| { /* DOM + signal setup */ },
+///     |renderer| {
+///         let mut compositor = MustangCompositor::default();
+///         let effects = vec![Effect::blur("panel", 20.0, 1280, 720)
+///             .with_region(Region::new(100.0, 100.0, 300.0, 200.0))];
+///         renderer.set_scene_effects(move |scene, w, h| {
+///             let mut painter = VelloScenePainter::new(scene);
+///             compositor.apply_scene_effects(&mut painter, &effects, (w, h));
+///         });
+///     },
+/// );
+/// ```
+pub fn launch_reactive_configured(
+    setup: impl FnOnce(&mut bliss::dom::DocumentMutator, &mut Reactor, &mut EventRouter, usize),
+    configure_renderer: impl FnOnce(&mut VelloWindowRenderer),
 ) {
     let event_loop = create_default_event_loop();
     let (proxy, receiver) = BlissShellProxy::new(event_loop.create_proxy());
@@ -141,7 +170,10 @@ pub fn launch_reactive(
 
     let handlers = Arc::clone(&router.handlers);
     let reactor = Arc::new(Mutex::new(reactor));
-    let renderer = VelloWindowRenderer::new();
+
+    let mut renderer = VelloWindowRenderer::new();
+    configure_renderer(&mut renderer);
+
     let window = WindowConfig::new(Box::new(doc) as _, renderer);
 
     let mut application = BlissApplication::new(proxy, receiver);
