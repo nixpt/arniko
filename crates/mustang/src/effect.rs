@@ -238,24 +238,39 @@ pub trait ApplyEffect<S: anyrender::PaintScene> {
 impl<S: anyrender::PaintScene> ApplyEffect<S> for Effect {
     fn apply_to_scene(&self, scene: &mut S, _viewport: (u32, u32)) {
         use kurbo::Rect;
-        use peniko::{BlendMode, Fill};
+        use peniko::BlendMode;
 
         match self.effect_type {
             EffectType::BackdropBlur => {
-                if let Some(ref _params) = self.blur_params {
-                    // Use draw_box_shadow for blur effect
+                if let Some(ref params) = self.blur_params {
                     let rect = Rect::new(
                         self.region.x as f64,
                         self.region.y as f64,
                         (self.region.x + self.region.width) as f64,
                         (self.region.y + self.region.height) as f64,
                     );
-                    // Note: In full implementation, this would use
-                    // scene.draw_box_shadow() or similar blur operation
-                    // For now, place a semi-transparent rect as placeholder
-                    // Use a simple color with alpha
-                    let color = peniko::color::palette::css::BLUE.with_alpha(0.2);
-                    scene.fill(Fill::NonZero, kurbo::Affine::IDENTITY, color, None, &rect);
+                    // Map BlurQuality to a corner-radius fraction: higher quality = rounder.
+                    let corner_radius = match params.quality {
+                        BlurQuality::Low => 0.0,
+                        BlurQuality::Medium => 4.0,
+                        BlurQuality::High => 8.0,
+                        BlurQuality::Ultra => 12.0,
+                    };
+                    // std_dev ≈ radius / 2 is the conventional CSS mapping.
+                    let std_dev = (params.radius / 2.0) as f64;
+                    // Frosted-glass: a near-white tint at low alpha so blur halos are visible.
+                    let tint = peniko::color::palette::css::WHITE.with_alpha(0.15);
+                    // Multi-pass: each pass slightly larger sigma for smoother result.
+                    for pass in 0..params.passes {
+                        let sigma = std_dev * (1.0 + pass as f64 * 0.3);
+                        scene.draw_box_shadow(
+                            kurbo::Affine::IDENTITY,
+                            rect,
+                            tint,
+                            corner_radius,
+                            sigma,
+                        );
+                    }
                 }
             }
             EffectType::Transform2D => {
