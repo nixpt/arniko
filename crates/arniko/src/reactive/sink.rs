@@ -3,12 +3,12 @@ use std::sync::{Arc, Mutex};
 
 use bliss::traits::events::{DomEvent, DomEventData, EventPhase, EventSink};
 
-type HandlerMap = Arc<Mutex<HashMap<usize, Box<dyn Fn() + Send + Sync>>>>;
+pub(super) type HandlerMap = Arc<Mutex<HashMap<usize, Box<dyn Fn() + Send + Sync>>>>;
 
 /// User-facing event registration surface. Register click handlers by DOM node ID.
 /// Node IDs come from `View::mount()` return values.
 pub struct EventRouter {
-    handlers: HandlerMap,
+    pub(super) handlers: HandlerMap,
 }
 
 impl EventRouter {

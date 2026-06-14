@@ -8,17 +8,19 @@ use bliss::shell::{
 };
 use bliss::traits::net::DummyNetProvider;
 use winit::application::ApplicationHandler;
-use winit::event::WindowEvent;
+use winit::event::{ElementState, MouseButton, WindowEvent};
 use winit::event_loop::ActiveEventLoop;
 use winit::window::WindowId;
 
-use super::sink::{EventRouter, event_router};
+use super::sink::{EventRouter, HandlerMap, event_router};
 use super::Reactor;
 
-/// ApplicationHandler that wraps BlissApplication and flushes the reactor after each window event.
+/// ApplicationHandler that wraps BlissApplication, flushes the reactor after each event,
+/// and routes click events to registered handlers by walking the DOM ancestor chain.
 struct ReactiveApplication {
     inner: BlissApplication<VelloWindowRenderer>,
     reactor: Arc<Mutex<Reactor>>,
+    handlers: HandlerMap,
 }
 
 impl ApplicationHandler for ReactiveApplication {
@@ -57,10 +59,34 @@ impl ApplicationHandler for ReactiveApplication {
             return;
         }
 
+        // Detect left-button release before consuming the event — this is when Click fires.
+        let is_left_release = matches!(
+            &event,
+            WindowEvent::PointerButton { state, button, .. }
+                if *state == ElementState::Released
+                    && matches!(button.clone().mouse_button(), Some(MouseButton::Left))
+        );
+
         if let Some(view) = self.inner.windows.get_mut(&window_id) {
             view.handle_winit_event(event);
 
-            // Flush reactor: apply all dirty signal patches into the DOM
+            // After the event, hover_node_id is the clicked node (may be a text node).
+            // Walk ancestors to find a registered handler.
+            if is_left_release {
+                let hover_id = view.doc.inner().get_hover_node_id();
+                if let Some(id) = hover_id {
+                    let chain = view.doc.inner().node_chain(id);
+                    let handlers = self.handlers.lock().unwrap();
+                    for chain_id in chain {
+                        if let Some(handler) = handlers.get(&chain_id) {
+                            handler();
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // Flush all dirty signal patches into the DOM.
             let mut inner = view.doc.inner_mut();
             let mut mutator = inner.mutate();
             self.reactor.lock().unwrap().flush(&mut mutator);
@@ -75,35 +101,24 @@ impl ApplicationHandler for ReactiveApplication {
 
 /// Launch a reactive arniko application.
 ///
-/// `setup` receives a `DocumentMutator` (for mounting views), a `Reactor` (for signal bindings),
-/// and an `EventRouter` (for click handler registration). Mount your root view and register
-/// handlers here; the reactor flushes automatically after every input event.
+/// `setup` receives:
+/// - `&mut DocumentMutator` — create DOM nodes, mount views
+/// - `&mut Reactor`         — signal→DOM patch bindings (registered by `View::mount`)
+/// - `&mut EventRouter`     — register click handlers by node ID (from `View::mount` return value)
+/// - `usize`                — the `<body id="arniko-root">` node; mount your root view here
 ///
-/// # Example
-/// ```no_run
-/// use arniko::reactive::{Signal, ReactiveText, launch_reactive};
-/// use arniko::button::ButtonVariant;
-/// use arniko::{Button, ComponentView};
-///
-/// launch_reactive(|mutator, reactor, router| {
-///     let count = Signal::new(0u32);
-///     let body = mutator.doc.root_element().id; // approximate — use query_selector in practice
-///
-///     let text_id = ReactiveText::new(count.clone()).mount(mutator, reactor, body);
-///     router.on_click(text_id, move || count.update(|n| n + 1));
-/// });
-/// ```
-/// `root_id` passed to setup is the `<body id="arniko-root">` node — mount your views there.
-pub fn launch_reactive(setup: impl FnOnce(&mut bliss::dom::DocumentMutator, &mut Reactor, &mut EventRouter, usize)) {
+/// The reactor flushes automatically after every input event, so `signal.set()` in a click
+/// handler triggers a DOM patch + redraw on the next event.
+pub fn launch_reactive(
+    setup: impl FnOnce(&mut bliss::dom::DocumentMutator, &mut Reactor, &mut EventRouter, usize),
+) {
     let event_loop = create_default_event_loop();
     let (proxy, receiver) = BlissShellProxy::new(event_loop.create_proxy());
-
-    let net_provider = Arc::new(DummyNetProvider);
 
     let mut doc = HtmlDocument::from_html(
         r#"<!DOCTYPE html><html><head></head><body id="arniko-root"></body></html>"#,
         DocumentConfig {
-            net_provider: Some(net_provider),
+            net_provider: Some(Arc::new(DummyNetProvider)),
             ..Default::default()
         },
     );
@@ -124,6 +139,7 @@ pub fn launch_reactive(setup: impl FnOnce(&mut bliss::dom::DocumentMutator, &mut
         reactor
     };
 
+    let handlers = Arc::clone(&router.handlers);
     let reactor = Arc::new(Mutex::new(reactor));
     let renderer = VelloWindowRenderer::new();
     let window = WindowConfig::new(Box::new(doc) as _, renderer);
@@ -131,10 +147,11 @@ pub fn launch_reactive(setup: impl FnOnce(&mut bliss::dom::DocumentMutator, &mut
     let mut application = BlissApplication::new(proxy, receiver);
     application.add_window(window);
 
-    let reactive_app = ReactiveApplication {
-        inner: application,
-        reactor,
-    };
-
-    event_loop.run_app(reactive_app).unwrap();
+    event_loop
+        .run_app(ReactiveApplication {
+            inner: application,
+            reactor,
+            handlers,
+        })
+        .unwrap();
 }
