@@ -421,6 +421,7 @@ name = "arniko"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "anyrender_vello",
  "bliss",
  "bliss-dom",
  "exo-bliss-net",
@@ -429,6 +430,7 @@ dependencies = [
  "serde_json",
  "tokio-test",
  "url",
+ "winit",
 ]
 
 [[package]]
