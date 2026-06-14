@@ -106,6 +106,11 @@ impl ArnikoHtmlBuilder {
         self
     }
 
+    #[cfg(feature = "launch")]
+    pub fn launch(self) {
+        bliss::launch_static_html(&self.render());
+    }
+
     pub fn render(self) -> String {
         let styles = self.styles.unwrap_or_default();
         let components = self.components.join("\n");

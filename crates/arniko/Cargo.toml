@@ -12,7 +12,8 @@ html = []                    # HTML string generation
 components = ["html"]        # UI components
 gpu = ["mustang/gpu"]        # GPU acceleration via Mustang
 networking = ["exo-bliss-net"]        # Exosphere networking
-full = ["html", "components", "gpu", "networking"]
+launch = ["bliss"]           # Native window launch via bliss
+full = ["html", "components", "gpu", "networking", "launch"]
 
 [dependencies]
 # Core dependencies
@@ -49,6 +50,11 @@ optional = true
 # [dependencies.peniko]
 # version = "0.6"
 # optional = true
+
+# Native window launch (optional)
+[dependencies.bliss]
+path = "../bliss"
+optional = true
 
 # Networking dependencies (optional)
 [dependencies.exo-bliss-net]

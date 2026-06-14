@@ -421,6 +421,7 @@ name = "arniko"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "bliss",
  "exo-bliss-net",
  "mustang",
  "serde",
