@@ -41,6 +41,9 @@
 #[cfg(feature = "components")]
 pub mod components;
 
+#[cfg(feature = "reactive")]
+pub mod reactive;
+
 pub mod css;
 
 // Mustang is now an external crate at crates/platform/rendering/mustang

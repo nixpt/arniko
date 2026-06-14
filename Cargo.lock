@@ -422,6 +422,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bliss",
+ "bliss-dom",
  "exo-bliss-net",
  "mustang",
  "serde",

@@ -13,7 +13,8 @@ components = ["html"]        # UI components
 gpu = ["mustang/gpu"]        # GPU acceleration via Mustang
 networking = ["exo-bliss-net"]        # Exosphere networking
 launch = ["bliss"]           # Native window launch via bliss
-full = ["html", "components", "gpu", "networking", "launch"]
+reactive = ["bliss-dom"]     # Reactive Signal + View layer
+full = ["html", "components", "gpu", "networking", "launch", "reactive"]
 
 [dependencies]
 # Core dependencies
@@ -54,6 +55,11 @@ optional = true
 # Native window launch (optional)
 [dependencies.bliss]
 path = "../bliss"
+optional = true
+
+# Reactive layer — DOM mutation API (optional)
+[dependencies.bliss-dom]
+path = "../bliss-dom"
 optional = true
 
 # Networking dependencies (optional)
