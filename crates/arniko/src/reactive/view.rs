@@ -1,5 +1,6 @@
 use std::fmt::Display;
 use std::marker::PhantomData;
+use std::sync::Arc;
 
 use bliss_dom::{Attribute, DocumentMutator, QualName, local_name, ns};
 
@@ -138,5 +139,82 @@ pub struct ComponentView<C: crate::Component>(pub C);
 impl<C: crate::Component> View for ComponentView<C> {
     fn mount(&self, mutator: &mut DocumentMutator, reactor: &mut Reactor, parent: usize) -> usize {
         StaticHtml(self.0.render()).mount(mutator, reactor, parent)
+    }
+}
+
+/// Renders a `Reactive<Vec<T>>` as a list of child views, reconciling on every flush.
+///
+/// On list change the previous children are removed and fresh ones are mounted from `template`.
+/// The template receives a `&T` and returns any `Box<dyn View>`.
+///
+/// **v1 note**: The initial render mounts items with the live `Reactor`, so items can contain
+/// reactive views (`ReactiveText`, etc.). Items remounted during reconciliation use a stub
+/// reactor — nested reactivity is silently dropped on updates. For fully reactive items,
+/// structure data as `Signal<Vec<Signal<ItemData>>>` and rely on the initial mount.
+pub struct For<T, R>
+where
+    T: Clone + Send + Sync + 'static,
+    R: Reactive<Vec<T>>,
+{
+    source: R,
+    template: Arc<dyn Fn(&T) -> Box<dyn View> + Send + Sync>,
+    attrs: Vec<Attribute>,
+    _marker: PhantomData<T>,
+}
+
+impl<T, R> For<T, R>
+where
+    T: Clone + Send + Sync + 'static,
+    R: Reactive<Vec<T>>,
+{
+    /// Create an unstyled list container.
+    pub fn new(
+        source: R,
+        template: impl Fn(&T) -> Box<dyn View> + Send + Sync + 'static,
+    ) -> Self {
+        For { source, template: Arc::new(template), attrs: vec![], _marker: PhantomData }
+    }
+
+    /// Create a list container with inline CSS applied to the wrapping `<div>`.
+    pub fn styled(
+        style: impl Into<String>,
+        source: R,
+        template: impl Fn(&T) -> Box<dyn View> + Send + Sync + 'static,
+    ) -> Self {
+        let style_attr = Attribute {
+            name: QualName::new(None, ns!(), local_name!("style")),
+            value: style.into(),
+        };
+        For { source, template: Arc::new(template), attrs: vec![style_attr], _marker: PhantomData }
+    }
+}
+
+impl<T, R> View for For<T, R>
+where
+    T: Clone + Send + Sync + 'static,
+    R: Reactive<Vec<T>>,
+{
+    fn mount(&self, mutator: &mut DocumentMutator, reactor: &mut Reactor, parent: usize) -> usize {
+        let container_id = mutator.create_element(div_name(), self.attrs.clone());
+        mutator.append_children(parent, &[container_id]);
+
+        // Mount initial items into the live reactor so nested reactive views work.
+        let initial_list = self.source.get_value();
+        let mut initial_ids = Vec::with_capacity(initial_list.len());
+        for item in &initial_list {
+            let view = (self.template)(item);
+            let id = view.mount(mutator, reactor, container_id);
+            initial_ids.push(id);
+        }
+
+        // Register the reconciliation binding for future list changes.
+        reactor.bind_for(
+            self.source.clone(),
+            Arc::clone(&self.template),
+            container_id,
+            initial_ids,
+        );
+
+        container_id
     }
 }

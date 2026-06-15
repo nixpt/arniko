@@ -13,7 +13,7 @@ pub use computed::Computed;
 pub use reactor::Reactor;
 pub use signal::{Reactive, Signal};
 pub use sink::{ArnikoEventSink, EventRouter, event_router};
-pub use view::{Div, ReactiveText, Span, StaticHtml, Text, View};
+pub use view::{Div, For, ReactiveText, Span, StaticHtml, Text, View};
 
 #[cfg(feature = "components")]
 pub use view::ComponentView;
