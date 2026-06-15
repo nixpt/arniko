@@ -1,8 +1,10 @@
 use std::fmt::Display;
+use std::marker::PhantomData;
 
 use bliss_dom::{Attribute, DocumentMutator, QualName, local_name, ns};
 
 use super::{Reactor, Signal};
+use super::signal::Reactive;
 
 /// A component that mounts itself into the bliss-dom tree and registers reactive bindings.
 /// Returns the root node ID created under `parent`.
@@ -49,23 +51,25 @@ impl View for Text {
     }
 }
 
-/// A text node bound to a signal — updates in-place when the signal changes.
-pub struct ReactiveText<T: Clone + Display + 'static> {
-    pub signal: Signal<T>,
+/// A text node bound to any `Reactive<T>` — a `Signal` or `Computed` — updates in-place when
+/// the source changes. Use `ReactiveText::new(signal)` or `ReactiveText::new(computed)`.
+pub struct ReactiveText<T: Clone + Display + 'static, R: Reactive<T> = Signal<T>> {
+    source: R,
+    _marker: PhantomData<T>,
 }
 
-impl<T: Clone + Display + 'static> ReactiveText<T> {
-    pub fn new(signal: Signal<T>) -> Self {
-        ReactiveText { signal }
+impl<T: Clone + Display + 'static, R: Reactive<T>> ReactiveText<T, R> {
+    pub fn new(source: R) -> Self {
+        ReactiveText { source, _marker: PhantomData }
     }
 }
 
-impl<T: Clone + Display + 'static> View for ReactiveText<T> {
+impl<T: Clone + Display + 'static, R: Reactive<T>> View for ReactiveText<T, R> {
     fn mount(&self, mutator: &mut DocumentMutator, reactor: &mut Reactor, parent: usize) -> usize {
-        let initial = self.signal.get().to_string();
+        let initial = self.source.get_value().to_string();
         let node_id = mutator.create_text_node(&initial);
         mutator.append_children(parent, &[node_id]);
-        reactor.bind(self.signal.clone(), move |m, v| {
+        reactor.bind(self.source.clone(), move |m, v| {
             m.set_node_text(node_id, &v.to_string());
         });
         node_id

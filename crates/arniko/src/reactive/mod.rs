@@ -1,4 +1,5 @@
 mod app;
+mod computed;
 mod reactor;
 mod signal;
 mod sink;
@@ -8,8 +9,9 @@ mod view;
 pub use anyrender_vello::{VelloScenePainter, VelloWindowRenderer};
 
 pub use app::{launch_reactive, launch_reactive_configured};
+pub use computed::Computed;
 pub use reactor::Reactor;
-pub use signal::Signal;
+pub use signal::{Reactive, Signal};
 pub use sink::{ArnikoEventSink, EventRouter, event_router};
 pub use view::{Div, ReactiveText, Span, StaticHtml, Text, View};
 

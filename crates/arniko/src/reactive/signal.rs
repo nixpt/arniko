@@ -1,8 +1,18 @@
 use std::sync::{Arc, RwLock};
 
+use super::computed::Computed;
+
 struct SignalInner<T> {
     value: T,
     version: u64,
+}
+
+/// Shared interface for anything that can be read reactively — both `Signal<T>` and `Computed<T>`.
+/// Implementors must be clone-to-share (`Clone`), thread-safe (`Send + Sync`), and `'static`.
+pub trait Reactive<T: Clone + 'static>: Clone + Send + Sync + 'static {
+    fn get_value(&self) -> T;
+    /// Monotonic counter; increments whenever the value changes.
+    fn reactive_version(&self) -> u64;
 }
 
 /// Reactive state container. Clone-to-share; `set` notifies the `Reactor` on next flush.
@@ -14,6 +24,11 @@ impl<T: Clone + 'static> Clone for Signal<T> {
     fn clone(&self) -> Self {
         Signal { inner: Arc::clone(&self.inner) }
     }
+}
+
+impl<T: Clone + Send + Sync + 'static> Reactive<T> for Signal<T> {
+    fn get_value(&self) -> T { self.get() }
+    fn reactive_version(&self) -> u64 { self.version() }
 }
 
 impl<T: Clone + 'static> Signal<T> {
@@ -42,5 +57,16 @@ impl<T: Clone + 'static> Signal<T> {
 
     pub(super) fn version(&self) -> u64 {
         self.inner.read().unwrap().version
+    }
+}
+
+impl<T: Clone + Send + Sync + 'static> Signal<T> {
+    /// Derive a `Computed<U>` from this signal. The function runs lazily — only when the
+    /// computed value is actually read and the signal version has changed since last compute.
+    pub fn derive<U>(&self, f: impl Fn(T) -> U + Send + Sync + 'static) -> Computed<U>
+    where
+        U: Clone + Send + Sync + 'static,
+    {
+        Computed::from_signal(self.clone(), f)
     }
 }

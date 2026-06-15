@@ -1,28 +1,32 @@
+use std::marker::PhantomData;
+
 use bliss_dom::DocumentMutator;
-use super::Signal;
+
+use super::signal::Reactive;
 
 trait Binding {
     fn flush(&mut self, mutator: &mut DocumentMutator);
 }
 
-struct SignalBinding<T: Clone + 'static> {
-    signal: Signal<T>,
+struct ReactiveBinding<T: Clone + 'static, R: Reactive<T>> {
+    source: R,
     last_version: u64,
     patch: Box<dyn Fn(&mut DocumentMutator, &T)>,
+    _marker: PhantomData<T>,
 }
 
-impl<T: Clone + 'static> Binding for SignalBinding<T> {
+impl<T: Clone + 'static, R: Reactive<T>> Binding for ReactiveBinding<T, R> {
     fn flush(&mut self, mutator: &mut DocumentMutator) {
-        let version = self.signal.version();
+        let version = self.source.reactive_version();
         if version != self.last_version {
             self.last_version = version;
-            let value = self.signal.get();
+            let value = self.source.get_value();
             (self.patch)(mutator, &value);
         }
     }
 }
 
-/// Tracks signal→DOM patch bindings. Call `flush` after mutating signals to apply patches.
+/// Tracks reactive→DOM patch bindings. Call `flush` after mutating signals to apply patches.
 pub struct Reactor {
     bindings: Vec<Box<dyn Binding>>,
 }
@@ -32,21 +36,23 @@ impl Reactor {
         Reactor { bindings: Vec::new() }
     }
 
-    /// Bind a signal to a DOM patch. The patch fires on `flush` whenever the signal version changes.
-    pub fn bind<T: Clone + 'static>(
+    /// Bind any `Reactive<T>` (a `Signal` or `Computed`) to a DOM patch function.
+    /// The patch fires on `flush` whenever the source's version has advanced.
+    pub fn bind<T: Clone + 'static, R: Reactive<T>>(
         &mut self,
-        signal: Signal<T>,
+        source: R,
         patch: impl Fn(&mut DocumentMutator, &T) + 'static,
     ) {
-        let last_version = signal.version();
-        self.bindings.push(Box::new(SignalBinding {
-            signal,
+        let last_version = source.reactive_version();
+        self.bindings.push(Box::new(ReactiveBinding {
+            source,
             last_version,
             patch: Box::new(patch),
+            _marker: PhantomData,
         }));
     }
 
-    /// Apply all dirty signal patches to the document.
+    /// Apply all dirty patches to the document.
     pub fn flush(&mut self, mutator: &mut DocumentMutator) {
         for binding in &mut self.bindings {
             binding.flush(mutator);
