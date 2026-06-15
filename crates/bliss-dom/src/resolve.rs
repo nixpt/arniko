@@ -125,7 +125,7 @@ impl BaseDocument {
             ScrollAnimationState::Fling(fling_state) => {
                 let time_ms = SystemTime::now()
                     .duration_since(UNIX_EPOCH)
-                    .unwrap()
+                    .unwrap_or_default()
                     .as_millis() as u64 as f64;
 
                 let time_diff_ms = time_ms - fling_state.last_seen_time;
@@ -227,7 +227,14 @@ impl BaseDocument {
                     #[cfg(feature = "parallel-construct")]
                     let mut font_ctx = self
                         .thread_font_contexts
-                        .get_or(|| RefCell::new(Box::new(self.font_ctx.lock().unwrap().clone())))
+                        .get_or(|| {
+                            RefCell::new(Box::new(
+                                self.font_ctx
+                                    .lock()
+                                    .unwrap_or_else(|e| e.into_inner())
+                                    .clone(),
+                            ))
+                        })
                         .borrow_mut();
                     #[cfg(feature = "parallel-construct")]
                     let font_ctx_mut = &mut *font_ctx;
@@ -235,7 +242,8 @@ impl BaseDocument {
                     #[cfg(not(feature = "parallel-construct"))]
                     let layout_ctx_mut = &mut self.layout_ctx;
                     #[cfg(not(feature = "parallel-construct"))]
-                    let font_ctx_mut = &mut *self.font_ctx.lock().unwrap();
+                    let font_ctx_mut =
+                        &mut *self.font_ctx.lock().unwrap_or_else(|e| e.into_inner());
 
                     layout.content_widths = None;
                     build_inline_layout_into(
@@ -252,11 +260,15 @@ impl BaseDocument {
                         LAYOUT_CTX.set(Some(layout_ctx));
                     }
 
-                    // If layout doesn't contain any inline boxes, then it is safe to populate the content_widths
-                    // cache during this parallelized stage.
-                    // if layout.layout.inline_boxes().is_empty() {
-                    //     layout.content_widths();
-                    // }
+                    // Pre-populate the content_widths cache. When there are no inline boxes,
+                    // this is trivially safe and saves a Parley call during layout. When there
+                    // ARE inline boxes, their sizes are not yet set (box sizing happens during
+                    // compute_inline_layout_inner), so the cached widths may be stale — they
+                    // will be recomputed on first access during layout. Only cache when no
+                    // inline boxes are present (pure text runs) where box sizes are irrelevant.
+                    if layout.layout.inline_boxes().is_empty() {
+                        layout.content_widths();
+                    }
 
                     ConstructionTaskResult {
                         node_id: task.node_id,
@@ -270,10 +282,9 @@ impl BaseDocument {
             match result.data {
                 ConstructionTaskResultData::InlineLayout(layout) => {
                     self.nodes[result.node_id].cache.clear();
-                    self.nodes[result.node_id]
-                        .element_data_mut()
-                        .unwrap()
-                        .inline_layout_data = Some(layout);
+                    if let Some(elem) = self.nodes[result.node_id].element_data_mut() {
+                        elem.inline_layout_data = Some(layout);
+                    }
                 }
             }
         }

@@ -37,7 +37,7 @@ impl FontMetricsProvider for BlissFontMetricsProvider {
         use skrifa::metrics::{GlyphMetrics, Metrics};
 
         // Lock font_ctx. Explicit reborrow required for borrow checker.
-        let mut font_ctx = self.font_ctx.lock().unwrap();
+        let mut font_ctx = self.font_ctx.lock().unwrap_or_else(|e| e.into_inner());
         let font_ctx = &mut *font_ctx;
 
         // Query fontique for the font that matches the font styles

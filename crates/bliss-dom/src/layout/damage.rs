@@ -412,7 +412,7 @@ impl BaseDocument {
                             let old_bg_image = elem_bgs[idx].as_ref();
                             let old_bg_image_url = old_bg_image.map(|data| &data.url);
                             if old_bg_image_url.is_some_and(|old_url| **new_url == **old_url) {
-                                break;
+                                continue;
                             }
 
                             // Check cache first

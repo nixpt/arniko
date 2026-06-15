@@ -22,7 +22,9 @@ pub(super) fn collect_list_item_children(
     for child in children.into_iter() {
         if let Some(layout) = node_list_item_child(doc, child, *index) {
             let node = &mut doc.nodes[child];
-            node.element_data_mut().unwrap().list_item_data = Some(Box::new(layout));
+            if let Some(data) = node.element_data_mut() {
+                data.list_item_data = Some(Box::new(layout));
+            }
             *index += 1;
             collect_list_item_children(doc, index, reversed, child);
         } else {
@@ -65,7 +67,10 @@ fn node_list_item_child(
         return None;
     };
 
-    let styles = node.primary_styles().unwrap();
+    let styles = match node.primary_styles() {
+        Some(s) => s,
+        None => return None,
+    };
     let list_style_type = styles.clone_list_style_type();
     let list_style_position = styles.clone_list_style_position();
     let marker = marker_for_style(list_style_type, index)?;

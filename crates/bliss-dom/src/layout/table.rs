@@ -70,7 +70,7 @@ pub(crate) fn build_table_context(
         panic!("Ignoring table because it has no styles");
     };
 
-    let mut style = stylo_taffy::to_taffy_style(&stylo_styles);
+    let mut style = stylo_taffy::to_taffy_style(&*stylo_styles);
     style.item_is_table = true;
     style.grid_auto_columns = Vec::new();
     style.grid_auto_rows = Vec::new();
@@ -240,24 +240,33 @@ pub(crate) fn collect_table_cells(
         }
         DisplayInside::TableCell => {
             // node.remove_damage(CONSTRUCT_DESCENDENT | CONSTRUCT_FC | CONSTRUCT_BOX);
-            let stylo_style = &node.primary_styles().unwrap();
+            let Some(stylo_style) = node.primary_styles() else {
+                return;
+            };
             let colspan: u16 = node
                 .attr(local_name!("colspan"))
                 .and_then(|val| val.parse().ok())
                 .unwrap_or(1);
-            let mut style = stylo_taffy::to_taffy_style(stylo_style);
+            let mut style = stylo_taffy::to_taffy_style(&*stylo_style);
 
             if first_cell_border.is_none() {
                 *first_cell_border = Some(stylo_style.clone_border());
             }
 
-            // TODO: account for padding/border/margin
+            // Account for padding and border in column width.
+            // Margin is not included — table cells do not use margin
+            // for column sizing per the CSS table layout spec.
+            // In `border-collapse: collapse` mode, cell borders are
+            // zeroed earlier, so the border addition is harmless.
             if *row == 1 {
                 let column = match style.size.width.tag() {
                     taffy::CompactLength::LENGTH_TAG => {
                         let len = style.size.width.value();
                         let padding = style.padding.resolve_or_zero(None, resolve_calc_value);
-                        style_helpers::length(len + padding.left + padding.right)
+                        let border = style.border.resolve_or_zero(None, resolve_calc_value);
+                        style_helpers::length(
+                            len + padding.left + padding.right + border.left + border.right,
+                        )
                     }
                     taffy::CompactLength::PERCENT_TAG => {
                         if is_fixed {

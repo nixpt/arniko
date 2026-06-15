@@ -203,7 +203,6 @@ pub(crate) fn collect_layout_children(
             doc.nodes[container_node_id].children = children;
         }
         DisplayInside::Flow | DisplayInside::FlowRoot | DisplayInside::TableCell => {
-            // TODO: make "all_inline" detection work in the presence of display:contents nodes
             let mut all_block = true;
             let mut all_inline = true;
             let mut all_out_of_flow = true;
@@ -223,6 +222,56 @@ pub(crate) fn collect_layout_children(
                 if matches!(display.inside(), DisplayInside::Contents) {
                     has_contents = true;
                     all_out_of_flow = false;
+                    // Recurse into display:contents children to check grandchildren's display types
+                    let mut contents_stack: Vec<usize> = child.children.clone();
+                    while let Some(c_id) = contents_stack.pop() {
+                        let c_node = &doc.nodes[c_id];
+                        let c_style = c_node.primary_styles();
+                        let c_style = c_style.as_ref();
+                        let c_display = c_style
+                            .map(|s| s.clone_display())
+                            .unwrap_or(Display::inline());
+
+                        if matches!(c_display.inside(), DisplayInside::Contents) {
+                            contents_stack.extend(c_node.children.iter().rev().copied());
+                            continue;
+                        }
+
+                        let c_position = c_style
+                            .map(|s| s.clone_position())
+                            .unwrap_or(PositionProperty::Static);
+                        let c_float = c_style.map(|s| s.clone_float()).unwrap_or(Float::None);
+
+                        if c_node.is_whitespace_node() {
+                            continue;
+                        }
+
+                        let is_in_flow = matches!(
+                            c_position,
+                            PositionProperty::Static
+                                | PositionProperty::Relative
+                                | PositionProperty::Sticky
+                        ) && matches!(c_float, Float::None);
+
+                        if !is_in_flow {
+                            continue;
+                        }
+
+                        all_out_of_flow = false;
+                        match c_display.outside() {
+                            DisplayOutside::None => {}
+                            DisplayOutside::Block
+                            | DisplayOutside::TableCaption
+                            | DisplayOutside::InternalTable => all_inline = false,
+                            DisplayOutside::Inline => {
+                                all_block = false;
+
+                                if c_node.is_or_contains_block() {
+                                    all_inline = false;
+                                }
+                            }
+                        }
+                    }
                 } else {
                     let position = style
                         .map(|s| s.clone_position())
@@ -270,7 +319,6 @@ pub(crate) fn collect_layout_children(
                 );
             }
 
-            // TODO: fix display:contents
             if all_inline {
                 let existing_layout = doc.nodes[container_node_id]
                     .element_data_mut()
@@ -779,7 +827,7 @@ pub(crate) fn find_inline_layout_embedded_boxes(
             NodeData::Comment | NodeData::Text(_) => {
                 node.remove_damage(CONSTRUCT_DESCENDENT | CONSTRUCT_FC | CONSTRUCT_BOX);
             }
-            NodeData::Document => unreachable!(),
+            NodeData::Document | NodeData::ShadowRoot { .. } => unreachable!(),
         }
     }
 }
@@ -1033,7 +1081,7 @@ pub(crate) fn build_inline_layout_into(
             NodeData::Comment => {
                 // node.remove_damage(CONSTRUCT_DESCENDENT | CONSTRUCT_FC | CONSTRUCT_BOX);
             }
-            NodeData::Document => unreachable!(),
+            NodeData::Document | NodeData::ShadowRoot { .. } => unreachable!(),
         }
     }
 }

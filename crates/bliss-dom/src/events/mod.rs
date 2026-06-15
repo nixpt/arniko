@@ -88,6 +88,7 @@ pub(crate) fn handle_dom_event<F: FnMut(DomEvent)>(
             DomEventData::Blur(_) => None,
             DomEventData::FocusIn(_) => None,
             DomEventData::FocusOut(_) => None,
+            DomEventData::Submit(_) => None,
         };
 
         if let Some(ui_event) = ui_event {
@@ -154,8 +155,10 @@ pub(crate) fn handle_dom_event<F: FnMut(DomEvent)>(
         DomEventData::Input(_) => {
             // Do nothing (no default action)
         }
-        DomEventData::ContextMenu(_) => {
-            // TODO: Open context menu
+        DomEventData::ContextMenu(event) => {
+            // Default action: show the platform-native context menu at screen coordinates
+            doc.shell_provider
+                .show_context_menu(event.screen_x() as f64, event.screen_y() as f64);
         }
         DomEventData::DoubleClick(_) => {
             // Do nothing (no default action)
@@ -201,6 +204,13 @@ pub(crate) fn handle_dom_event<F: FnMut(DomEvent)>(
         }
         DomEventData::FocusOut(_) => {
             // Do nothing (no default action)
+        }
+        DomEventData::Submit(data) => {
+            // Default action: submit the form. This runs AFTER scripts have had
+            // a chance to process the event and potentially call preventDefault().
+            // If the event was cancelled, this code never executes.
+            // event.target is the form node ID (set when the Submit event was dispatched).
+            doc.submit_form(event.target, data.submitter_id);
         }
     }
 }

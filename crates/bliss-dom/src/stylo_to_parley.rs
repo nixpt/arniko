@@ -97,7 +97,14 @@ pub(crate) fn white_space_collapse(input: stylo::WhiteSpaceCollapse) -> parley::
         stylo::WhiteSpaceCollapse::Collapse => parley::WhiteSpaceCollapse::Collapse,
         stylo::WhiteSpaceCollapse::Preserve => parley::WhiteSpaceCollapse::Preserve,
 
-        // TODO: Implement PreserveBreaks and BreakSpaces modes
+        // Parley only supports Collapse and Preserve. The following modes are approximations:
+        //   - PreserveBreaks (white-space: pre-wrap): Collapses spaces but preserves newlines.
+        //     Mapping to Preserve keeps newlines working, at the cost of also preserving spaces.
+        //   - BreakSpaces (white-space: break-spaces): Like Preserve but spaces can break.
+        //     Mapping to Preserve keeps whitespace preserved, at the cost of spaces not breaking
+        //     (which may cause text to overflow its container).
+        //
+        // Full support requires Parley to add these modes natively.
         stylo::WhiteSpaceCollapse::PreserveBreaks => parley::WhiteSpaceCollapse::Preserve,
         stylo::WhiteSpaceCollapse::BreakSpaces => parley::WhiteSpaceCollapse::Preserve,
     }

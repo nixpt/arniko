@@ -31,6 +31,7 @@ use taffy::{
 };
 
 use crate::Document;
+use crate::document::BaseDocument;
 use crate::layout::damage::HoistedPaintChildren;
 
 use super::{Attribute, ElementData};
@@ -89,6 +90,16 @@ pub struct Node {
     ///   ownership in `BaseDocument`).
     /// - The pointer is set during `Node::new()` and never modified thereafter.
     tree: *const Slab<Node>,
+
+    /// Pointer to the owning BaseDocument. Enables Stylo trait implementations (like
+    /// TShadowRoot::style_data) to access document-level data (cascade data, scoped stylesheets)
+    /// directly from a Node reference without threading &BaseDocument through every call site.
+    ///
+    /// # Safety
+    /// - This is a `*const` pointer. We only ever read the BaseDocument through shared references.
+    /// - The BaseDocument must outlive all its Nodes (guaranteed by ownership in BaseDocument).
+    /// - The pointer is set once at creation via `create_node()` and never modified.
+    doc: *const BaseDocument,
 
     /// Our Id
     pub id: usize,
@@ -191,6 +202,7 @@ unsafe impl Sync for Node {}
 impl Node {
     pub(crate) fn new(
         tree: *const Slab<Node>,
+        doc: *const BaseDocument,
         id: usize,
         guard: SharedRwLock,
         data: NodeData,
@@ -213,6 +225,7 @@ impl Node {
 
         Self {
             tree,
+            doc,
 
             id,
             parent: None,
@@ -547,8 +560,12 @@ pub enum NodeData {
 
     /// A comment.
     Comment,
-    // Comment { contents: String },
 
+    /// A shadow root (hosts a separate DOM tree for web components).
+    ShadowRoot {
+        /// The node ID of the host element.
+        host: usize,
+    },
     // /// A `DOCTYPE` with name, public id, and system id. See
     // /// [document type declaration on wikipedia][https://en.wikipedia.org/wiki/Document_type_declaration]
     // Doctype { name: String, public_id: String, system_id: String },
@@ -601,6 +618,7 @@ impl NodeData {
             NodeData::AnonymousBlock(_) => NodeKind::AnonymousBlock,
             NodeData::Text(_) => NodeKind::Text,
             NodeData::Comment => NodeKind::Comment,
+            NodeData::ShadowRoot { .. } => NodeKind::Element,
         }
     }
 }
@@ -642,6 +660,15 @@ impl TextNodeData {
 // }
 
 impl Node {
+    /// Returns a shared reference to the owning BaseDocument.
+    ///
+    /// # Safety
+    /// The `doc` pointer is set once at node creation and points to the BaseDocument that owns
+    /// the node (via `Slab<Node>`). The BaseDocument is guaranteed to outlive all its nodes.
+    pub fn doc(&self) -> &BaseDocument {
+        unsafe { &*self.doc }
+    }
+
     pub fn tree(&self) -> &Slab<Node> {
         unsafe { &*self.tree }
     }
@@ -705,6 +732,17 @@ impl Node {
         matches!(self.data, NodeData::Element { .. })
     }
 
+    pub fn is_shadow_root(&self) -> bool {
+        matches!(self.data, NodeData::ShadowRoot { .. })
+    }
+
+    pub fn shadow_host(&self) -> Option<usize> {
+        match self.data {
+            NodeData::ShadowRoot { host } => Some(host),
+            _ => None,
+        }
+    }
+
     pub fn is_anonymous(&self) -> bool {
         matches!(self.data, NodeData::AnonymousBlock { .. })
     }
@@ -764,6 +802,7 @@ impl Node {
                 // &std::str::from_utf8(data.contents.as_bytes().split_at(10).0).unwrap_or("INVALID UTF8")
             ),
             NodeData::AnonymousBlock(_) => write!(s, "AnonymousBlock"),
+            NodeData::ShadowRoot { host } => write!(s, "#shadow-root (host={host})"),
             NodeData::Element(data) => {
                 let name = &data.name;
                 let class = self.attr(local_name!("class")).unwrap_or("");
@@ -804,6 +843,7 @@ impl Node {
             NodeData::Document => {}
             NodeData::Comment => {}
             NodeData::AnonymousBlock(_) => {}
+            NodeData::ShadowRoot { .. } => {}
             // NodeData::Doctype { name, .. } => write!(s, "DOCTYPE {name}"),
             NodeData::Text(data) => {
                 writer.push_str(data.content.as_str());
@@ -883,7 +923,7 @@ impl Node {
             NodeData::Text(data) => {
                 out.push_str(&data.content);
             }
-            NodeData::Element(..) | NodeData::AnonymousBlock(..) => {
+            NodeData::Element(..) | NodeData::AnonymousBlock(..) | NodeData::ShadowRoot { .. } => {
                 for child_id in self.children.iter() {
                     self.with(*child_id).write_text_content(out);
                 }
@@ -936,13 +976,59 @@ impl Node {
             return true;
         }
 
-        // TODO: mix-blend-mode
-        // TODO: transforms
-        // TODO: filter
-        // TODO: clip-path
-        // TODO: mask
-        // TODO: isolation
-        // TODO: contain
+        // According to CSS spec, the following properties also create stacking contexts
+        // https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_positioned_layout/Stacking_context
+
+        // mix-blend-mode other than normal creates a stacking context
+        {
+            use style::properties::longhands::mix_blend_mode::computed_value::T as MixBlendMode;
+            if !matches!(style.clone_mix_blend_mode(), MixBlendMode::Normal) {
+                return true;
+            }
+        }
+
+        // Any transform value other than none creates a stacking context
+        {
+            use style::values::computed::transform::Transform as StyloTransform;
+            if style.clone_transform() != StyloTransform::none() {
+                return true;
+            }
+        }
+
+        // Any filter value other than none creates a stacking context
+        if !style.clone_filter().0.is_empty() {
+            return true;
+        }
+
+        // isolation: isolate creates a stacking context
+        {
+            use style::properties::longhands::isolation::computed_value::T as Isolation;
+            if matches!(style.clone_isolation(), Isolation::Isolate) {
+                return true;
+            }
+        }
+
+        // contain with paint or layout creates a stacking context
+        {
+            use style::properties::longhands::contain::computed_value::T as Contain;
+            let contain = style.clone_contain();
+            if contain.intersects(Contain::PAINT) {
+                return true;
+            }
+        }
+
+        // clip-path other than none creates a stacking context
+        {
+            use style::values::computed::basic_shape::ClipPath as StyloClipPath;
+            if !matches!(style.clone_clip_path(), StyloClipPath::None) {
+                return true;
+            }
+        }
+
+        // mask-image other than none creates a stacking context
+        if !style.clone_mask_image().0.is_empty() {
+            return true;
+        }
 
         false
     }

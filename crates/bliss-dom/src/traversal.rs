@@ -176,6 +176,55 @@ impl BaseDocument {
         self.nodes[node_id].after = after;
     }
 
+    pub fn prev_node(&self, start: &Node, mut filter: impl FnMut(&Node) -> bool) -> Option<usize> {
+        let start_id = start.id;
+        let mut node = start;
+        loop {
+            // Next is previous sibling (or the last child of the previous sibling)
+            let next = if let Some(parent) = node.parent_node() {
+                let self_idx = parent
+                    .children
+                    .iter()
+                    .position(|id| *id == node.id)
+                    .unwrap();
+                // Previous sibling: go to its last child (and repeat down the tree)
+                if self_idx > 0 {
+                    let mut sibling = &self.nodes[parent.children[self_idx - 1]];
+                    // Descend to the last child
+                    while !sibling.children.is_empty() {
+                        sibling = &self.nodes[*sibling.children.last().unwrap()];
+                    }
+                    sibling
+                }
+                // No previous sibling: go to parent
+                else {
+                    parent
+                }
+            }
+            // No parent: wrap to the last node in the tree
+            else {
+                self.last_node_in_tree()
+            };
+
+            if filter(next) {
+                return Some(next.id);
+            } else if next.id == start_id {
+                return None;
+            }
+
+            node = next;
+        }
+    }
+
+    /// Find the last node in a pre-order traversal of the tree (deepest last child of the root's last child).
+    fn last_node_in_tree(&self) -> &Node {
+        let mut node = self.root_node();
+        while !node.children.is_empty() {
+            node = &self.nodes[*node.children.last().unwrap()];
+        }
+        node
+    }
+
     pub fn next_node(&self, start: &Node, mut filter: impl FnMut(&Node) -> bool) -> Option<usize> {
         let start_id = start.id;
         let mut node = start;

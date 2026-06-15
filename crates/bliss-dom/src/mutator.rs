@@ -127,6 +127,17 @@ impl DocumentMutator<'_> {
         self.doc.create_text_node(text)
     }
 
+    /// Create a shadow root attached to the given host element.
+    /// Returns the node ID of the new shadow root.
+    pub fn attach_shadow(&mut self, host_id: usize) -> usize {
+        let shadow_root_id = self.doc.create_node(NodeData::ShadowRoot { host: host_id });
+        let shadow_root = &mut self.doc.nodes[shadow_root_id];
+        shadow_root.parent = Some(host_id);
+        shadow_root.flags.insert(NodeFlags::IS_IN_DOCUMENT);
+        self.doc.nodes[host_id].children.push(shadow_root_id);
+        shadow_root_id
+    }
+
     pub fn create_element(&mut self, name: QualName, attrs: Vec<Attribute>) -> usize {
         let mut data = ElementData::new(name, attrs);
         data.flush_style_attribute(self.doc.guard(), &self.doc.url.url_extra_data());
@@ -216,11 +227,15 @@ impl DocumentMutator<'_> {
 
         let node = &mut self.doc.nodes[node_id];
         if let Some(data) = &mut *node.stylo_element_data.borrow_mut() {
-            data.hint |= RestyleHint::restyle_subtree();
+            // Attribute changes only affect this element's selector matching,
+            // not its children's. RESTYLE_SELF is sufficient.
+            data.hint |= RestyleHint::RESTYLE_SELF;
             data.damage.insert(ALL_DAMAGE);
         }
 
-        // TODO: make this fine grained / conditional based on ElementSelectorFlags
+        // The parent needs full subtree restyle to ensure the traversal
+        // visits this subtree (without ElementSelectorFlags we can't
+        // narrow this further — descendant selectors may target this node).
         let parent = node.parent;
         if let Some(parent_id) = parent {
             let parent = &mut self.doc.nodes[parent_id];
@@ -295,7 +310,8 @@ impl DocumentMutator<'_> {
 
         let mut stylo_element_data = node.stylo_element_data.borrow_mut();
         if let Some(data) = &mut *stylo_element_data {
-            data.hint |= RestyleHint::restyle_subtree();
+            // Clearing an attribute only affects this element's selector matching.
+            data.hint |= RestyleHint::RESTYLE_SELF;
             data.damage.insert(ALL_DAMAGE);
         }
         drop(stylo_element_data);
@@ -390,10 +406,13 @@ impl DocumentMutator<'_> {
             parent.insert_damage(ALL_DAMAGE);
             let parent_is_in_doc = parent.flags.is_in_document();
 
-            // TODO: make this fine grained / conditional based on ElementSelectorFlags
+            // When removing a child, the parent's own styles don't change —
+            // only its children set does. RESTYLE_SELF is sufficient for the
+            // old parent since we just need to trigger a traversal that will
+            // pick up the removed child's absence from the layout tree.
             if parent_is_in_doc {
                 if let Some(data) = &mut *parent.stylo_element_data.borrow_mut() {
-                    data.hint |= RestyleHint::restyle_subtree();
+                    data.hint |= RestyleHint::RESTYLE_SELF;
                 }
                 // Mark ancestors dirty so the style traversal visits this subtree.
                 parent.mark_ancestors_dirty();
@@ -487,10 +506,11 @@ impl DocumentMutator<'_> {
                 let old_parent = &mut self.doc.nodes[old_parent_id];
                 old_parent.insert_damage(ALL_DAMAGE);
 
-                // TODO: make this fine grained / conditional based on ElementSelectorFlags
+                // When reparenting a child, the old parent's own styles don't
+                // change — only its children set does.
                 if child_was_in_doc {
                     if let Some(data) = &mut *old_parent.stylo_element_data.borrow_mut() {
-                        data.hint |= RestyleHint::restyle_subtree();
+                        data.hint |= RestyleHint::RESTYLE_SELF;
                     }
                     // Mark ancestors dirty so the style traversal visits this subtree.
                     old_parent.mark_ancestors_dirty();

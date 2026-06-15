@@ -3,12 +3,12 @@
 //! This example demonstrates the complete visual effects pipeline including
 //! glass morphism, transforms, and GPU-accelerated rendering.
 
+use arniko::ArnikoApp;
 use arniko::config::ThemeConfig;
 use arniko::mustang::{
     ColorAdjustParams, CompositeResult, Compositor, CompositorConfig, Effect, MustangCompositor,
     MustangConfig, Region, TransformParams,
 };
-use arniko::ArnikoApp;
 
 fn main() {
     println!("🎨 Arniko Advanced Visual Effects Demo");
@@ -303,7 +303,7 @@ fn demo_theme_effects() {
         }
 
         // Check if theme has effects
-        let has_effects = arniko::compositor::integration::theme_has_effects(&theme_config);
+        let has_effects = theme_has_effects(&theme_config);
         println!("  - Has effects: {}", has_effects);
     }
 }

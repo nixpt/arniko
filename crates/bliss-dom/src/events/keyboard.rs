@@ -3,14 +3,13 @@ use crate::{
     node::{TextBrush, TextInputData},
 };
 use bliss_traits::{
-    events::{BlissInputEvent, BlissKeyEvent, DomEvent, DomEventData},
+    events::{BlissInputEvent, BlissKeyEvent, BlissSubmitEvent, DomEvent, DomEventData},
     shell::ShellProvider,
 };
 use keyboard_types::{Key, Modifiers};
 use markup5ever::local_name;
 use parley::{FontContext, LayoutContext};
 
-// TODO: support keypress events
 enum GeneratedEvent {
     Input,
     Select,
@@ -28,8 +27,7 @@ pub(crate) fn handle_keypress<F: FnMut(DomEvent)>(
         // Shift+Tab - move to previous focusable element
         let shift = event.modifiers.contains(Modifiers::SHIFT);
         if shift {
-            // TODO: Implement focus_prev_node() for reverse tab navigation
-            // For now, we'll just not do anything on Shift+Tab
+            doc.focus_prev_node();
         } else {
             doc.focus_next_node();
         }
@@ -71,6 +69,9 @@ pub(crate) fn handle_keypress<F: FnMut(DomEvent)>(
         };
 
         if let Some(input_data) = element_data.text_input_data_mut() {
+            // Clone the event before passing ownership to apply_keypress_event
+            // so we can still use it for KeyPress dispatch
+            let key_event = event.clone();
             let generated_event = apply_keypress_event(
                 input_data,
                 &mut doc.font_ctx.lock().unwrap(),
@@ -80,6 +81,16 @@ pub(crate) fn handle_keypress<F: FnMut(DomEvent)>(
             );
 
             if let Some(generated_event) = generated_event {
+                // Dispatch a KeyPress event for character-producing keys
+                // (Input = character typed, Submit = Enter on single-line)
+                let needs_keypress = matches!(
+                    generated_event,
+                    GeneratedEvent::Input | GeneratedEvent::Submit
+                );
+                if needs_keypress {
+                    dispatch_event(DomEvent::new(node_id, DomEventData::KeyPress(key_event)));
+                }
+
                 match generated_event {
                     GeneratedEvent::Input => {
                         let value = input_data.editor.raw_text().to_string();
@@ -93,8 +104,60 @@ pub(crate) fn handle_keypress<F: FnMut(DomEvent)>(
                         doc.shell_provider.request_redraw();
                     }
                     GeneratedEvent::Submit => {
-                        // TODO: Generate submit event that can be handled by script
-                        implicit_form_submission(doc, target);
+                        // Check if this form has multiple text-like inputs.
+                        // Per HTML spec, Enter on a text input only submits the form
+                        // if there is at most one text-like input in the form.
+                        // https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#field-that-blocks-implicit-submission
+                        let can_implicit_submit =
+                            doc.controls_to_form
+                                .get(&node_id)
+                                .map_or(false, |form_owner_id| {
+                                    doc.controls_to_form
+                                        .iter()
+                                        .filter(|(_, form_id)| *form_id == form_owner_id)
+                                        .filter_map(|(control_id, _)| {
+                                            doc.nodes[*control_id].element_data()
+                                        })
+                                        .filter(|element_data| {
+                                            element_data.attr(local_name!("type")).is_some_and(
+                                                |t| {
+                                                    matches!(
+                                                        t,
+                                                        "text"
+                                                            | "search"
+                                                            | "email"
+                                                            | "url"
+                                                            | "tel"
+                                                            | "password"
+                                                            | "date"
+                                                            | "month"
+                                                            | "week"
+                                                            | "time"
+                                                            | "datetime-local"
+                                                            | "number"
+                                                    )
+                                                },
+                                            )
+                                        })
+                                        .count()
+                                        <= 1
+                                });
+
+                        if !can_implicit_submit {
+                            return;
+                        }
+
+                        // Dispatch submit event on the form. The actual form submission
+                        // happens in the default action (mod.rs) AFTER scripts have had
+                        // a chance to process the event and potentially call preventDefault().
+                        if let Some(&form_id) = doc.controls_to_form.get(&node_id) {
+                            dispatch_event(DomEvent::new(
+                                form_id,
+                                DomEventData::Submit(BlissSubmitEvent {
+                                    submitter_id: node_id,
+                                }),
+                            ));
+                        }
                     }
                 }
             }
@@ -269,42 +332,4 @@ fn apply_keypress_event(
     };
 
     None
-}
-
-/// https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#field-that-blocks-implicit-submission
-fn implicit_form_submission(doc: &BaseDocument, text_target: usize) {
-    let Some(form_owner_id) = doc.controls_to_form.get(&text_target) else {
-        return;
-    };
-    if doc
-        .controls_to_form
-        .iter()
-        .filter(|(_control_id, form_id)| *form_id == form_owner_id)
-        .filter_map(|(control_id, _)| doc.nodes[*control_id].element_data())
-        .filter(|element_data| {
-            element_data.attr(local_name!("type")).is_some_and(|t| {
-                matches!(
-                    t,
-                    "text"
-                        | "search"
-                        | "email"
-                        | "url"
-                        | "tel"
-                        | "password"
-                        | "date"
-                        | "month"
-                        | "week"
-                        | "time"
-                        | "datetime-local"
-                        | "number"
-                )
-            })
-        })
-        .count()
-        > 1
-    {
-        return;
-    }
-
-    doc.submit_form(*form_owner_id, *form_owner_id);
 }

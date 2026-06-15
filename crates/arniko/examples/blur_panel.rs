@@ -6,13 +6,11 @@
 //! Run with:
 //!   CARGO_TARGET_DIR=/build/target-arniko cargo run -p arniko --features reactive,gpu --example blur_panel
 
+use arniko::mustang::compositor::region::Region;
+use arniko::mustang::{Effect, MustangCompositor};
 use arniko::reactive::{
-    Div, Signal, StaticHtml, Text, ReactiveText, View,
-    VelloScenePainter, launch_reactive_configured,
-};
-use mustang::{
-    Effect, MustangCompositor,
-    compositor::region::Region,
+    Div, ReactiveText, Signal, StaticHtml, Text, VelloScenePainter, View,
+    launch_reactive_configured,
 };
 
 fn main() {
@@ -42,7 +40,8 @@ fn main() {
                                    <p style="margin:0;font-size:14px;color:#71717a;">
                                        Mustang blur effect applied via the scene_effects hook
                                        every frame before wgpu submission.
-                                   </p>"#.into(),
+                                   </p>"#
+                                    .into(),
                             )),
                             Box::new(Div::styled(
                                 "display:flex; gap:12px; align-items:center;",
@@ -82,14 +81,12 @@ fn main() {
             let inc = count.clone();
             router.on_click(btn_ids[2], move || inc.update(|n| n + 1));
         },
-
         // ── Renderer configuration: wire mustang blur ──────────────────────────
         |renderer| {
             let mut compositor = MustangCompositor::default();
             let effects = vec![
                 // Gaussian blur halo over the glass panel — radius=20px, 2 passes.
-                Effect::blur("glass-panel", 20.0, 1280, 720)
-                    .with_region(panel_region),
+                Effect::blur("glass-panel", 20.0, 1280, 720).with_region(panel_region),
             ];
 
             renderer.set_scene_effects(move |scene, w, h| {

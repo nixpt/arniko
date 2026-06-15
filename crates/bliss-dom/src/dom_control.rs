@@ -246,32 +246,42 @@ impl DomController for BaseDocument {
 
     fn add_event_listener(
         &mut self,
-        _node_id: NodeId,
-        _event: &str,
-        _handler_id: u64,
+        node_id: NodeId,
+        event: &str,
+        handler_id: u64,
     ) -> DomControlResult<()> {
-        // TODO: Implement event listener registry
-        // This would require:
-        // 1. A registry to map handler_id to actual callbacks
-        // 2. Integration with the EventDriver
-        // 3. Storage of listener metadata on nodes
+        // Validate the node exists
+        if self.get_node(node_id).is_none() {
+            return Err(DomControlError::NodeNotFound(node_id));
+        }
 
-        Err(DomControlError::InvalidMutation(
-            "Event listener registry not yet implemented".to_string(),
-        ))
+        self.event_listeners
+            .entry((node_id, event.to_string()))
+            .or_default()
+            .push(handler_id);
+
+        Ok(())
     }
 
     fn remove_event_listener(
         &mut self,
-        _node_id: NodeId,
-        _event: &str,
-        _handler_id: u64,
+        node_id: NodeId,
+        event: &str,
+        handler_id: u64,
     ) -> DomControlResult<()> {
-        // TODO: Implement event listener registry
+        // Validate the node exists
+        if self.get_node(node_id).is_none() {
+            return Err(DomControlError::NodeNotFound(node_id));
+        }
 
-        Err(DomControlError::InvalidMutation(
-            "Event listener registry not yet implemented".to_string(),
-        ))
+        if let Some(handlers) = self.event_listeners.get_mut(&(node_id, event.to_string())) {
+            handlers.retain(|&id| id != handler_id);
+            if handlers.is_empty() {
+                self.event_listeners.remove(&(node_id, event.to_string()));
+            }
+        }
+
+        Ok(())
     }
 }
 

@@ -5,8 +5,8 @@ use std::{
 
 use bliss_traits::{
     events::{
-        BlissInputEvent, BlissPointerEvent, BlissPointerId, BlissWheelDelta, BlissWheelEvent,
-        DomEvent, DomEventData, MouseEventButton, MouseEventButtons,
+        BlissInputEvent, BlissPointerEvent, BlissPointerId, BlissSubmitEvent, BlissWheelDelta,
+        BlissWheelEvent, DomEvent, DomEventData, MouseEventButton, MouseEventButtons,
     },
     navigation::NavigationOptions,
 };
@@ -530,8 +530,16 @@ pub(crate) fn handle_click(
                 local_name!("input")
                     if el.is_submit_button() || el.attr(local_name!("type")) == Some("submit") =>
                 {
-                    if let Some(form_owner) = doc.controls_to_form.get(&node_id) {
-                        doc.submit_form(*form_owner, node_id);
+                    // Dispatch submit event. The actual form submission happens in the
+                    // default action (mod.rs) AFTER scripts have had a chance to
+                    // process the event and potentially call preventDefault().
+                    if let Some(&form_owner) = doc.controls_to_form.get(&node_id) {
+                        dispatch_event(DomEvent::new(
+                            form_owner,
+                            DomEventData::Submit(BlissSubmitEvent {
+                                submitter_id: node_id,
+                            }),
+                        ));
                     }
                 }
                 #[cfg(feature = "file_input")]

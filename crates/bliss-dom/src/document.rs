@@ -288,6 +288,23 @@ pub struct BaseDocument {
     /// Value is a list of (node_id, image_type) pairs waiting for the image.
     pub(crate) pending_images: HashMap<String, Vec<(usize, ImageType)>>,
 
+    /// Event listener registry, mapping (node_id, event_name) to registered handler_ids.
+    /// Used by addEventListener/removeEventListener via the DomController API.
+    /// The handler_id is an opaque identifier that the caller (e.g. a script engine)
+    /// uses to dispatch callbacks when the event fires.
+    pub(crate) event_listeners: HashMap<(usize, String), Vec<u64>>,
+
+    /// Scoped stylesheets for each shadow root, keyed by shadow root node ID.
+    /// When a `<style>` element is inside a shadow root, its stylesheet is stored
+    /// here instead of being added to the global stylist. These are used to build
+    /// per-shadow-root CascadeData during style resolution.
+    pub(crate) shadow_scoped_sheets: HashMap<usize, Vec<DocumentStyleSheet>>,
+
+    /// Pre-built CascadeData for each shadow root, keyed by shadow root node ID.
+    /// Rebuilt during `resolve_stylist()` from `shadow_scoped_sheets`. Accessed by
+    /// `TShadowRoot::style_data()` to apply scoped styles within shadow roots.
+    pub(crate) shadow_cascade_data: HashMap<usize, Box<style::stylist::CascadeData>>,
+
     // Service providers
     /// Network provider. Can be used to fetch assets.
     pub net_provider: Arc<dyn NetProvider>,
@@ -430,6 +447,9 @@ impl BaseDocument {
             deferred_construction_nodes: Vec::new(),
             image_cache: HashMap::new(),
             pending_images: HashMap::new(),
+            event_listeners: HashMap::new(),
+            shadow_scoped_sheets: HashMap::new(),
+            shadow_cascade_data: HashMap::new(),
             controls_to_form: HashMap::new(),
             net_provider,
             navigation_provider,
@@ -510,6 +530,15 @@ impl BaseDocument {
     /// This is used for lifecycle management - events should only be forwarded when the capsule is "Running"
     pub fn set_events_enabled(&mut self, enabled: bool) {
         self.events_enabled = enabled;
+    }
+
+    /// Query registered event listeners for a given node ID and event name.
+    /// Returns an empty Vec if no listeners are registered.
+    pub fn get_event_listeners(&self, node_id: usize, event_name: &str) -> &[u64] {
+        self.event_listeners
+            .get(&(node_id, event_name.to_string()))
+            .map(|v| v.as_slice())
+            .unwrap_or(&[])
     }
 
     /// Execute script code
@@ -718,11 +747,12 @@ impl BaseDocument {
     pub fn create_node(&mut self, node_data: NodeData) -> usize {
         // Cast to *const since Node only needs shared access to the slab via tree()
         let slab_ptr = self.nodes.as_ref() as *const Slab<Node>;
+        let doc_ptr = self as *const BaseDocument;
         let guard = self.guard.clone();
 
         let entry = self.nodes.vacant_entry();
         let id = entry.key();
-        entry.insert(Node::new(slab_ptr, id, guard, node_data));
+        entry.insert(Node::new(slab_ptr, doc_ptr, id, guard, node_data));
 
         // Mark the new node as changed.
         self.changed_nodes.insert(id);
@@ -857,7 +887,35 @@ impl BaseDocument {
         let css = self.nodes[target_id].text_content();
         let css = html_escape::decode_html_entities(&css);
         let sheet = self.make_stylesheet(&css, Origin::Author);
+
+        // Check if this <style> element is inside a shadow root.
+        // If so, route its stylesheet to the shadow root's scoped storage
+        // instead of the global stylist, so the rules only apply within
+        // the shadow tree.
+        if let Some(shadow_root_id) = self.find_containing_shadow_root(target_id) {
+            self.shadow_scoped_sheets
+                .entry(shadow_root_id)
+                .or_default()
+                .push(sheet);
+            // Mark the cascade data as needing rebuild
+            self.shadow_cascade_data.remove(&shadow_root_id);
+            return;
+        }
+
         self.add_stylesheet_for_node(sheet, target_id);
+    }
+
+    /// Walk up the parent chain from `node_id` to find the nearest shadow root ancestor.
+    /// Returns `Some(shadow_root_node_id)` if one is found, `None` otherwise.
+    fn find_containing_shadow_root(&self, node_id: usize) -> Option<usize> {
+        let mut current = self.nodes[node_id].parent;
+        while let Some(parent_id) = current {
+            if matches!(self.nodes[parent_id].data, NodeData::ShadowRoot { .. }) {
+                return Some(parent_id);
+            }
+            current = self.nodes[parent_id].parent;
+        }
+        None
     }
 
     pub fn remove_user_agent_stylesheet(&mut self, contents: &str) {
@@ -1169,7 +1227,21 @@ impl BaseDocument {
 
     pub fn focus_next_node(&mut self) -> Option<usize> {
         let focussed_node_id = self.get_focussed_node_id()?;
-        let id = self.next_node(&self.nodes[focussed_node_id], |node| node.is_focussable())?;
+        let id = self
+            .next_node(&self.nodes[focussed_node_id], |node| node.is_focussable())
+            // Wrap around: when at the last focusable, continue from the document root
+            .or_else(|| self.next_node(self.root_node(), |node| node.is_focussable()))?;
+        self.set_focus_to(id);
+        Some(id)
+    }
+
+    /// Move focus to the previous focusable node in document order (reverse Tab).
+    pub fn focus_prev_node(&mut self) -> Option<usize> {
+        let focussed_node_id = self.get_focussed_node_id()?;
+        let id = self
+            .prev_node(&self.nodes[focussed_node_id], |node| node.is_focussable())
+            // Wrap around: when at the first focusable, find the last focusable in the document
+            .or_else(|| self.prev_node(self.root_node(), |node| node.is_focussable()))?;
         self.set_focus_to(id);
         Some(id)
     }

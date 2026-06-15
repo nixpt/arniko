@@ -71,6 +71,8 @@ pub fn walk_tree(indent: usize, node: &Node) {
 
         NodeData::AnonymousBlock(_) => println!("{id} AnonymousBlock"),
 
+        NodeData::ShadowRoot { host } => println!("#shadow-root (host={host}) {id}"),
+
         NodeData::Element(data) => {
             print!("<{} {id}", data.name.local);
             for attr in data.attrs.iter() {
