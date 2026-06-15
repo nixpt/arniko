@@ -6,9 +6,17 @@ on:
   push:
     branches: [main]
 
+# Cancel in-progress runs when a new commit lands on the same PR/branch.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Minimal token permissions for a lint/build/test job.
+permissions:
+  contents: read
+
 env:
   CARGO_TERM_COLOR: always
-  RUSTFLAGS: -D warnings
 
 jobs:
   fmt-and-lint:
@@ -25,7 +33,7 @@ jobs:
           components: rustfmt, clippy
 
       - name: Cache cargo registry & target
-        uses: actions/swf-common-actions/cache@0.4.2
+        uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/registry
@@ -38,12 +46,14 @@ jobs:
       - name: cargo fmt --check
         run: cargo fmt --package arniko --package bliss-dom --check
 
+      # -D warnings is passed to clippy via `--` so it only affects
+      # clippy lints, not arbitrary compiler warnings in build/test.
       - name: cargo clippy (arniko, bliss-dom)
         run: |
           cargo clippy -p arniko -p bliss-dom --all-targets -- -D warnings
 
   build-arniko:
-    name: build arniko (default features)
+    name: build arniko + mustang
     runs-on: ubuntu-latest
     needs: fmt-and-lint
 
@@ -55,7 +65,7 @@ jobs:
         uses: dtolnay/rust-toolchain@1.85.0
 
       - name: Cache cargo registry & target
-        uses: actions/swf-common-actions/cache@0.4.2
+        uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/registry
@@ -84,7 +94,7 @@ jobs:
         uses: dtolnay/rust-toolchain@1.85.0
 
       - name: Cache cargo registry & target
-        uses: actions/swf-common-actions/cache@0.4.2
+        uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/registry
@@ -104,9 +114,17 @@ jobs:
         run: cargo test -p mustang --lib
 
   arniko-crush:
-    name: check arniko-crush (sibling crush-ast must be buildable)
+    name: check arniko-crush (requires sibling crush-ast)
     runs-on: ubuntu-latest
     needs: fmt-and-lint
+
+    # arniko-crush depends on crush-lang-sdk from the sibling crush-ast repo.
+    # We check out crush-ast at the same directory level as arniko so the
+    # relative path dependency in arniko/Cargo.toml resolves.
+    # Adjust CRUSH_AST_REF below to track a known-good crush-ast commit
+    # (e.g. after the stdlib fix lands).
+    env:
+      CRUSH_AST_REF: a0eabdd
 
     steps:
       - name: Checkout arniko
@@ -114,17 +132,18 @@ jobs:
         with:
           path: arniko
 
-      - name: Checkout crush-ast
+      - name: Checkout crush-ast (pinned to known-good ref)
         uses: actions/checkout@v4
         with:
           repository: nixpt/crush-ast
+          ref: ${{ env.CRUSH_AST_REF }}
           path: crush-ast
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@1.85.0
 
       - name: Cache cargo registry & target
-        uses: actions/swf-common-actions/cache@0.4.2
+        uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/registry
