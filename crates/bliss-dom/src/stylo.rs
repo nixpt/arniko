@@ -56,23 +56,82 @@ use style_dom::ElementState;
 use style::values::computed::text::TextAlign as StyloTextAlign;
 
 impl crate::document::BaseDocument {
+    /// Build (or rebuild) CascadeData for each shadow root from its scoped stylesheets.
+    /// Called during `resolve_stylist()` after the stylist flush, before the style traversal.
+    fn build_shadow_cascade_data(&mut self) {
+        use style::stylesheet_set::DocumentStylesheetSet;
+
+        if self.shadow_scoped_sheets.is_empty() {
+            return;
+        }
+
+        let shadow_root_ids: Vec<usize> = self.shadow_scoped_sheets.keys().copied().collect();
+        for shadow_root_id in shadow_root_ids {
+            let sheets = match self.shadow_scoped_sheets.get(&shadow_root_id) {
+                Some(s) if !s.is_empty() => s.clone(),
+                _ => continue,
+            };
+
+            let mut set = DocumentStylesheetSet::<style::stylesheets::DocumentStyleSheet>::new();
+            for sheet in &sheets {
+                let guard = self.guard.read();
+                set.append_stylesheet(
+                    Some(self.stylist.device()),
+                    &Default::default(),
+                    sheet.clone(),
+                    &guard,
+                );
+            }
+
+            let guard = self.guard.read();
+            let mut flusher = set.flush::<BlissNode>(None, None);
+            let author_flusher = flusher.flush_origin(style::stylesheets::origin::Origin::Author);
+            let mut cascade_data = style::stylist::CascadeData::new();
+            if cascade_data
+                .rebuild(
+                    self.stylist.device(),
+                    style::context::QuirksMode::NoQuirks,
+                    author_flusher,
+                    &guard,
+                )
+                .is_ok()
+            {
+                self.shadow_cascade_data
+                    .insert(shadow_root_id, Box::new(cascade_data));
+            }
+        }
+    }
+
     pub fn resolve_stylist(&mut self, now: f64) {
         style::thread_state::enter(ThreadState::LAYOUT);
 
-        let guard = &self.guard;
-        let guards = StylesheetGuards {
-            author: &guard.read(),
-            ua_or_user: &guard.read(),
-        };
+        // Phase 1: Flush the stylist's own cascade data.
+        // The read guard is scoped to this block so its borrow of `self` is
+        // released before the `&mut self` work in phases 2/3.
+        // (A second, separate read guard is acquired in Phase 4 below —
+        // both are needed because the `&mut self` work in between forces
+        // us to drop the guard before re-acquiring.)
+        {
+            let guard = self.guard.read();
+            let guards = StylesheetGuards {
+                author: &guard,
+                ua_or_user: &guard,
+            };
 
-        let root = TDocument::as_node(&&self.nodes[0])
-            .first_element_child()
-            .unwrap()
-            .as_element()
-            .unwrap();
+            let root = TDocument::as_node(&&self.nodes[0])
+                .first_element_child()
+                .unwrap()
+                .as_element()
+                .unwrap();
 
-        self.stylist
-            .flush(&guards, Some(root), Some(&self.snapshots));
+            self.stylist
+                .flush(&guards, Some(root), Some(&self.snapshots));
+        }
+
+        // Phase 2: Build per-shadow-root cascade data from scoped stylesheets.
+        self.build_shadow_cascade_data();
+
+        // Phase 3: Mark actively animating nodes as dirty.
 
         // Mark actively animating nodes as dirty
         let mut sets = self.animations.sets.write();
@@ -102,28 +161,40 @@ impl crate::document::BaseDocument {
         }
         drop(sets);
 
-        // Build the style context used by the style traversal
-        let context = SharedStyleContext {
-            traversal_flags: TraversalFlags::empty(),
-            stylist: &self.stylist,
-            options: GLOBAL_STYLE_DATA.options.clone(),
-            guards,
-            visited_styles_enabled: false,
-            animations: self.animations.clone(),
-            current_time_for_animations: now,
-            snapshot_map: &self.snapshots,
-            registered_speculative_painters: &RegisteredPaintersImpl,
-        };
+        // Build the style context used by the style traversal.
+        // The read guard is scoped to this block so it lives through the
+        // traversal and is released before the `&mut self` cleanup below.
+        // (See Phase 1 above for why the guard is re-acquired here rather
+        // than hoisted to function scope.)
+        {
+            let guard = self.guard.read();
+            let guards = StylesheetGuards {
+                author: &guard,
+                ua_or_user: &guard,
+            };
 
-        // components/layout_2020/lib.rs:983
-        let root = self.root_element();
-        // dbg!(root);
-        let token = RecalcStyle::pre_traverse(root, &context);
+            let context = SharedStyleContext {
+                traversal_flags: TraversalFlags::empty(),
+                stylist: &self.stylist,
+                options: GLOBAL_STYLE_DATA.options.clone(),
+                guards,
+                visited_styles_enabled: false,
+                animations: self.animations.clone(),
+                current_time_for_animations: now,
+                snapshot_map: &self.snapshots,
+                registered_speculative_painters: &RegisteredPaintersImpl,
+            };
 
-        if token.should_traverse() {
-            // Style the elements, resolving their data
-            let traverser = RecalcStyle::new(context);
-            style::driver::traverse_dom(&traverser, token, None);
+            // components/layout_2020/lib.rs:983
+            let root = self.root_element();
+            // dbg!(root);
+            let token = RecalcStyle::pre_traverse(root, &context);
+
+            if token.should_traverse() {
+                // Style the elements, resolving their data
+                let traverser = RecalcStyle::new(context);
+                style::driver::traverse_dom(&traverser, token, None);
+            }
         }
 
         for opaque in self.snapshots.keys() {
@@ -195,14 +266,24 @@ impl<'a> TShadowRoot for BlissNode<'a> {
     }
 
     fn host(&self) -> <Self::ConcreteNode as TNode>::ConcreteElement {
-        unimplemented!("Shadow roots are not yet implemented")
+        if let NodeData::ShadowRoot { host } = self.data {
+            self.with(host)
+        } else {
+            panic!("TShadowRoot::host() called on non-shadow-root node")
+        }
     }
 
     fn style_data<'b>(&self) -> Option<&'b style::stylist::CascadeData>
     where
         Self: 'b,
     {
-        unimplemented!("Shadow roots are not yet implemented")
+        // Access the scoped cascade data stored on the owning BaseDocument.
+        // The doc pointer on Node is set at creation time and the BaseDocument
+        // is guaranteed to outlive all its Nodes.
+        let doc = self.doc();
+        doc.shadow_cascade_data
+            .get(&self.id)
+            .map(|boxed| &**boxed as &style::stylist::CascadeData)
     }
 }
 
@@ -271,8 +352,11 @@ impl<'a> TNode for BlissNode<'a> {
     }
 
     fn as_shadow_root(&self) -> Option<Self::ConcreteShadowRoot> {
-        // TODO: implement shadow DOM
-        None
+        if matches!(self.data, NodeData::ShadowRoot { .. }) {
+            Some(self)
+        } else {
+            None
+        }
     }
 }
 
@@ -302,10 +386,19 @@ impl selectors::Element for BlissNode<'_> {
     }
 
     fn parent_node_is_shadow_root(&self) -> bool {
-        false
+        self.parent_node()
+            .map(|parent| matches!(parent.data, NodeData::ShadowRoot { .. }))
+            .unwrap_or(false)
     }
 
     fn containing_shadow_host(&self) -> Option<Self> {
+        let mut current = self.parent_node();
+        while let Some(parent) = current {
+            if let NodeData::ShadowRoot { host } = parent.data {
+                return Some(self.with(host));
+            }
+            current = parent.parent_node();
+        }
         None
     }
 
@@ -496,7 +589,7 @@ impl selectors::Element for BlissNode<'_> {
     }
 
     fn is_html_slot_element(&self) -> bool {
-        false
+        self.data.is_element_with_tag_name(&local_name!("slot"))
     }
 
     fn has_id(
@@ -779,10 +872,20 @@ impl<'a> TElement for BlissNode<'a> {
     }
 
     fn shadow_root(&self) -> Option<<Self::ConcreteNode as TNode>::ConcreteShadowRoot> {
-        None
+        self.children
+            .iter()
+            .find(|&&child_id| self.with(child_id).is_shadow_root())
+            .map(|&child_id| self.with(child_id))
     }
 
     fn containing_shadow(&self) -> Option<<Self::ConcreteNode as TNode>::ConcreteShadowRoot> {
+        let mut current = self.parent_node();
+        while let Some(parent) = current {
+            if matches!(parent.data, NodeData::ShadowRoot { .. }) {
+                return Some(parent);
+            }
+            current = parent.parent_node();
+        }
         None
     }
 
@@ -962,10 +1065,46 @@ impl<'a> TElement for BlissNode<'a> {
 
     fn query_container_size(
         &self,
-        _display: &style::values::specified::Display,
+        display: &style::values::specified::Display,
     ) -> euclid::default::Size2D<Option<app_units::Au>> {
-        // FIXME: Implement container queries. For now this effectively disables them without panicking.
-        Default::default()
+        // Elements with display: contents don't generate a box and cannot be containers.
+        use style::values::specified::box_::DisplayInside;
+        if matches!(display.inside(), DisplayInside::Contents) {
+            return euclid::default::Size2D::new(None, None);
+        }
+
+        // Check whether this element is a container (container-type != normal).
+        let Some(style) = self.primary_styles() else {
+            return euclid::default::Size2D::new(None, None);
+        };
+        let ct = style.clone_container_type();
+        use style::properties::longhands::container_type::computed_value::T as ContainerType;
+        if ct == ContainerType::NORMAL {
+            return euclid::default::Size2D::new(None, None);
+        }
+
+        // Return the content box size from the previous frame's layout.
+        // Container sizes are only available after the first layout pass;
+        // on the very first frame this returns None (container queries won't match).
+        use app_units::Au;
+        let raw = self.final_layout.size;
+        let pad = self.final_layout.padding;
+        let bor = self.final_layout.border;
+        let inner_w = (raw.width - pad.left - pad.right - bor.left - bor.right).max(0.0);
+        let inner_h = (raw.height - pad.top - pad.bottom - bor.top - bor.bottom).max(0.0);
+
+        euclid::default::Size2D::new(
+            if inner_w > 0.0 {
+                Some(Au((inner_w * 60.0f32) as i32))
+            } else {
+                None
+            },
+            if inner_h > 0.0 {
+                Some(Au((inner_h * 60.0f32) as i32))
+            } else {
+                None
+            },
+        )
     }
 
     fn each_custom_state<F>(&self, _callback: F)
