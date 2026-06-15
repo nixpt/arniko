@@ -4,8 +4,8 @@
 //! or compose into a larger document. The full Arniko stylesheet is available
 //! via `arniko.styles`.
 
-use crush_lang_sdk::{HostCap, HostCapSpec, HostCaps};
 use crush_lang_sdk::Value;
+use crush_lang_sdk::{HostCap, HostCapSpec, HostCaps};
 
 /// Register all Arniko UI capabilities on the given [`HostCaps`] registry.
 pub fn register(caps: &mut HostCaps) {
@@ -81,8 +81,18 @@ impl HostCap for ArnikoButtonCap {
             return Err("arniko.button requires at least a label".to_string());
         }
         let label = text_arg(&args[0]);
-        let variant = args.get(1).map(text_arg).as_deref().map(parse_button_variant).unwrap_or_default();
-        let size = args.get(2).map(text_arg).as_deref().map(parse_button_size).unwrap_or_default();
+        let variant = args
+            .get(1)
+            .map(text_arg)
+            .as_deref()
+            .map(parse_button_variant)
+            .unwrap_or_default();
+        let size = args
+            .get(2)
+            .map(text_arg)
+            .as_deref()
+            .map(parse_button_size)
+            .unwrap_or_default();
 
         use arniko::{Button, ButtonSize};
         let mut button = Button::new(&label).variant(variant);
@@ -95,23 +105,29 @@ impl HostCap for ArnikoButtonCap {
 }
 
 fn parse_button_variant(s: &str) -> arniko::ButtonVariant {
-    parse_variant(s, &[
-        ("default", arniko::ButtonVariant::Default),
-        ("destructive", arniko::ButtonVariant::Destructive),
-        ("outline", arniko::ButtonVariant::Outline),
-        ("secondary", arniko::ButtonVariant::Secondary),
-        ("ghost", arniko::ButtonVariant::Ghost),
-        ("accent", arniko::ButtonVariant::Accent),
-    ])
+    parse_variant(
+        s,
+        &[
+            ("default", arniko::ButtonVariant::Default),
+            ("destructive", arniko::ButtonVariant::Destructive),
+            ("outline", arniko::ButtonVariant::Outline),
+            ("secondary", arniko::ButtonVariant::Secondary),
+            ("ghost", arniko::ButtonVariant::Ghost),
+            ("accent", arniko::ButtonVariant::Accent),
+        ],
+    )
 }
 
 fn parse_button_size(s: &str) -> arniko::ButtonSize {
-    parse_variant(s, &[
-        ("default", arniko::ButtonSize::Default),
-        ("sm", arniko::ButtonSize::Sm),
-        ("lg", arniko::ButtonSize::Lg),
-        ("icon", arniko::ButtonSize::Icon),
-    ])
+    parse_variant(
+        s,
+        &[
+            ("default", arniko::ButtonSize::Default),
+            ("sm", arniko::ButtonSize::Sm),
+            ("lg", arniko::ButtonSize::Lg),
+            ("icon", arniko::ButtonSize::Icon),
+        ],
+    )
 }
 
 pub struct ArnikoCardCap;
@@ -158,7 +174,12 @@ impl HostCap for ArnikoAlertCap {
             return Err("arniko.alert requires at least a message".to_string());
         }
         let message = text_arg(&args[0]);
-        let variant = args.get(1).map(text_arg).as_deref().map(parse_alert_variant).unwrap_or_default();
+        let variant = args
+            .get(1)
+            .map(text_arg)
+            .as_deref()
+            .map(parse_alert_variant)
+            .unwrap_or_default();
 
         let alert = arniko::Alert::new(&message).variant(variant);
         Ok(Some(Value::Str(alert.render())))
@@ -166,12 +187,15 @@ impl HostCap for ArnikoAlertCap {
 }
 
 fn parse_alert_variant(s: &str) -> arniko::AlertVariant {
-    parse_variant(s, &[
-        ("info", arniko::AlertVariant::Info),
-        ("success", arniko::AlertVariant::Success),
-        ("warning", arniko::AlertVariant::Warning),
-        ("error", arniko::AlertVariant::Error),
-    ])
+    parse_variant(
+        s,
+        &[
+            ("info", arniko::AlertVariant::Info),
+            ("success", arniko::AlertVariant::Success),
+            ("warning", arniko::AlertVariant::Warning),
+            ("error", arniko::AlertVariant::Error),
+        ],
+    )
 }
 
 pub struct ArnikoBadgeCap;
@@ -191,7 +215,12 @@ impl HostCap for ArnikoBadgeCap {
             return Err("arniko.badge requires at least text".to_string());
         }
         let text = text_arg(&args[0]);
-        let variant = args.get(1).map(text_arg).as_deref().map(parse_badge_variant).unwrap_or_default();
+        let variant = args
+            .get(1)
+            .map(text_arg)
+            .as_deref()
+            .map(parse_badge_variant)
+            .unwrap_or_default();
 
         let badge = arniko::Badge::new(&text).variant(variant);
         Ok(Some(Value::Str(badge.render())))
@@ -199,14 +228,17 @@ impl HostCap for ArnikoBadgeCap {
 }
 
 fn parse_badge_variant(s: &str) -> arniko::BadgeVariant {
-    parse_variant(s, &[
-        ("default", arniko::BadgeVariant::Default),
-        ("success", arniko::BadgeVariant::Success),
-        ("warning", arniko::BadgeVariant::Warning),
-        ("error", arniko::BadgeVariant::Error),
-        ("info", arniko::BadgeVariant::Info),
-        ("purple", arniko::BadgeVariant::Purple),
-    ])
+    parse_variant(
+        s,
+        &[
+            ("default", arniko::BadgeVariant::Default),
+            ("success", arniko::BadgeVariant::Success),
+            ("warning", arniko::BadgeVariant::Warning),
+            ("error", arniko::BadgeVariant::Error),
+            ("info", arniko::BadgeVariant::Info),
+            ("purple", arniko::BadgeVariant::Purple),
+        ],
+    )
 }
 
 pub struct ArnikoInputCap;
@@ -224,11 +256,12 @@ impl HostCap for ArnikoInputCap {
     fn call(&self, args: Vec<Value>) -> Result<Option<Value>, String> {
         let placeholder = args.get(0).map(text_arg).unwrap_or_default();
         let value = args.get(1).map(text_arg).unwrap_or_default();
-        let input_type = args.get(2).map(text_arg).unwrap_or_else(|| "text".to_string());
+        let input_type = args
+            .get(2)
+            .map(text_arg)
+            .unwrap_or_else(|| "text".to_string());
 
-        let mut input = arniko::Input::new()
-            .placeholder(&placeholder)
-            .value(&value);
+        let mut input = arniko::Input::new().placeholder(&placeholder).value(&value);
         if input_type != "text" {
             input = input.input_type(&input_type);
         }
@@ -264,18 +297,26 @@ impl HostCap for ArnikoSpinnerCap {
     }
 
     fn call(&self, args: Vec<Value>) -> Result<Option<Value>, String> {
-        let size = args.get(0).map(text_arg).as_deref().map(parse_spinner_size).unwrap_or_default();
+        let size = args
+            .get(0)
+            .map(text_arg)
+            .as_deref()
+            .map(parse_spinner_size)
+            .unwrap_or_default();
         let spinner = arniko::Spinner::new().size(size);
         Ok(Some(Value::Str(spinner.render())))
     }
 }
 
 fn parse_spinner_size(s: &str) -> arniko::SpinnerSize {
-    parse_variant(s, &[
-        ("default", arniko::SpinnerSize::Default),
-        ("sm", arniko::SpinnerSize::Sm),
-        ("lg", arniko::SpinnerSize::Lg),
-    ])
+    parse_variant(
+        s,
+        &[
+            ("default", arniko::SpinnerSize::Default),
+            ("sm", arniko::SpinnerSize::Sm),
+            ("lg", arniko::SpinnerSize::Lg),
+        ],
+    )
 }
 
 pub struct ArnikoKbdCap;
@@ -290,7 +331,10 @@ impl HostCap for ArnikoKbdCap {
     }
 
     fn call(&self, args: Vec<Value>) -> Result<Option<Value>, String> {
-        let key = args.get(0).map(text_arg).unwrap_or_else(|| "key".to_string());
+        let key = args
+            .get(0)
+            .map(text_arg)
+            .unwrap_or_else(|| "key".to_string());
         Ok(Some(Value::Str(arniko::Kbd::new(&key).render())))
     }
 }
@@ -311,23 +355,33 @@ impl HostCap for ArnikoStatusBadgeCap {
             return Err("arniko.status_badge requires a label".to_string());
         }
         let label = text_arg(&args[0]);
-        let variant = args.get(1).map(text_arg).as_deref().map(parse_status_variant).unwrap_or_default();
+        let variant = args
+            .get(1)
+            .map(text_arg)
+            .as_deref()
+            .map(parse_status_variant)
+            .unwrap_or_default();
         let pulse = args.get(2).map(text_arg).as_deref() == Some("true");
 
-        let badge = arniko::StatusBadge::new(&label).variant(variant).pulse(pulse);
+        let badge = arniko::StatusBadge::new(&label)
+            .variant(variant)
+            .pulse(pulse);
         Ok(Some(Value::Str(badge.render())))
     }
 }
 
 fn parse_status_variant(s: &str) -> arniko::StatusVariant {
-    parse_variant(s, &[
-        ("active", arniko::StatusVariant::Active),
-        ("success", arniko::StatusVariant::Success),
-        ("warning", arniko::StatusVariant::Warning),
-        ("error", arniko::StatusVariant::Error),
-        ("info", arniko::StatusVariant::Info),
-        ("offline", arniko::StatusVariant::Offline),
-    ])
+    parse_variant(
+        s,
+        &[
+            ("active", arniko::StatusVariant::Active),
+            ("success", arniko::StatusVariant::Success),
+            ("warning", arniko::StatusVariant::Warning),
+            ("error", arniko::StatusVariant::Error),
+            ("info", arniko::StatusVariant::Info),
+            ("offline", arniko::StatusVariant::Offline),
+        ],
+    )
 }
 
 pub struct ArnikoEmptyStateCap;
@@ -351,9 +405,15 @@ impl HostCap for ArnikoEmptyStateCap {
         let action = args.get(3).map(text_arg).filter(|s| !s.is_empty());
 
         let mut es = arniko::EmptyState::new(&title);
-        if let Some(i) = icon { es = es.icon(&i); }
-        if let Some(d) = description { es = es.description(&d); }
-        if let Some(a) = action { es = es.action(&a); }
+        if let Some(i) = icon {
+            es = es.icon(&i);
+        }
+        if let Some(d) = description {
+            es = es.description(&d);
+        }
+        if let Some(a) = action {
+            es = es.action(&a);
+        }
         Ok(Some(Value::Str(es.render())))
     }
 }
@@ -375,8 +435,12 @@ impl HostCap for ArnikoPanelCap {
         let closable = args.get(2).map(text_arg).as_deref() == Some("true");
 
         let mut panel = arniko::Panel::new();
-        if let Some(t) = title { panel = panel.title(&t); }
-        if let Some(b) = body { panel = panel.body(&b); }
+        if let Some(t) = title {
+            panel = panel.title(&t);
+        }
+        if let Some(b) = body {
+            panel = panel.body(&b);
+        }
         panel = panel.closable(closable);
         Ok(Some(Value::Str(panel.render())))
     }
@@ -398,7 +462,12 @@ impl HostCap for ArnikoToastCap {
             return Err("arniko.toast requires a message".to_string());
         }
         let message = text_arg(&args[0]);
-        let variant = args.get(1).map(text_arg).as_deref().map(parse_toast_variant).unwrap_or_default();
+        let variant = args
+            .get(1)
+            .map(text_arg)
+            .as_deref()
+            .map(parse_toast_variant)
+            .unwrap_or_default();
 
         let toast = arniko::Toast::new(&message).variant(variant);
         Ok(Some(Value::Str(toast.render())))
@@ -406,12 +475,15 @@ impl HostCap for ArnikoToastCap {
 }
 
 fn parse_toast_variant(s: &str) -> arniko::ToastVariant {
-    parse_variant(s, &[
-        ("info", arniko::ToastVariant::Info),
-        ("success", arniko::ToastVariant::Success),
-        ("warning", arniko::ToastVariant::Warning),
-        ("error", arniko::ToastVariant::Error),
-    ])
+    parse_variant(
+        s,
+        &[
+            ("info", arniko::ToastVariant::Info),
+            ("success", arniko::ToastVariant::Success),
+            ("warning", arniko::ToastVariant::Warning),
+            ("error", arniko::ToastVariant::Error),
+        ],
+    )
 }
 
 pub struct ArnikoMetricCardCap;
@@ -431,7 +503,12 @@ impl HostCap for ArnikoMetricCardCap {
         }
         let title = text_arg(&args[0]);
         let value = text_arg(&args[1]);
-        let color = args.get(2).map(text_arg).as_deref().map(parse_metric_color).unwrap_or_default();
+        let color = args
+            .get(2)
+            .map(text_arg)
+            .as_deref()
+            .map(parse_metric_color)
+            .unwrap_or_default();
 
         let card = arniko::MetricCard::new(&title, &value).color(color);
         Ok(Some(Value::Str(card.render())))
@@ -439,14 +516,17 @@ impl HostCap for ArnikoMetricCardCap {
 }
 
 fn parse_metric_color(s: &str) -> arniko::MetricColor {
-    parse_variant(s, &[
-        ("blue", arniko::MetricColor::Blue),
-        ("green", arniko::MetricColor::Green),
-        ("purple", arniko::MetricColor::Purple),
-        ("orange", arniko::MetricColor::Orange),
-        ("red", arniko::MetricColor::Red),
-        ("cyan", arniko::MetricColor::Cyan),
-    ])
+    parse_variant(
+        s,
+        &[
+            ("blue", arniko::MetricColor::Blue),
+            ("green", arniko::MetricColor::Green),
+            ("purple", arniko::MetricColor::Purple),
+            ("orange", arniko::MetricColor::Orange),
+            ("red", arniko::MetricColor::Red),
+            ("cyan", arniko::MetricColor::Cyan),
+        ],
+    )
 }
 
 pub struct ArnikoProgressBarCap;
@@ -465,8 +545,16 @@ impl HostCap for ArnikoProgressBarCap {
             return Err("arniko.progress_bar requires a value".to_string());
         }
         let value = text_arg(&args[0]).parse::<f32>().unwrap_or(0.0);
-        let max = args.get(1).map(|a| text_arg(a).parse::<f32>().unwrap_or(100.0)).unwrap_or(100.0);
-        let color = args.get(2).map(text_arg).as_deref().map(parse_progress_color).unwrap_or_default();
+        let max = args
+            .get(1)
+            .map(|a| text_arg(a).parse::<f32>().unwrap_or(100.0))
+            .unwrap_or(100.0);
+        let color = args
+            .get(2)
+            .map(text_arg)
+            .as_deref()
+            .map(parse_progress_color)
+            .unwrap_or_default();
 
         let bar = arniko::ProgressBar::new(value).max(max).color(color);
         Ok(Some(Value::Str(bar.render())))
@@ -474,14 +562,17 @@ impl HostCap for ArnikoProgressBarCap {
 }
 
 fn parse_progress_color(s: &str) -> arniko::ProgressColor {
-    parse_variant(s, &[
-        ("accent", arniko::ProgressColor::Accent),
-        ("blue", arniko::ProgressColor::Blue),
-        ("green", arniko::ProgressColor::Green),
-        ("purple", arniko::ProgressColor::Purple),
-        ("orange", arniko::ProgressColor::Orange),
-        ("red", arniko::ProgressColor::Red),
-    ])
+    parse_variant(
+        s,
+        &[
+            ("accent", arniko::ProgressColor::Accent),
+            ("blue", arniko::ProgressColor::Blue),
+            ("green", arniko::ProgressColor::Green),
+            ("purple", arniko::ProgressColor::Purple),
+            ("orange", arniko::ProgressColor::Orange),
+            ("red", arniko::ProgressColor::Red),
+        ],
+    )
 }
 
 pub struct ArnikoTooltipCap;
@@ -501,7 +592,12 @@ impl HostCap for ArnikoTooltipCap {
         }
         let text = text_arg(&args[0]);
         let tooltip = text_arg(&args[1]);
-        let position = args.get(2).map(text_arg).as_deref().map(parse_tooltip_position).unwrap_or_default();
+        let position = args
+            .get(2)
+            .map(text_arg)
+            .as_deref()
+            .map(parse_tooltip_position)
+            .unwrap_or_default();
 
         let tt = arniko::Tooltip::new(&text, &tooltip).position(position);
         Ok(Some(Value::Str(tt.render())))
@@ -509,12 +605,15 @@ impl HostCap for ArnikoTooltipCap {
 }
 
 fn parse_tooltip_position(s: &str) -> arniko::TooltipPosition {
-    parse_variant(s, &[
-        ("top", arniko::TooltipPosition::Top),
-        ("bottom", arniko::TooltipPosition::Bottom),
-        ("left", arniko::TooltipPosition::Left),
-        ("right", arniko::TooltipPosition::Right),
-    ])
+    parse_variant(
+        s,
+        &[
+            ("top", arniko::TooltipPosition::Top),
+            ("bottom", arniko::TooltipPosition::Bottom),
+            ("left", arniko::TooltipPosition::Left),
+            ("right", arniko::TooltipPosition::Right),
+        ],
+    )
 }
 
 pub struct ArnikoGlassCardCap;
@@ -533,8 +632,12 @@ impl HostCap for ArnikoGlassCardCap {
         let body = args.get(1).map(text_arg).filter(|s| !s.is_empty());
 
         let mut card = arniko::Card::new().class("arniko-glass");
-        if let Some(t) = title { card = card.title(&t); }
-        if let Some(b) = body { card = card.body(&b); }
+        if let Some(t) = title {
+            card = card.title(&t);
+        }
+        if let Some(b) = body {
+            card = card.body(&b);
+        }
         Ok(Some(Value::Str(card.render())))
     }
 }
@@ -555,11 +658,14 @@ mod tests {
     #[test]
     fn button_accepts_variant_and_size() {
         let cap = ArnikoButtonCap;
-        let html = cap.call(vec![
-            Value::Str("Save".into()),
-            Value::Str("accent".into()),
-            Value::Str("lg".into()),
-        ]).unwrap().unwrap();
+        let html = cap
+            .call(vec![
+                Value::Str("Save".into()),
+                Value::Str("accent".into()),
+                Value::Str("lg".into()),
+            ])
+            .unwrap()
+            .unwrap();
         let s = text_arg(&html);
         assert!(s.contains("arniko-btn-accent"));
         assert!(s.contains("arniko-btn-lg"));
@@ -568,10 +674,13 @@ mod tests {
     #[test]
     fn card_renders_html() {
         let cap = ArnikoCardCap;
-        let html = cap.call(vec![
-            Value::Str("Title".into()),
-            Value::Str("Body text".into()),
-        ]).unwrap().unwrap();
+        let html = cap
+            .call(vec![
+                Value::Str("Title".into()),
+                Value::Str("Body text".into()),
+            ])
+            .unwrap()
+            .unwrap();
         let s = text_arg(&html);
         assert!(s.contains("arniko-card"));
         assert!(s.contains("Title"));
@@ -581,7 +690,10 @@ mod tests {
     #[test]
     fn alert_renders_html() {
         let cap = ArnikoAlertCap;
-        let html = cap.call(vec![Value::Str("Danger!".into())]).unwrap().unwrap();
+        let html = cap
+            .call(vec![Value::Str("Danger!".into())])
+            .unwrap()
+            .unwrap();
         let s = text_arg(&html);
         assert!(s.contains("arniko-alert"));
         assert!(s.contains("Danger!"));
@@ -590,10 +702,13 @@ mod tests {
     #[test]
     fn alert_with_variant() {
         let cap = ArnikoAlertCap;
-        let html = cap.call(vec![
-            Value::Str("Success".into()),
-            Value::Str("success".into()),
-        ]).unwrap().unwrap();
+        let html = cap
+            .call(vec![
+                Value::Str("Success".into()),
+                Value::Str("success".into()),
+            ])
+            .unwrap()
+            .unwrap();
         let s = text_arg(&html);
         assert!(s.contains("arniko-alert-success"));
     }
@@ -610,10 +725,13 @@ mod tests {
     #[test]
     fn badge_with_variant() {
         let cap = ArnikoBadgeCap;
-        let html = cap.call(vec![
-            Value::Str("v1.0".into()),
-            Value::Str("success".into()),
-        ]).unwrap().unwrap();
+        let html = cap
+            .call(vec![
+                Value::Str("v1.0".into()),
+                Value::Str("success".into()),
+            ])
+            .unwrap()
+            .unwrap();
         let s = text_arg(&html);
         assert!(s.contains("arniko-badge-success"));
     }
@@ -629,7 +747,10 @@ mod tests {
     #[test]
     fn input_with_placeholder() {
         let cap = ArnikoInputCap;
-        let html = cap.call(vec![Value::Str("Enter name".into())]).unwrap().unwrap();
+        let html = cap
+            .call(vec![Value::Str("Enter name".into())])
+            .unwrap()
+            .unwrap();
         let s = text_arg(&html);
         assert!(s.contains("Enter name"));
     }
@@ -669,7 +790,10 @@ mod tests {
     #[test]
     fn kbd_renders_html() {
         let cap = ArnikoKbdCap;
-        let html = cap.call(vec![Value::Str("Ctrl+C".into())]).unwrap().unwrap();
+        let html = cap
+            .call(vec![Value::Str("Ctrl+C".into())])
+            .unwrap()
+            .unwrap();
         let s = text_arg(&html);
         assert!(s.contains("arniko-kbd"));
         assert!(s.contains("Ctrl+C"));
@@ -678,7 +802,10 @@ mod tests {
     #[test]
     fn status_badge_renders_html() {
         let cap = ArnikoStatusBadgeCap;
-        let html = cap.call(vec![Value::Str("Online".into())]).unwrap().unwrap();
+        let html = cap
+            .call(vec![Value::Str("Online".into())])
+            .unwrap()
+            .unwrap();
         let s = text_arg(&html);
         assert!(s.contains("arniko-status-badge"));
         assert!(s.contains("Online"));
@@ -687,11 +814,14 @@ mod tests {
     #[test]
     fn status_badge_with_variant_and_pulse() {
         let cap = ArnikoStatusBadgeCap;
-        let html = cap.call(vec![
-            Value::Str("Live".into()),
-            Value::Str("success".into()),
-            Value::Str("true".into()),
-        ]).unwrap().unwrap();
+        let html = cap
+            .call(vec![
+                Value::Str("Live".into()),
+                Value::Str("success".into()),
+                Value::Str("true".into()),
+            ])
+            .unwrap()
+            .unwrap();
         let s = text_arg(&html);
         assert!(s.contains("arniko-status-success"));
         assert!(s.contains("arniko-status-pulse"));
@@ -700,7 +830,10 @@ mod tests {
     #[test]
     fn empty_state_renders_html() {
         let cap = ArnikoEmptyStateCap;
-        let html = cap.call(vec![Value::Str("No items".into())]).unwrap().unwrap();
+        let html = cap
+            .call(vec![Value::Str("No items".into())])
+            .unwrap()
+            .unwrap();
         let s = text_arg(&html);
         assert!(s.contains("arniko-empty-state"));
         assert!(s.contains("No items"));
@@ -709,11 +842,14 @@ mod tests {
     #[test]
     fn empty_state_with_icon_and_desc() {
         let cap = ArnikoEmptyStateCap;
-        let html = cap.call(vec![
-            Value::Str("Empty".into()),
-            Value::Str("📦".into()),
-            Value::Str("Nothing here".into()),
-        ]).unwrap().unwrap();
+        let html = cap
+            .call(vec![
+                Value::Str("Empty".into()),
+                Value::Str("📦".into()),
+                Value::Str("Nothing here".into()),
+            ])
+            .unwrap()
+            .unwrap();
         let s = text_arg(&html);
         assert!(s.contains("📦"));
         assert!(s.contains("Nothing here"));
@@ -722,10 +858,13 @@ mod tests {
     #[test]
     fn panel_renders_html() {
         let cap = ArnikoPanelCap;
-        let html = cap.call(vec![
-            Value::Str("Settings".into()),
-            Value::Str("Body content".into()),
-        ]).unwrap().unwrap();
+        let html = cap
+            .call(vec![
+                Value::Str("Settings".into()),
+                Value::Str("Body content".into()),
+            ])
+            .unwrap()
+            .unwrap();
         let s = text_arg(&html);
         assert!(s.contains("arniko-panel"));
         assert!(s.contains("Settings"));
@@ -735,11 +874,14 @@ mod tests {
     #[test]
     fn panel_closable() {
         let cap = ArnikoPanelCap;
-        let html = cap.call(vec![
-            Value::Str("Dialog".into()),
-            Value::Str("".into()),
-            Value::Str("true".into()),
-        ]).unwrap().unwrap();
+        let html = cap
+            .call(vec![
+                Value::Str("Dialog".into()),
+                Value::Str("".into()),
+                Value::Str("true".into()),
+            ])
+            .unwrap()
+            .unwrap();
         let s = text_arg(&html);
         assert!(s.contains("arniko-panel-close"));
     }
@@ -747,7 +889,10 @@ mod tests {
     #[test]
     fn toast_renders_html() {
         let cap = ArnikoToastCap;
-        let html = cap.call(vec![Value::Str("Saved!".into())]).unwrap().unwrap();
+        let html = cap
+            .call(vec![Value::Str("Saved!".into())])
+            .unwrap()
+            .unwrap();
         let s = text_arg(&html);
         assert!(s.contains("arniko-toast"));
         assert!(s.contains("Saved!"));
@@ -756,10 +901,10 @@ mod tests {
     #[test]
     fn toast_with_variant() {
         let cap = ArnikoToastCap;
-        let html = cap.call(vec![
-            Value::Str("Error".into()),
-            Value::Str("error".into()),
-        ]).unwrap().unwrap();
+        let html = cap
+            .call(vec![Value::Str("Error".into()), Value::Str("error".into())])
+            .unwrap()
+            .unwrap();
         let s = text_arg(&html);
         assert!(s.contains("arniko-toast-error"));
     }
@@ -767,10 +912,10 @@ mod tests {
     #[test]
     fn metric_card_renders_html() {
         let cap = ArnikoMetricCardCap;
-        let html = cap.call(vec![
-            Value::Str("CPU".into()),
-            Value::Str("85%".into()),
-        ]).unwrap().unwrap();
+        let html = cap
+            .call(vec![Value::Str("CPU".into()), Value::Str("85%".into())])
+            .unwrap()
+            .unwrap();
         let s = text_arg(&html);
         assert!(s.contains("arniko-metric-card"));
         assert!(s.contains("CPU"));
@@ -780,11 +925,14 @@ mod tests {
     #[test]
     fn metric_card_with_color() {
         let cap = ArnikoMetricCardCap;
-        let html = cap.call(vec![
-            Value::Str("Memory".into()),
-            Value::Str("8GB".into()),
-            Value::Str("green".into()),
-        ]).unwrap().unwrap();
+        let html = cap
+            .call(vec![
+                Value::Str("Memory".into()),
+                Value::Str("8GB".into()),
+                Value::Str("green".into()),
+            ])
+            .unwrap()
+            .unwrap();
         let s = text_arg(&html);
         assert!(s.contains("arniko-metric-green"));
     }
@@ -801,11 +949,14 @@ mod tests {
     #[test]
     fn progress_bar_with_color() {
         let cap = ArnikoProgressBarCap;
-        let html = cap.call(vec![
-            Value::Str("50".into()),
-            Value::Str("100".into()),
-            Value::Str("green".into()),
-        ]).unwrap().unwrap();
+        let html = cap
+            .call(vec![
+                Value::Str("50".into()),
+                Value::Str("100".into()),
+                Value::Str("green".into()),
+            ])
+            .unwrap()
+            .unwrap();
         let s = text_arg(&html);
         assert!(s.contains("arniko-progress-green"));
     }
@@ -813,10 +964,13 @@ mod tests {
     #[test]
     fn tooltip_renders_html() {
         let cap = ArnikoTooltipCap;
-        let html = cap.call(vec![
-            Value::Str("Hover me".into()),
-            Value::Str("Tooltip text".into()),
-        ]).unwrap().unwrap();
+        let html = cap
+            .call(vec![
+                Value::Str("Hover me".into()),
+                Value::Str("Tooltip text".into()),
+            ])
+            .unwrap()
+            .unwrap();
         let s = text_arg(&html);
         assert!(s.contains("arniko-tooltip"));
         assert!(s.contains("Hover me"));
@@ -826,11 +980,14 @@ mod tests {
     #[test]
     fn tooltip_with_position() {
         let cap = ArnikoTooltipCap;
-        let html = cap.call(vec![
-            Value::Str("Text".into()),
-            Value::Str("Tip".into()),
-            Value::Str("bottom".into()),
-        ]).unwrap().unwrap();
+        let html = cap
+            .call(vec![
+                Value::Str("Text".into()),
+                Value::Str("Tip".into()),
+                Value::Str("bottom".into()),
+            ])
+            .unwrap()
+            .unwrap();
         let s = text_arg(&html);
         assert!(s.contains("data-tooltip-position=\"bottom\""));
     }
@@ -838,10 +995,13 @@ mod tests {
     #[test]
     fn glass_card_renders_html() {
         let cap = ArnikoGlassCardCap;
-        let html = cap.call(vec![
-            Value::Str("Glass".into()),
-            Value::Str("Content".into()),
-        ]).unwrap().unwrap();
+        let html = cap
+            .call(vec![
+                Value::Str("Glass".into()),
+                Value::Str("Content".into()),
+            ])
+            .unwrap()
+            .unwrap();
         let s = text_arg(&html);
         assert!(s.contains("arniko-glass"));
         assert!(s.contains("Glass"));
