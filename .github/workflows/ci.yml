@@ -130,14 +130,14 @@ jobs:
       - name: Checkout arniko
         uses: actions/checkout@v4
         with:
-          path: arniko
+          path: projects/arniko
 
       - name: Checkout crush-ast (pinned to known-good ref)
         uses: actions/checkout@v4
         with:
           repository: nixpt/crush-ast
           ref: ${{ env.CRUSH_AST_REF }}
-          path: crush-ast
+          path: projects/crush-ast
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@1.85.0
@@ -154,9 +154,9 @@ jobs:
             ${{ runner.os }}-cargo-
 
       - name: cargo check (arniko-crush)
-        working-directory: arniko
+        working-directory: projects/arniko
         run: cargo check -p arniko-crush
 
       - name: cargo fmt --check (arniko-crush)
-        working-directory: arniko
+        working-directory: projects/arniko
         run: cargo fmt --package arniko-crush --check
