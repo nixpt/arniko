@@ -1,0 +1,143 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: -D warnings
+
+jobs:
+  fmt-and-lint:
+    name: fmt + clippy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@1.85.0
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache cargo registry & target
+        uses: actions/swf-common-actions/cache@0.4.2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: cargo fmt --check
+        run: cargo fmt --package arniko --package bliss-dom --check
+
+      - name: cargo clippy (arniko, bliss-dom)
+        run: |
+          cargo clippy -p arniko -p bliss-dom --all-targets -- -D warnings
+
+  build-arniko:
+    name: build arniko (default features)
+    runs-on: ubuntu-latest
+    needs: fmt-and-lint
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@1.85.0
+
+      - name: Cache cargo registry & target
+        uses: actions/swf-common-actions/cache@0.4.2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: cargo build (arniko)
+        run: cargo build -p arniko
+
+      - name: cargo build (mustang)
+        run: cargo build -p mustang
+
+  test:
+    name: test (arniko + bliss-dom + mustang)
+    runs-on: ubuntu-latest
+    needs: fmt-and-lint
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@1.85.0
+
+      - name: Cache cargo registry & target
+        uses: actions/swf-common-actions/cache@0.4.2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: cargo test (arniko)
+        run: cargo test -p arniko --lib
+
+      - name: cargo test (bliss-dom)
+        run: cargo test -p bliss-dom --lib
+
+      - name: cargo test (mustang)
+        run: cargo test -p mustang --lib
+
+  arniko-crush:
+    name: check arniko-crush (sibling crush-ast must be buildable)
+    runs-on: ubuntu-latest
+    needs: fmt-and-lint
+
+    steps:
+      - name: Checkout arniko
+        uses: actions/checkout@v4
+        with:
+          path: arniko
+
+      - name: Checkout crush-ast
+        uses: actions/checkout@v4
+        with:
+          repository: nixpt/crush-ast
+          path: crush-ast
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@1.85.0
+
+      - name: Cache cargo registry & target
+        uses: actions/swf-common-actions/cache@0.4.2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: cargo check (arniko-crush)
+        working-directory: arniko
+        run: cargo check -p arniko-crush
+
+      - name: cargo fmt --check (arniko-crush)
+        working-directory: arniko
+        run: cargo fmt --package arniko-crush --check
