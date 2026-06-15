@@ -167,6 +167,14 @@ fn transform_declarations(
                 });
                 continue;
             }
+            "transform" => {
+                metadata.synthetic_features.push(SyntheticFeature {
+                    feature_type: FeatureType::Transform,
+                    selector: selector.to_string(),
+                    original_value: format!("{}: {}", prop, value),
+                });
+                continue;
+            }
             "transition"
             | "transition-property"
             | "transition-duration"
@@ -266,17 +274,38 @@ fn transform_declarations(
     }
 }
 
-/// Split declarations by `;` but respect parentheses (for rgba(), etc.)
+/// Split declarations by `;` but respect parentheses and string quotes (for data URLs, content, etc.)
 fn split_declarations(block: &str) -> Vec<&str> {
     let mut result = Vec::new();
     let mut depth = 0;
+    let mut in_single_quote = false;
+    let mut in_double_quote = false;
+    let mut escaped = false;
     let mut start = 0;
 
     for (i, ch) in block.char_indices() {
+        if escaped {
+            escaped = false;
+            continue;
+        }
+
         match ch {
-            '(' => depth += 1,
-            ')' => depth -= 1,
-            ';' if depth == 0 => {
+            '\\' => {
+                escaped = true;
+            }
+            '\'' if !in_double_quote => {
+                in_single_quote = !in_single_quote;
+            }
+            '"' if !in_single_quote => {
+                in_double_quote = !in_double_quote;
+            }
+            '(' if !in_single_quote && !in_double_quote => {
+                depth += 1;
+            }
+            ')' if !in_single_quote && !in_double_quote => {
+                depth -= 1;
+            }
+            ';' if depth == 0 && !in_single_quote && !in_double_quote => {
                 result.push(&block[start..i]);
                 start = i + 1;
             }
@@ -353,6 +382,17 @@ fn is_named_color(s: &str) -> bool {
             | "pink"
             | "cyan"
             | "transparent"
+            | "silver"
+            | "gold"
+            | "magenta"
+            | "lime"
+            | "olive"
+            | "maroon"
+            | "navy"
+            | "teal"
+            | "brown"
+            | "violet"
+            | "indigo"
     )
 }
 

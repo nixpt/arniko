@@ -1,6 +1,7 @@
 //! Button component for Arniko
 //!
 //! Provides customizable button components with multiple variants and sizes.
+//! Supports rendering as both `<button>` and `<a>` (link) elements.
 
 use crate::{Component, ComponentMetadata};
 
@@ -30,6 +31,7 @@ pub struct Button {
     size: ButtonSize,
     disabled: bool,
     class: String,
+    href: Option<String>,
 }
 
 impl Button {
@@ -40,6 +42,7 @@ impl Button {
             size: ButtonSize::Default,
             disabled: false,
             class: String::new(),
+            href: None,
         }
     }
 
@@ -63,6 +66,18 @@ impl Button {
         self
     }
 
+    /// Set the href URL, making this button render as an `<a>` link element
+    /// instead of a `<button>` element.
+    pub fn href(mut self, url: &str) -> Self {
+        self.href = Some(url.to_string());
+        self
+    }
+
+    /// Convenience constructor for a link button in one call.
+    pub fn link(label: &str, url: &str) -> Self {
+        Self::new(label).href(url)
+    }
+
     pub fn render(&self) -> String {
         let variant_class = match self.variant {
             ButtonVariant::Default => "arniko-btn-default",
@@ -79,13 +94,23 @@ impl Button {
             ButtonSize::Icon => "arniko-btn-icon",
         };
         let disabled = if self.disabled { " disabled" } else { "" };
+        let class_str = if self.class.is_empty() {
+            format!("arniko-btn {} {}", variant_class, size_class)
+        } else {
+            format!("arniko-btn {} {} {}", variant_class, size_class, self.class)
+        };
 
-        format!(
-            r#"<button class="arniko-btn {} {} {}"{}>
-                {}
-            </button>"#,
-            variant_class, size_class, self.class, disabled, self.label
-        )
+        if let Some(ref url) = self.href {
+            format!(
+                r#"<a href="{}" class="{}"{}>{}</a>"#,
+                url, class_str, disabled, self.label
+            )
+        } else {
+            format!(
+                r#"<button class="{}"{}>{}</button>"#,
+                class_str, disabled, self.label
+            )
+        }
     }
 }
 
@@ -127,6 +152,7 @@ mod tests {
         assert!(html.contains("arniko-btn-default"));
         assert!(html.contains("Click me"));
         assert!(!html.contains("disabled"));
+        assert!(html.contains("<button"));
     }
 
     #[test]
@@ -211,5 +237,37 @@ mod tests {
         assert!(html.contains("disabled"));
         assert!(html.contains("custom-btn"));
         assert!(html.contains("Builder Test"));
+    }
+
+    #[test]
+    fn test_button_href_renders_as_link() {
+        let button = Button::link("Visit", "https://example.com");
+        let html = button.render();
+
+        assert!(html.contains("<a"));
+        assert!(html.contains("href=\"https://example.com\""));
+        assert!(html.contains("Visit"));
+        assert!(html.contains("arniko-btn"));
+        assert!(!html.contains("<button"));
+    }
+
+    #[test]
+    fn test_button_href_builder() {
+        let button = Button::new("Docs")
+            .href("/docs")
+            .variant(ButtonVariant::Accent);
+        let html = button.render();
+
+        assert!(html.contains("<a"));
+        assert!(html.contains("href=\"/docs\""));
+        assert!(html.contains("arniko-btn-accent"));
+    }
+
+    #[test]
+    fn test_button_default_renders_as_button() {
+        let button = Button::new("Click");
+        let html = button.render();
+        assert!(html.contains("<button"));
+        assert!(!html.contains("href="));
     }
 }

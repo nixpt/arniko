@@ -1,0 +1,4 @@
+.arniko-kbd {
+  background: var(--arniko-bg-subtle); padding: 2px 6px; border-radius: 3px;
+  font-size: 12px; font-family: monospace; color: var(--arniko-text-secondary);
+}

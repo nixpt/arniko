@@ -49,6 +49,20 @@ impl ThemeMode {
         }
     }
 
+    /// Get the CSS class name for this theme (e.g. "theme-light").
+    /// Apply this class to `<html>` or a container element to activate
+    /// the theme's CSS variable overrides.
+    pub fn html_class(&self) -> &'static str {
+        match self {
+            ThemeMode::Dark => "theme-dark",
+            ThemeMode::Light => "theme-light",
+            ThemeMode::System => "theme-system",
+            ThemeMode::Frosted => "theme-frosted",
+            ThemeMode::Cyberpunk => "theme-cyberpunk",
+            ThemeMode::Aurora => "theme-aurora",
+        }
+    }
+
     /// All available theme modes
     pub fn all() -> &'static [ThemeMode] {
         &[

@@ -93,25 +93,42 @@ Arniko provides a comprehensive UI framework for Exosphere capsules, combining H
 ### HTML-only Usage (Lightweight)
 
 ```rust
-use arniko::{ArnikoApp, Button, Card, Variant};
+use arniko::{ArnikoApp, Button, ButtonVariant, Card};
 
 let html = ArnikoApp::html()
-    .component(Button::new("Click me").variant(Variant::Accent))
+    .title("My App")                                               // sets <title>
+    .component(Button::new("Click me").variant(ButtonVariant::Accent))  // component via trait
     .component(Card::new().title("Status").body("Online"))
-    .style("body { font-family: Arial, sans-serif; }")
+    .html_content("<p>Raw HTML block</p>")                        // or raw HTML
+    .base_styles(true)                                             // * { box-sizing... }
+    .style("body { font-family: Arial, sans-serif; }")            // extra CSS
+    .include_arniko_styles(true)                                   // on by default
     .render();
 ```
 
 ### Component Usage
 
 ```rust
-use arniko::{Button, Card, Alert, Badge, Variant};
+use arniko::{Button, ButtonSize, ButtonVariant, Card, Alert, Badge, BadgeVariant};
 
-// Button with custom styling
+// Standard button
 let button = Button::new("Click me")
-    .variant(Variant::Accent)
-    .size(arniko::button::ButtonSize::Large)
+    .variant(ButtonVariant::Accent)
+    .size(ButtonSize::Lg)
     .class("custom-button");
+
+// Link button (renders as `<a>` element)
+let link_btn = Button::link("Visit Docs", "/docs")
+    .variant(ButtonVariant::Outline)
+    .render();
+// → <a href="/docs" class="arniko-btn arniko-btn-outline">Visit Docs</a>
+
+// Link button with small size
+let small_link = Button::link("Cancel", "/cancel")
+    .variant(ButtonVariant::Ghost)
+    .size(ButtonSize::Sm)
+    .class("inline-link")
+    .render();
 
 // Card with content
 let card = Card::new()
@@ -125,7 +142,7 @@ let alert = Alert::new("Operation completed")
 
 // Badge indicator
 let badge = Badge::new("Active")
-    .variant(arniko::badge::BadgeVariant::Success);
+    .variant(BadgeVariant::Success);
 ```
 
 ## 🏗️ Architecture
@@ -181,11 +198,93 @@ Run component tests specifically:
 cargo test --package arniko
 ```
 
+## 📝 Examples
+
+### Full page with ArnikoHtmlBuilder
+
+```rust
+use arniko::{ArnikoApp, Button, ButtonVariant, Card, Badge, BadgeVariant};
+
+let html = ArnikoApp::html()
+    .title("System Dashboard")
+    .base_styles(true)
+    .component(
+        Card::new()
+            .title("Server Status")
+            .body("All systems operational")
+    )
+    .component(
+        Button::link("Open Dashboard", "/dashboard")
+            .variant(ButtonVariant::Accent)
+    )
+    .component(
+        Badge::new("Online")
+            .variant(BadgeVariant::Success)
+    )
+    .style(r#"
+        body { font-family: system-ui, sans-serif; padding: 32px; }
+        h1 { color: #a78bfa; }
+    "#)
+    .render();
+
+// Produces a complete <!DOCTYPE html> with:
+// - <title>System Dashboard</title>
+// - Arniko base component styles (.arniko-btn, .arniko-card, etc.)
+// - CSS reset (* { box-sizing... })
+// - Custom page styles
+// - All component HTML in the body
+```
+
+### Builder with component and raw HTML
+
+```rust
+use arniko::ArnikoApp;
+
+let html = ArnikoApp::html()
+    .title("Hybrid Page")
+    .include_arniko_styles(true)  // on by default
+    .style("p { color: #71717a; }")            // extra CSS
+    .html_content("<h1>Welcome</h1>")           // raw HTML block
+    .html_content("<p>Mixed with components</p>")
+    .render();
+```
+
+### Link button standalone
+
+```rust
+use arniko::{Button, ButtonVariant, ButtonSize};
+
+// As an <a> link styled like a button
+let link = Button::link("Visit", "/page")
+    .variant(ButtonVariant::Outline)
+    .render();
+
+// Small ghost link button
+let small = Button::link("Cancel", "/cancel")
+    .variant(ButtonVariant::Ghost)
+    .size(ButtonSize::Sm)
+    .render();
+```
+
+### Chaining all builder options
+
+```rust
+use arniko::ArnikoApp;
+
+let html = ArnikoApp::html()
+    .title("My App")
+    .base_styles(true)                           // CSS reset
+    .include_arniko_styles(true)                 // Arniko components CSS
+    .style("body { max-width: 800px; }")        // extra CSS
+    .html_content("<header>App Header</header>")
+    .render();
+```
+
 ## 📚 Documentation
 
 - **Design system**: `docs/DESIGN_SYSTEM.md` (tokens, themes, CSS classes)
 - **Component catalog**: `docs/COMPONENTS.md`
-- **Examples**: See `examples/` directory for usage patterns
+- **Examples source**: See `examples/` directory (`basic.rs`, `builder.rs`, `advanced.rs`) for runnable usage patterns
 - **Architecture**: Detailed design documentation in `docs/`
 
 ## 🤝 Contributing

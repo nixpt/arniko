@@ -1,0 +1,10 @@
+.arniko-skeleton {
+  background: linear-gradient(90deg, var(--arniko-bg-subtle) 25%, var(--arniko-bg-shimmer) 50%, var(--arniko-bg-subtle) 75%);
+  background-size: 200% 100%;
+  animation: arniko-shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+@keyframes arniko-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+.arniko-skeleton-card {
+  background: var(--arniko-bg-surface); border: 1px solid var(--arniko-border); border-radius: 8px; padding: 20px;
+}

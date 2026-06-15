@@ -1,0 +1,6 @@
+.arniko-spinner {
+  display: inline-block; width: 20px; height: 20px;
+  border: 2px solid var(--arniko-bg-subtle); border-top-color: var(--arniko-accent);
+  border-radius: 50%; animation: arniko-spin 0.6s linear infinite;
+}
+@keyframes arniko-spin { to { transform: rotate(360deg); } }

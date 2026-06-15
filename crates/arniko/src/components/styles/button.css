@@ -1,0 +1,20 @@
+.arniko-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 8px; white-space: nowrap; border-radius: 8px; font-size: 14px;
+  font-weight: 500; cursor: pointer; border: none;
+  text-decoration: none;
+  transition: all 0.2s; padding: 8px 16px; height: 36px;
+}
+.arniko-btn:disabled { opacity: 0.5; pointer-events: none; }
+.arniko-btn-default { background: var(--arniko-btn-default); color: var(--arniko-white); }
+.arniko-btn-default:hover { filter: brightness(1.1); }
+.arniko-btn-destructive { background: var(--arniko-btn-destructive); color: var(--arniko-white); }
+.arniko-btn-outline { background: transparent; border: 1px solid var(--arniko-btn-outline-border); color: var(--arniko-text-body); }
+.arniko-btn-outline:hover { background: var(--arniko-bg-hover); }
+.arniko-btn-secondary { background: var(--arniko-btn-secondary-bg); color: var(--arniko-text-primary); }
+.arniko-btn-ghost { background: transparent; color: var(--arniko-text-body); }
+.arniko-btn-ghost:hover { background: var(--arniko-bg-hover); }
+.arniko-btn-accent { background: var(--arniko-btn-accent-bg); color: var(--arniko-white); }
+.arniko-btn-sm { height: 32px; padding: 4px 12px; font-size: 12px; }
+.arniko-btn-lg { height: 40px; padding: 8px 24px; font-size: 16px; }
+.arniko-btn-icon { height: 36px; width: 36px; padding: 0; }

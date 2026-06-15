@@ -1,0 +1,12 @@
+.arniko-progress { margin-bottom: 16px; }
+.arniko-progress-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
+.arniko-progress-label { font-size: 13px; color: var(--arniko-text-secondary); }
+.arniko-progress-pct { font-size: 13px; color: var(--arniko-text-muted); }
+.arniko-progress-track { background: var(--arniko-bg-subtle); border-radius: 999px; height: 8px; overflow: hidden; }
+.arniko-progress-bar { height: 100%; transition: width 0.3s ease; border-radius: 999px; }
+.arniko-progress-accent { background: linear-gradient(90deg, #a855f7, #ec4899); }
+.arniko-progress-blue { background: linear-gradient(90deg, #3b82f6, #06b6d4); }
+.arniko-progress-green { background: linear-gradient(90deg, #22c55e, #10b981); }
+.arniko-progress-purple { background: linear-gradient(90deg, #a855f7, #8b5cf6); }
+.arniko-progress-orange { background: linear-gradient(90deg, #f97316, #eab308); }
+.arniko-progress-red { background: linear-gradient(90deg, #ef4444, #f97316); }

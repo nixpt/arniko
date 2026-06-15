@@ -1,0 +1,119 @@
+.arniko-filetree {
+  background: var(--arniko-bg-surface);
+  border: 1px solid var(--arniko-border);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+}
+.arniko-filetree-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--arniko-border-light);
+}
+.arniko-filetree-header-icon {
+  font-size: 14px;
+}
+.arniko-filetree-header-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--arniko-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+.arniko-filetree-root {
+  font-size: 9px;
+  color: var(--arniko-text-subtle);
+  font-family: 'JetBrains Mono', monospace;
+  margin-left: auto;
+}
+.arniko-filetree-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+}
+.arniko-filetree-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+.arniko-filetree-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  font-size: 11px;
+}
+.arniko-filetree-row:hover {
+  background: var(--arniko-bg-hover);
+}
+.arniko-filetree-row.arniko-filetree-selected {
+  background: rgba(0, 242, 255, 0.08);
+  border: 1px solid var(--arniko-border-accent);
+}
+.arniko-filetree-dir {
+  color: var(--arniko-text-muted);
+  font-weight: 700;
+}
+.arniko-filetree-file {
+  color: var(--arniko-text-secondary);
+}
+.arniko-filetree-test {
+  color: var(--arniko-success);
+}
+.arniko-filetree-test .arniko-filetree-name {
+  font-weight: 600;
+}
+.arniko-filetree-indent {
+  white-space: pre;
+  color: var(--arniko-text-subtle);
+}
+.arniko-filetree-icon {
+  font-size: 12px;
+}
+.arniko-filetree-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.arniko-filetree-preview {
+  background: var(--arniko-bg-surface);
+  border: 1px solid var(--arniko-border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.arniko-filetree-preview-header {
+  padding: 6px 10px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--arniko-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--arniko-border);
+}
+.arniko-filetree-preview-body {
+  padding: 8px 10px;
+  font-size: 10px;
+  color: var(--arniko-text-secondary);
+  line-height: 1.5;
+  max-height: 160px;
+  overflow-y: auto;
+  margin: 0;
+}
+.arniko-filetree-empty {
+  font-size: 11px;
+  color: var(--arniko-text-muted);
+  padding: 16px 0;
+  font-family: 'JetBrains Mono', monospace;
+  text-align: center;
+}

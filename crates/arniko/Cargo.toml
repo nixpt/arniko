@@ -13,7 +13,7 @@ components = ["html"]        # UI components
 gpu = ["mustang/gpu"]        # GPU acceleration via Mustang
 networking = ["exo-bliss-net"]        # Exosphere networking
 launch = ["bliss"]           # Native window launch via bliss
-reactive = ["bliss", "bliss-dom", "anyrender_vello", "winit"]  # Reactive Signal + View + EventSink + launch
+reactive = ["bliss", "bliss-dom", "anyrender_vello", "winit", "keyboard-types"]  # Reactive Signal + View + EventSink + launch
 full = ["html", "components", "gpu", "networking", "launch", "reactive"]
 
 [dependencies]
@@ -75,6 +75,15 @@ optional = true
 path = "../../../exosphere/crates/platform/sdk/exo-bliss-net"
 optional = true
 
+[dependencies.keyboard-types]
+version = "0.7"
+optional = true
 
 [dev-dependencies]
 tokio-test = "0.4"
+vello = { workspace = true }
+bliss-html = { path = "../bliss-html" }
+
+[[test]]
+name = "reactive_components"
+required-features = ["reactive"]

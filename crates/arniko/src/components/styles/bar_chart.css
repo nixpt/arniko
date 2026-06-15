@@ -1,0 +1,25 @@
+.arniko-bar-chart {
+  display: flex; flex-direction: column; gap: 8px;
+}
+.arniko-bar-chart-empty {
+  font-size: 11px; color: var(--arniko-text-muted); padding: 16px 0;
+  font-family: monospace; text-align: center;
+}
+.arniko-bar-chart-row {
+  display: flex; align-items: center; gap: 10px; font-size: 11px;
+  font-family: monospace;
+}
+.arniko-bar-chart-label {
+  min-width: 64px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.5px; color: var(--arniko-text-secondary);
+}
+.arniko-bar-chart-track {
+  flex: 1; height: 8px; background: rgba(255,255,255,0.06);
+  border-radius: 4px; overflow: hidden; min-width: 80px;
+}
+.arniko-bar-chart-fill {
+  height: 100%; border-radius: 4px; transition: width 0.5s ease-out;
+}
+.arniko-bar-chart-value {
+  min-width: 40px; text-align: right; font-weight: 700; font-size: 11px;
+}

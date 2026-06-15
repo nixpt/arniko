@@ -1,0 +1,16 @@
+.arniko-status-grid { display: grid; gap: 12px; }
+.arniko-status-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px; background: rgba(0,0,0,0.3); border-radius: 8px;
+}
+.arniko-status-label { font-size: 13px; color: var(--arniko-text-secondary); }
+.arniko-status-value { display: flex; align-items: center; gap: 8px; }
+.arniko-status-dot { width: 8px; height: 8px; border-radius: 50%; }
+.arniko-status-text { font-size: 12px; font-weight: 500; }
+.arniko-status-pulse { animation: arniko-pulse 2s ease-in-out infinite; }
+@keyframes arniko-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+.arniko-status-active { background: var(--arniko-success); color: var(--arniko-success); }
+.arniko-status-warning { background: var(--arniko-warning); color: var(--arniko-warning); }
+.arniko-status-error { background: var(--arniko-error); color: var(--arniko-error); }
+.arniko-status-idle { background: var(--arniko-accent); color: var(--arniko-accent); }
+.arniko-status-offline { background: var(--arniko-text-subtle); color: var(--arniko-text-subtle); }

@@ -1,0 +1,22 @@
+.arniko-status-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 2px 10px; border-radius: 9999px; font-size: 0.75rem; font-weight: 500;
+  background: var(--arniko-bg-subtle); color: var(--arniko-text-secondary);
+}
+.arniko-status-badge::before {
+  content: ""; display: inline-block; width: 6px; height: 6px;
+  border-radius: 50%; background: currentColor;
+}
+.arniko-status-badge.arniko-status-active { color: var(--arniko-accent); }
+.arniko-status-badge.arniko-status-success { color: var(--arniko-success); }
+.arniko-status-badge.arniko-status-warning { color: var(--arniko-warning); }
+.arniko-status-badge.arniko-status-error { color: var(--arniko-error); }
+.arniko-status-badge.arniko-status-info { color: var(--arniko-info); }
+.arniko-status-badge.arniko-status-offline { color: var(--arniko-text-muted); }
+.arniko-status-badge.arniko-status-pulse::before {
+  animation: arniko-pulse 1.5s ease-in-out infinite;
+}
+@keyframes arniko-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}

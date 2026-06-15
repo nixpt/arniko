@@ -1,0 +1,17 @@
+.arniko-panel {
+  border: 1px solid var(--arniko-border); border-radius: 0.75rem; overflow: hidden;
+  background: var(--arniko-bg-surface);
+}
+.arniko-panel-header {
+  display: flex; align-items: center; gap: 8px; padding: 12px 16px;
+  border-bottom: 1px solid var(--arniko-border); font-weight: 600;
+  font-size: 0.875rem; color: var(--arniko-text-primary);
+}
+.arniko-panel-icon { font-size: 1rem; }
+.arniko-panel-title { flex: 1; }
+.arniko-panel-close {
+  background: none; border: none; font-size: 1.25rem; cursor: pointer;
+  color: var(--arniko-text-muted); padding: 0 4px; line-height: 1;
+}
+.arniko-panel-close:hover { color: var(--arniko-text-primary); }
+.arniko-panel-body { padding: 16px; font-size: 0.875rem; color: var(--arniko-text-body); }

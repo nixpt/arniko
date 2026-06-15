@@ -1,0 +1,5 @@
+.arniko-input {
+  background: var(--arniko-bg-input); border: 1px solid var(--arniko-border); border-radius: 6px;
+  padding: 8px 12px; color: var(--arniko-text-body); font-size: 14px; width: 100%;
+}
+.arniko-input:focus { outline: none; border-color: var(--arniko-accent); }

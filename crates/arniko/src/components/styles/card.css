@@ -1,0 +1,12 @@
+.arniko-card {
+  background: var(--arniko-bg-surface); border: 1px solid var(--arniko-border); border-radius: 8px; padding: 20px;
+}
+.arniko-card-title {
+  font-size: 13px; color: var(--arniko-text-muted); text-transform: uppercase;
+  letter-spacing: 0.5px; margin-bottom: 8px;
+}
+.arniko-card-body { font-size: 16px; color: var(--arniko-text-body); }
+.arniko-glass {
+  background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+}

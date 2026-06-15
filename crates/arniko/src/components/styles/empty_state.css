@@ -1,0 +1,11 @@
+.arniko-empty-state {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 48px 24px; text-align: center; color: var(--arniko-text-secondary);
+}
+.arniko-empty-icon { font-size: 3rem; margin-bottom: 16px; opacity: 0.5; }
+.arniko-empty-title {
+  font-size: 1.125rem; font-weight: 600; color: var(--arniko-text-primary);
+  margin-bottom: 8px;
+}
+.arniko-empty-desc { font-size: 0.875rem; color: var(--arniko-text-muted); margin-bottom: 16px; max-width: 320px; }
+.arniko-empty-action { margin-top: 8px; }

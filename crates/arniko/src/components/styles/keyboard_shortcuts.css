@@ -1,0 +1,46 @@
+.arniko-shortcut-overlay {
+  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(6,9,14,0.85); display: flex;
+  justify-content: center; align-items: center;
+  z-index: 9500; backdrop-filter: blur(4px);
+}
+.arniko-shortcut-modal {
+  background: rgba(12,18,28,0.95);
+  border: 1px solid rgba(0,242,255,0.2); border-radius: 12px;
+  padding: 24px; min-width: 420px; max-width: 560px;
+  box-shadow: 0 8px 48px rgba(0,0,0,0.5);
+}
+.arniko-shortcut-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 16px; padding-bottom: 12px;
+  border-bottom: 1px solid var(--arniko-border-light);
+}
+.arniko-shortcut-title {
+  font-size: 14px; font-weight: 700; color: var(--arniko-text-primary); letter-spacing: 1px;
+}
+.arniko-shortcut-close {
+  font-size: 14px; color: var(--arniko-text-muted); cursor: pointer;
+  padding: 4px 8px; border-radius: 4px; transition: color 0.2s ease;
+}
+.arniko-shortcut-close:hover { color: var(--arniko-error); }
+.arniko-shortcut-body {
+  display: flex; flex-direction: column; gap: 8px;
+}
+.arniko-shortcut-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 12px; background: rgba(8,14,24,0.6); border-radius: 6px;
+  font-size: 12px; transition: background 0.2s ease;
+}
+.arniko-shortcut-row:hover { background: rgba(0,242,255,0.04); }
+.arniko-shortcut-keys {
+  font-family: monospace; font-weight: 700; color: var(--arniko-cyan);
+  background: rgba(0,242,255,0.08); padding: 2px 8px;
+  border-radius: 4px; font-size: 11px;
+  border: 1px solid var(--arniko-border-accent);
+}
+.arniko-shortcut-action { color: var(--arniko-text-secondary); font-size: 12px; }
+.arniko-shortcut-footer {
+  font-size: 10px; color: var(--arniko-text-muted); text-align: center;
+  margin-top: 16px; padding-top: 12px;
+  border-top: 1px solid var(--arniko-border-light);
+}

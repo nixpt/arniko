@@ -1,0 +1,11 @@
+.arniko-theme-toggle {
+  font-size: 10px; font-weight: 700; font-family: monospace;
+  cursor: pointer; padding: 5px 10px; border-radius: 5px;
+  background: rgba(0,242,255,0.06);
+  border: 1px solid var(--arniko-border-accent); color: var(--arniko-cyan);
+  transition: background 0.2s ease, transform 0.2s ease;
+  user-select: none; letter-spacing: 0.5px;
+}
+.arniko-theme-toggle:hover {
+  background: rgba(0,242,255,0.12); transform: scale(1.05);
+}

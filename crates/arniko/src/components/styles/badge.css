@@ -1,0 +1,10 @@
+.arniko-badge {
+  display: inline-block; padding: 2px 8px; border-radius: 4px;
+  font-size: 12px; font-weight: 500;
+}
+.arniko-badge-default { background: var(--arniko-bg-subtle); color: var(--arniko-text-secondary); }
+.arniko-badge-success { background: var(--arniko-success-bg); color: var(--arniko-success); }
+.arniko-badge-warning { background: var(--arniko-warning-bg); color: var(--arniko-warning); }
+.arniko-badge-error { background: var(--arniko-error-bg); color: var(--arniko-error); }
+.arniko-badge-info { background: var(--arniko-info-bg); color: var(--arniko-info); }
+.arniko-badge-purple { background: #2e1065; color: #c4b5fd; }

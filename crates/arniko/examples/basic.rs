@@ -1,53 +1,43 @@
-//! Test example for Arniko UI framework
+//! Individual component rendering examples
 //!
-//! This example demonstrates basic usage of Arniko components.
+//! Shows how each Arniko component renders standalone.
+//! For the builder API (ArnikoApp::html()), see `builder.rs`.
 
-use arniko::{Alert, ArnikoApp, Badge, Button, Card, Component};
+use arniko::{Alert, Badge, Button, Card, Component};
 
 fn main() {
-    // Test HTML generation
-    let html = ArnikoApp::html()
-        .component(Button::new("Click me").variant(arniko::button::ButtonVariant::Accent))
-        .component(Card::new().title("Test Card").body("This is a test card"))
-        .component(Alert::new("Success!").variant(arniko::alert::AlertVariant::Success))
-        .component(Badge::new("Active").variant(arniko::badge::BadgeVariant::Success))
-        .style("body { font-family: Arial, sans-serif; padding: 20px; }")
-        .render();
-
-    println!("Generated HTML:");
-    println!("{}", html);
-
-    // Test individual components
-    test_individual_components();
+    demo_individual_components();
 }
 
-fn test_individual_components() {
-    println!("\n=== Testing Individual Components ===");
+fn demo_individual_components() {
+    println!("=== Individual Components ===\n");
 
-    // Test Button
+    // Button with custom variant and size
     let button = Button::new("Test Button")
         .variant(arniko::button::ButtonVariant::Outline)
-        .size(arniko::button::ButtonSize::Large);
-    println!("Button HTML: {}", button.render());
+        .size(arniko::button::ButtonSize::Lg);
+    println!("Button:\n{}\n", button.render());
 
-    // Test Card
+    // Card with title, body, and custom class
     let card = Card::new()
         .title("Sample Card")
         .body("This is the body content")
         .class("custom-card");
-    println!("Card HTML: {}", card.render());
+    println!("Card:\n{}\n", card.render());
 
-    // Test Alert
-    let alert = Alert::new("Warning message").variant(arniko::alert::AlertVariant::Warning);
-    println!("Alert HTML: {}", alert.render());
+    // Alert with warning variant
+    let alert = Alert::new("Warning message")
+        .variant(arniko::alert::AlertVariant::Warning);
+    println!("Alert:\n{}\n", alert.render());
 
-    // Test Badge
-    let badge = Badge::new("New").variant(arniko::badge::BadgeVariant::Error);
-    println!("Badge HTML: {}", badge.render());
+    // Badge with error variant
+    let badge = Badge::new("New")
+        .variant(arniko::badge::BadgeVariant::Error);
+    println!("Badge:\n{}\n", badge.render());
 
-    // Test component metadata
+    // Component metadata
     let metadata = button.metadata();
-    println!("Button metadata: {:?}", metadata);
+    println!("Button metadata: {:?}\n", metadata);
 }
 
 #[cfg(test)]
@@ -93,18 +83,5 @@ mod tests {
         assert!(html.contains("arniko-badge-success"));
         assert!(html.contains("Test"));
     }
-
-    #[test]
-    fn test_arniko_app_html_builder() {
-        let html = ArnikoApp::html()
-            .component(Button::new("Click"))
-            .component(Card::new().title("Card"))
-            .render();
-
-        assert!(html.contains("<!DOCTYPE html>"));
-        assert!(html.contains("arniko-btn"));
-        assert!(html.contains("arniko-card"));
-        assert!(html.contains("Click"));
-        assert!(html.contains("Card"));
-    }
 }
+

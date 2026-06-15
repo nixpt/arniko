@@ -1,6 +1,7 @@
 mod app;
 mod computed;
 mod reactor;
+pub mod reactive_html;
 mod signal;
 mod sink;
 mod view;
@@ -12,7 +13,9 @@ pub use app::{launch_reactive, launch_reactive_configured};
 pub use computed::Computed;
 pub use reactor::Reactor;
 pub use signal::{Reactive, Signal};
+pub use keyboard_types;
 pub use sink::{ArnikoEventSink, EventRouter, event_router};
+pub use reactive_html::ReactiveHtml;
 pub use view::{Div, For, ReactiveText, Span, StaticHtml, Text, View};
 
 #[cfg(feature = "components")]

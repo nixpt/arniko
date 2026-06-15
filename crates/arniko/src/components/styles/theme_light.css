@@ -1,0 +1,56 @@
+/* ═══════════════════════════════════════
+   Arniko Light Theme Overrides
+   ═══════════════════════════════════════
+   Apply class="theme-light" to <html> or <body>
+   to switch to the light color palette.
+   ═══════════════════════════════════════ */
+
+.theme-light {
+  --arniko-bg-surface: #ffffff;
+  --arniko-bg-elevated: #fafafa;
+  --arniko-bg-input: #ffffff;
+  --arniko-bg-subtle: #e4e4e7;
+  --arniko-bg-shimmer: #d4d4d8;
+  --arniko-bg-hover: rgba(0, 0, 0, 0.04);
+
+  --arniko-text-primary: #18181b;
+  --arniko-text-body: #3f3f46;
+  --arniko-text-secondary: #71717a;
+  --arniko-text-muted: #a1a1aa;
+  --arniko-text-subtle: #d4d4d8;
+
+  --arniko-border: #e4e4e7;
+  --arniko-border-light: rgba(0, 0, 0, 0.06);
+  --arniko-border-accent: rgba(99, 102, 241, 0.2);
+
+  --arniko-accent: #6366f1;
+  --arniko-accent-glow: rgba(99, 102, 241, 0.15);
+
+  --arniko-cyan: #0891b2;
+  --arniko-purple: #7c3aed;
+  --arniko-white: #ffffff;
+
+  --arniko-btn-default: #2563eb;
+  --arniko-btn-destructive: #dc2626;
+  --arniko-btn-outline-border: #d4d4d8;
+  --arniko-btn-secondary-bg: #f4f4f5;
+  --arniko-btn-accent-bg: #7c3aed;
+
+  --arniko-success: #16a34a;
+  --arniko-success-bg: #f0fdf4;
+  --arniko-success-border: #bbf7d0;
+
+  --arniko-error: #dc2626;
+  --arniko-error-bg: #fef2f2;
+  --arniko-error-border: #fecaca;
+
+  --arniko-warning: #d97706;
+  --arniko-warning-bg: #fffbf0;
+  --arniko-warning-border: #fde68a;
+
+  --arniko-info: #2563eb;
+  --arniko-info-bg: #f0f6ff;
+  --arniko-info-border: #bfdbfe;
+
+  --arniko-splash-bg: #f8f8f8;
+}
