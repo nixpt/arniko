@@ -7,7 +7,7 @@ use super::signal::Reactive;
 use super::view::View;
 
 trait Binding {
-    fn flush(&mut self, mutator: &mut DocumentMutator);
+    fn flush(&mut self, mutator: &mut DocumentMutator) -> bool;
 }
 
 struct ReactiveBinding<T: Clone + 'static, R: Reactive<T>> {
@@ -80,10 +80,14 @@ where
 pub struct Reactor {
     bindings: Vec<Box<dyn Binding>>,
 }
+    bindings: Vec<Box<dyn Binding>>,
+}
 
 impl Reactor {
     pub fn new() -> Self {
-        Reactor { bindings: Vec::new() }
+        Reactor {
+            bindings: Vec::new(),
+        }
     }
 
     /// Bind any `Reactive<T>` (a `Signal` or `Computed`) to a DOM patch function.
@@ -110,8 +114,7 @@ impl Reactor {
         template: Arc<dyn Fn(&T) -> Box<dyn View> + Send + Sync>,
         container_id: usize,
         initial_ids: Vec<usize>,
-    )
-    where
+    ) where
         T: Clone + Send + Sync + 'static,
         R: Reactive<Vec<T>>,
     {
@@ -127,9 +130,26 @@ impl Reactor {
     }
 
     /// Apply all dirty patches to the document.
-    pub fn flush(&mut self, mutator: &mut DocumentMutator) {
+    ///
+    /// If a `SceneScheduler` is provided, it is notified once if any
+    /// binding produced a dirty patch — this is the "reactive-coordinated
+    /// scheduling" hook from Phase 5: signal changes drive both the DOM
+    /// patch and the GPU effect re-application.
+    pub fn flush(
+        &mut self,
+        mutator: &mut DocumentMutator,
+        scheduler: Option<&crate::mustang::SceneScheduler>,
+    ) {
+        let mut any_dirty = false;
         for binding in &mut self.bindings {
-            binding.flush(mutator);
+            if binding.flush(mutator) {
+                any_dirty = true;
+            }
+        }
+        if any_dirty {
+            if let Some(s) = scheduler {
+                s.on_dom_changed();
+            }
         }
     }
 }

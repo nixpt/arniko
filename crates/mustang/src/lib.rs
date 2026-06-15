@@ -24,6 +24,7 @@ pub mod compositor;
 pub mod config;
 pub mod effect;
 pub mod renderer;
+pub mod scheduler;
 
 // Re-export main types from effect module
 pub use effect::{
@@ -45,6 +46,7 @@ pub use renderer::{
 };
 
 pub use compositor::*;
+pub use scheduler::SceneScheduler;
 
 use std::collections::HashMap;
 
