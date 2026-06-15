@@ -345,6 +345,9 @@ impl<'dom> BlissDomPainter<'dom> {
             NodeData::Document => {}
             // NodeData::Doctype => {}
             NodeData::Comment => {} // NodeData::ProcessingInstruction { .. } => {}
+            // A shadow root hosts a subtree but paints nothing itself; its
+            // children render via the host element's layout.
+            NodeData::ShadowRoot { .. } => {}
         }
     }
 
