@@ -67,10 +67,7 @@ fn node_list_item_child(
         return None;
     };
 
-    let styles = match node.primary_styles() {
-        Some(s) => s,
-        None => return None,
-    };
+    let styles = node.primary_styles()?;
     let list_style_type = styles.clone_list_style_type();
     let list_style_position = styles.clone_list_style_position();
     let marker = marker_for_style(list_style_type, index)?;

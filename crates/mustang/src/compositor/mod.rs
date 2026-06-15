@@ -126,7 +126,7 @@ fn parse_transform(value: &str) -> TransformParams {
         let after = &value[start + 10..];
         if let Some(end) = after.find(')') {
             let parts: Vec<&str> = after[..end].split(',').collect();
-            if parts.len() >= 1 {
+            if !parts.is_empty() {
                 let x = parts[0]
                     .trim()
                     .trim_end_matches("px")

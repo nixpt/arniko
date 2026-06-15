@@ -111,7 +111,7 @@ pub(crate) fn handle_keypress<F: FnMut(DomEvent)>(
                         let can_implicit_submit =
                             doc.controls_to_form
                                 .get(&node_id)
-                                .map_or(false, |form_owner_id| {
+                                .is_some_and(|form_owner_id| {
                                     doc.controls_to_form
                                         .iter()
                                         .filter(|(_, form_id)| *form_id == form_owner_id)

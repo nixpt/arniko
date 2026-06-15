@@ -177,8 +177,8 @@ impl SharedElementTracker {
 
         let count = to_remove.len();
         if let Ok(mut elements) = self.elements.lock() {
-            for id in to_remove {
-                elements.remove(&id);
+            for id in &to_remove {
+                elements.remove(id);
             }
         }
         count

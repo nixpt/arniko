@@ -70,7 +70,7 @@ pub(crate) fn build_table_context(
         panic!("Ignoring table because it has no styles");
     };
 
-    let mut style = stylo_taffy::to_taffy_style(&*stylo_styles);
+    let mut style = stylo_taffy::to_taffy_style(&stylo_styles);
     style.item_is_table = true;
     style.grid_auto_columns = Vec::new();
     style.grid_auto_rows = Vec::new();
@@ -247,7 +247,7 @@ pub(crate) fn collect_table_cells(
                 .attr(local_name!("colspan"))
                 .and_then(|val| val.parse().ok())
                 .unwrap_or(1);
-            let mut style = stylo_taffy::to_taffy_style(&*stylo_style);
+            let mut style = stylo_taffy::to_taffy_style(&stylo_style);
 
             if first_cell_border.is_none() {
                 *first_cell_border = Some(stylo_style.clone_border());
