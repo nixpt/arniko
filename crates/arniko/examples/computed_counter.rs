@@ -140,8 +140,9 @@ fn row(label: &str, value: Box<dyn View>) -> Box<dyn View> {
         "display:flex; justify-content:space-between; align-items:center; \
          font-size:13px; border-bottom:1px solid #27272a; padding-bottom:8px;",
         vec![
-            Box::new(StaticHtml(
-                format!(r#"<span style="color:#71717a;">{label}</span>"#),
+            Box::new(Div::styled(
+                "color:#71717a;",
+                vec![Box::new(Text(label.to_string()))],
             )),
             Box::new(Div::styled(
                 "font-weight:600; font-size:14px; color:#f4f4f5;",
