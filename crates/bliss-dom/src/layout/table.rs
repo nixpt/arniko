@@ -285,7 +285,8 @@ pub(crate) fn collect_table_cells(
                         }
                     }
                     taffy::CompactLength::AUTO_TAG => style_helpers::auto(),
-                    _ => unreachable!(),
+                    // Unknown tag — malformed CSS. Fall back to auto sizing.
+                    _ => style_helpers::auto(),
                 };
                 columns.push(column);
             }

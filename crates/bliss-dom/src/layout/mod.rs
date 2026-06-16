@@ -69,14 +69,13 @@ impl BaseDocument {
         let resolved_line_height = font_styles.map(|s| s.1);
 
         match &mut node.data {
-            NodeData::Text(data) => {
+            NodeData::Text(_data) => {
                 // With the new "inline context" architecture all text nodes should be wrapped in an "inline layout context"
                 // and should therefore never be measured individually.
-                println!(
-                    "ERROR: Tried to lay out text node individually ({})",
+                eprintln!(
+                    "bliss-dom: text node {} laid out individually (should be wrapped in inline context)",
                     usize::from(node_id)
                 );
-                dbg!(data);
                 taffy::LayoutOutput::HIDDEN
                 // unreachable!();
 
@@ -202,7 +201,11 @@ impl BaseDocument {
                         },
                         SpecialElementData::Canvas(_) => taffy::Size::ZERO,
                         SpecialElementData::None => taffy::Size::ZERO,
-                        _ => unreachable!(),
+                        _ => {
+                            // Unexpected special_data on img/canvas/svg element —
+                            // malformed DOM. Fall back to zero-size.
+                            taffy::Size::ZERO
+                        }
                     };
 
                     let replaced_context = ReplacedContext {
