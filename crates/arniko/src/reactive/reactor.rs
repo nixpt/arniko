@@ -31,12 +31,15 @@ impl<T: Clone + 'static, R: Reactive<T>> Binding for ReactiveBinding<T, R> {
     }
 }
 
-/// Reconciles a `Reactive<Vec<T>>` against a container node by clearing all mounted children
-/// and re-mounting fresh ones whenever the list version advances.
+/// Reconciles a `Reactive<Vec<T>>` against a container node using positional
+/// diffing: items at the same index survive (their DOM nodes and child reactors
+/// are preserved, so nested `ReactiveText` / `Computed` inside items keep
+/// updating); extra trailing items are dropped via `remove_and_drop_node`;
+/// new items are mounted with dedicated child reactors.
 ///
-/// v1 limitation: item views remounted during reconciliation are given a stub `Reactor`, so
-/// nested `ReactiveText` / `Computed` inside items only work on the initial render. Items
-/// containing reactive views should use the initial mount; static item templates work fully.
+/// This replaces the v1 clear-and-remount strategy that leaked DOM nodes
+/// (arena growth on every list change) and broke nested reactivity after
+/// the first reconciliation.
 struct ForBinding<T, R>
 where
     T: Clone + Send + Sync + 'static,
@@ -46,7 +49,7 @@ where
     last_version: u64,
     template: Arc<dyn Fn(&T) -> Box<dyn View> + Send + Sync>,
     container_id: usize,
-    mounted_ids: Vec<usize>,
+    children: Vec<ItemState>,
     _marker: PhantomData<T>,
 }
 
@@ -56,28 +59,56 @@ where
     R: Reactive<Vec<T>>,
 {
     fn flush(&mut self, mutator: &mut DocumentMutator) -> bool {
+        // Always flush child reactors so nested reactive views update
+        // regardless of whether the list itself changed.
+        let mut any_dirty = false;
+        for child in &mut self.children {
+            if child.reactor.flush(mutator, None) {
+                any_dirty = true;
+            }
+        }
+
         let version = self.source.reactive_version();
         if version == self.last_version {
-            return false;
+            return any_dirty;
         }
         self.last_version = version;
         let list = self.source.get_value();
 
-        // Clear existing children.
-        for id in self.mounted_ids.drain(..) {
-            mutator.remove_node(id);
+        let old_len = self.children.len();
+        let new_len = list.len();
+
+        // Drop trailing items that are no longer in the list.
+        for i in (new_len..old_len).rev() {
+            let child = self.children.remove(i);
+            mutator.remove_and_drop_node(child.node_id);
+            // child.reactor drops — its bindings are disposed.
+            any_dirty = true;
         }
 
-        // Re-mount fresh children. A stub Reactor is used so nested reactive views
-        // don't register in the main reactor (v1 limitation).
-        let mut stub = Reactor::new();
-        for item in &list {
-            let view = (self.template)(item);
-            let id = view.mount(mutator, &mut stub, self.container_id);
-            self.mounted_ids.push(id);
+        // Mount new items at the end.
+        for i in old_len..new_len {
+            let mut child_reactor = Reactor::new();
+            let view = (self.template)(&list[i]);
+            let node_id = view.mount(mutator, &mut child_reactor, self.container_id);
+            self.children.push(ItemState {
+                node_id,
+                reactor: child_reactor,
+            });
+            any_dirty = true;
         }
-        true
+
+        any_dirty
     }
+}
+
+/// A mounted list item tracked by `ForBinding`.
+///
+/// Each item owns a dedicated child `Reactor` so nested `ReactiveText` /
+/// `Computed` views inside the item keep updating across list reconciliations.
+pub(crate) struct ItemState {
+    pub node_id: usize,
+    pub reactor: Reactor,
 }
 
 /// Tracks reactive→DOM patch bindings. Call `flush` after mutating signals to apply patches.
@@ -115,7 +146,7 @@ impl Reactor {
         source: R,
         template: Arc<dyn Fn(&T) -> Box<dyn View> + Send + Sync>,
         container_id: usize,
-        initial_ids: Vec<usize>,
+        children: Vec<ItemState>,
     ) where
         T: Clone + Send + Sync + 'static,
         R: Reactive<Vec<T>>,
@@ -126,12 +157,14 @@ impl Reactor {
             last_version,
             template,
             container_id,
-            mounted_ids: initial_ids,
+            children,
             _marker: PhantomData,
         }));
     }
 
     /// Apply all dirty patches to the document.
+    ///
+    /// Returns `true` if any binding produced a dirty patch.
     ///
     /// If a `SceneScheduler` is provided, it is notified once if any
     /// binding produced a dirty patch — this is the "reactive-coordinated
@@ -141,7 +174,7 @@ impl Reactor {
         &mut self,
         mutator: &mut DocumentMutator,
         scheduler: Option<&crate::mustang::SceneScheduler>,
-    ) {
+    ) -> bool {
         let mut any_dirty = false;
         for binding in &mut self.bindings {
             if binding.flush(mutator) {
@@ -153,6 +186,7 @@ impl Reactor {
                 s.on_dom_changed();
             }
         }
+        any_dirty
     }
 }
 

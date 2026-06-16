@@ -4,6 +4,7 @@ use std::sync::Arc;
 
 use bliss_dom::{Attribute, DocumentMutator, QualName, local_name, ns};
 
+use super::reactor::ItemState;
 use super::signal::Reactive;
 use super::{Reactor, Signal};
 
@@ -154,15 +155,17 @@ impl<C: crate::Component> View for ComponentView<C> {
     }
 }
 
-/// Renders a `Reactive<Vec<T>>` as a list of child views, reconciling on every flush.
+/// Renders a `Reactive<Vec<T>>` as a list of child views, reconciling on every flush
+/// using positional diffing: items at the same index survive (their DOM nodes + child
+/// reactors are preserved), trailing items are dropped via `remove_and_drop_node`,
+/// and new items are mounted with dedicated child reactors.
 ///
-/// On list change the previous children are removed and fresh ones are mounted from `template`.
-/// The template receives a `&T` and returns any `Box<dyn View>`.
+/// Each list item gets its own child `Reactor` so nested `ReactiveText` / `Computed`
+/// inside items keep updating across list reconciliations.
 ///
-/// **v1 note**: The initial render mounts items with the live `Reactor`, so items can contain
-/// reactive views (`ReactiveText`, etc.). Items remounted during reconciliation use a stub
-/// reactor — nested reactivity is silently dropped on updates. For fully reactive items,
-/// structure data as `Signal<Vec<Signal<ItemData>>>` and rely on the initial mount.
+/// The template receives a `&T` and returns any `Box<dyn View>`. For fully dynamic
+/// item content, wrap item data in `Signal<ItemData>` so the child reactor can
+/// update nested reactive views in-place.
 pub struct For<T, R>
 where
     T: Clone + Send + Sync + 'static,
@@ -217,13 +220,19 @@ where
         let container_id = mutator.create_element(div_name(), self.attrs.clone());
         mutator.append_children(parent, &[container_id]);
 
-        // Mount initial items into the live reactor so nested reactive views work.
+        // Mount initial items, each with a dedicated child reactor so nested
+        // reactive views (ReactiveText, Computed) keep updating across list
+        // reconciliations.
         let initial_list = self.source.get_value();
-        let mut initial_ids = Vec::with_capacity(initial_list.len());
+        let mut children = Vec::with_capacity(initial_list.len());
         for item in &initial_list {
+            let mut child_reactor = Reactor::new();
             let view = (self.template)(item);
-            let id = view.mount(mutator, reactor, container_id);
-            initial_ids.push(id);
+            let node_id = view.mount(mutator, &mut child_reactor, container_id);
+            children.push(ItemState {
+                node_id,
+                reactor: child_reactor,
+            });
         }
 
         // Register the reconciliation binding for future list changes.
@@ -231,7 +240,7 @@ where
             self.source.clone(),
             Arc::clone(&self.template),
             container_id,
-            initial_ids,
+            children,
         );
 
         container_id

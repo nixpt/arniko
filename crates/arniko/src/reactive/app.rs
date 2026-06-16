@@ -8,13 +8,13 @@ use bliss::shell::{
 };
 use bliss::traits::net::DummyNetProvider;
 use winit::application::ApplicationHandler;
-use winit::event::{ElementState, MouseButton, WindowEvent};
+use winit::event::WindowEvent;
 use winit::event_loop::ActiveEventLoop;
 use winit::window::WindowId;
 
 use super::Reactor;
 use super::signal::{Signal, WakeFn};
-use super::sink::{EventRouter, HandlerMap, event_router};
+use super::sink::{EventRouter, event_router};
 
 /// Reactive runtime context — holds a wake closure so `Signal::set()` can
 /// wake the event loop. Passed into the `launch_reactive` setup closure.
@@ -31,12 +31,12 @@ impl ReactiveRuntime {
     }
 }
 
-/// ApplicationHandler that wraps BlissApplication, flushes the reactor after each event,
-/// and routes click events to registered handlers by walking the DOM ancestor chain.
+/// ApplicationHandler that wraps BlissApplication and flushes the reactor
+/// after each event. Click dispatch is handled by the DOM event sink
+/// (ArnikoEventSink) — no redundant ancestor walk here.
 struct ReactiveApplication {
     inner: BlissApplication<VelloWindowRenderer>,
     reactor: Arc<Mutex<Reactor>>,
-    handlers: HandlerMap,
 }
 
 impl ApplicationHandler for ReactiveApplication {
@@ -88,32 +88,11 @@ impl ApplicationHandler for ReactiveApplication {
             return;
         }
 
-        // Detect left-button release before consuming the event — this is when Click fires.
-        let is_left_release = matches!(
-            &event,
-            WindowEvent::PointerButton { state, button, .. }
-                if *state == ElementState::Released
-                    && matches!(button.clone().mouse_button(), Some(MouseButton::Left))
-        );
-
+        // Let the DOM event sink handle click dispatch.
+        // No redundant ancestor walk here — ArnikoEventSink already
+        // routes clicks through the registered handler map.
         if let Some(view) = self.inner.windows.get_mut(&window_id) {
             view.handle_winit_event(event);
-
-            // After the event, hover_node_id is the clicked node (may be a text node).
-            // Walk ancestors to find a registered handler.
-            if is_left_release {
-                let hover_id = view.doc.inner().get_hover_node_id();
-                if let Some(id) = hover_id {
-                    let chain = view.doc.inner().node_chain(id);
-                    let handlers = self.handlers.lock().unwrap();
-                    for chain_id in chain {
-                        if let Some(handler) = handlers.get(&chain_id) {
-                            handler();
-                            break;
-                        }
-                    }
-                }
-            }
 
             // Flush all dirty signal patches into the DOM.
             let mut inner = view.doc.inner_mut();
@@ -210,7 +189,6 @@ pub fn launch_reactive_configured(
         reactor
     };
 
-    let handlers = Arc::clone(&router.handlers);
     let reactor = Arc::new(Mutex::new(reactor));
 
     let mut renderer = VelloWindowRenderer::new();
@@ -225,7 +203,6 @@ pub fn launch_reactive_configured(
         .run_app(ReactiveApplication {
             inner: application,
             reactor,
-            handlers,
         })
         .unwrap();
 }
