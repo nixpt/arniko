@@ -166,6 +166,8 @@ mod tests {
         assert!(html.contains("arniko-splash-overlay"));
         assert!(html.contains("Loading"));
         assert!(html.contains("Initializing..."));
+        assert!(html.contains(r#"role="progressbar""#));
+        assert!(html.contains(r#"aria-live="polite""#));
     }
 
     #[cfg(feature = "components")]

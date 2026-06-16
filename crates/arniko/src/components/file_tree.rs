@@ -270,6 +270,7 @@ mod tests {
         let html = tree.render();
         assert!(html.contains("arniko-filetree"));
         assert!(html.contains("No files to display"));
+        assert!(html.contains(r#"role="tree""#));
     }
 
     #[cfg(feature = "components")]

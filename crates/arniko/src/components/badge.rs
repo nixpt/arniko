@@ -95,6 +95,7 @@ mod tests {
         assert!(html.contains("arniko-badge"));
         assert!(html.contains("arniko-badge-default"));
         assert!(html.contains("Test"));
+        assert!(html.contains(r#"role="status""#));
     }
 
     #[test]

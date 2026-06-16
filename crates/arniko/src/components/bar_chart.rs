@@ -191,6 +191,7 @@ mod tests {
         let chart = BarChart::new();
         let html = chart.render();
         assert!(html.contains("No data"));
+        assert!(html.contains(r#"role="img""#));
     }
 
     #[cfg(feature = "components")]

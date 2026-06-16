@@ -67,3 +67,37 @@ impl Component for Tooltip {
         ComponentMetadata::default()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_tooltip_default() {
+        let tip = Tooltip::new("Hover me", "Helpful text");
+        let html = tip.render();
+        assert!(html.contains("arniko-tooltip"));
+        assert!(html.contains("Hover me"));
+        assert!(html.contains(r#"data-tooltip="Helpful text""#));
+        assert!(html.contains(r#"role="tooltip""#));
+        assert!(html.contains(r#"tabindex="0""#));
+    }
+
+    #[test]
+    fn test_tooltip_positions() {
+        let top = Tooltip::new("A", "B").position(TooltipPosition::Top);
+        assert!(top.render().contains(r#"data-tooltip-position="top""#));
+
+        let bottom = Tooltip::new("A", "B").position(TooltipPosition::Bottom);
+        assert!(bottom.render().contains(r#"data-tooltip-position="bottom""#));
+    }
+
+    #[test]
+    fn test_tooltip_escapes_html() {
+        let tip = Tooltip::new("<script>", "&evil");
+        let html = tip.render();
+        assert!(!html.contains("<script>"));
+        assert!(html.contains("&lt;script&gt;"));
+        assert!(html.contains("&amp;evil"));
+    }
+}

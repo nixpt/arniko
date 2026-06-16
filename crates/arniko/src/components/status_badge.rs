@@ -92,6 +92,7 @@ mod tests {
         assert!(html.contains("arniko-status-badge"));
         assert!(html.contains("Online"));
         assert!(html.contains("arniko-status-active"));
+        assert!(html.contains(r#"role="status""#));
     }
 
     #[test]

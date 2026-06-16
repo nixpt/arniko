@@ -195,6 +195,7 @@ mod tests {
         let html = feed.render();
         assert!(html.contains("arniko-feed"));
         assert!(html.contains("No events yet"));
+        assert!(html.contains(r#"role="log""#));
     }
 
     #[cfg(feature = "components")]

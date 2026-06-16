@@ -33,3 +33,23 @@ impl Component for Separator {
         ComponentMetadata::default()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_separator_default() {
+        let sep = Separator::new();
+        let html = sep.render();
+        assert!(html.contains("arniko-separator"));
+        assert!(html.contains(r#"role="separator""#));
+    }
+
+    #[test]
+    fn test_separator_custom_class() {
+        let sep = Separator::new().class("my-sep");
+        let html = sep.render();
+        assert!(html.contains("my-sep"));
+    }
+}

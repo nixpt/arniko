@@ -82,6 +82,7 @@ mod tests {
         let html = card.render();
 
         assert!(html.contains("arniko-card"));
+        assert!(html.contains(r#"role="region""#));
         assert!(!html.contains("arniko-card-title"));
         assert!(!html.contains("arniko-card-body"));
     }

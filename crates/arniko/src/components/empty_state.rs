@@ -91,6 +91,7 @@ mod tests {
         let html = es.render();
         assert!(html.contains("arniko-empty-state"));
         assert!(html.contains("No items found"));
+        assert!(html.contains(r#"role="status""#));
     }
 
     #[test]

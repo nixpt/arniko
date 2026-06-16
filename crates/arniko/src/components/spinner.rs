@@ -56,3 +56,32 @@ impl Component for Spinner {
         ComponentMetadata::default()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_spinner_default() {
+        let spinner = Spinner::new();
+        let html = spinner.render();
+        assert!(html.contains("arniko-spinner"));
+        assert!(html.contains(r#"role="status""#));
+        assert!(html.contains(r#"aria-label="Loading""#));
+    }
+
+    #[test]
+    fn test_spinner_sizes() {
+        let sm = Spinner::new().size(SpinnerSize::Sm);
+        assert!(sm.render().contains("arniko-spinner-sm"));
+
+        let lg = Spinner::new().size(SpinnerSize::Lg);
+        assert!(lg.render().contains("arniko-spinner-lg"));
+    }
+
+    #[test]
+    fn test_spinner_custom_class() {
+        let spinner = Spinner::new().class("my-spinner");
+        assert!(spinner.render().contains("my-spinner"));
+    }
+}

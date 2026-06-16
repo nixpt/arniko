@@ -87,3 +87,32 @@ impl Component for SkeletonCard {
         ComponentMetadata::default()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_skeleton_default() {
+        let skel = Skeleton::new();
+        let html = skel.render();
+        assert!(html.contains("arniko-skeleton"));
+        assert!(html.contains(r#"role="status""#));
+        assert!(html.contains(r#"aria-busy="true""#));
+    }
+
+    #[test]
+    fn test_skeleton_custom_size() {
+        let skel = Skeleton::new().width("50%").height("40px");
+        let html = skel.render();
+        assert!(html.contains("width: 50%"));
+        assert!(html.contains("height: 40px"));
+    }
+
+    #[test]
+    fn test_skeleton_card() {
+        let card = SkeletonCard::new();
+        let html = card.render();
+        assert!(html.contains("arniko-skeleton-card"));
+    }
+}

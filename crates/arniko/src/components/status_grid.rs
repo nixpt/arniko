@@ -141,3 +141,44 @@ impl Component for StatusGrid {
         ComponentMetadata::default()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_status_indicator_default() {
+        let indicator = StatusIndicator::new("CPU", "45%");
+        let html = indicator.render();
+        assert!(html.contains("arniko-status-item"));
+        assert!(html.contains("CPU"));
+        assert!(html.contains("45%"));
+        assert!(html.contains("arniko-status-active"));
+    }
+
+    #[test]
+    fn test_status_indicator_states() {
+        let warning = StatusIndicator::new("Disk", "80%").state(StatusState::Warning);
+        assert!(warning.render().contains("arniko-status-warning"));
+
+        let error = StatusIndicator::new("Net", "down").state(StatusState::Error);
+        assert!(error.render().contains("arniko-status-error"));
+    }
+
+    #[test]
+    fn test_status_grid_empty() {
+        let grid = StatusGrid::new();
+        let html = grid.render();
+        assert!(html.contains("arniko-status-grid"));
+    }
+
+    #[test]
+    fn test_status_grid_with_items() {
+        let grid = StatusGrid::new()
+            .add(StatusIndicator::new("CPU", "45%"))
+            .add(StatusIndicator::new("RAM", "60%"));
+        let html = grid.render();
+        assert!(html.contains("CPU"));
+        assert!(html.contains("RAM"));
+    }
+}

@@ -164,5 +164,7 @@ mod tests {
         assert!(html.contains("Ctrl+C"));
         assert!(html.contains("Cancel"));
         assert!(html.contains("Keyboard Shortcuts"));
+        assert!(html.contains(r#"role="dialog""#));
+        assert!(html.contains(r#"tabindex="0""#));
     }
 }

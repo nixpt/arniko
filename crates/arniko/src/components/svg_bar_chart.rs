@@ -356,6 +356,7 @@ mod tests {
         assert!(html.contains("Benchmark Performance"));
         assert!(html.contains("⚡"));
         assert!(html.contains("12.30"));
+        assert!(html.contains(r#"role="img""#));
     }
 
     #[cfg(feature = "components")]

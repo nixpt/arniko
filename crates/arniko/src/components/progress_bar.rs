@@ -122,3 +122,44 @@ impl Component for ProgressBar {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_progress_bar_default() {
+        let bar = ProgressBar::new(50.0);
+        let html = bar.render();
+        assert!(html.contains("arniko-progress"));
+        assert!(html.contains(r#"role="progressbar""#));
+        assert!(html.contains(r#"aria-valuenow="50""#));
+        assert!(html.contains(r#"aria-valuemin="0""#));
+        assert!(html.contains(r#"aria-valuemax="100""#));
+        assert!(html.contains(r#"aria-label="Progress""#));
+        assert!(html.contains("50%"));
+    }
+
+    #[test]
+    fn test_progress_bar_with_label() {
+        let bar = ProgressBar::new(75.0).label("Upload");
+        let html = bar.render();
+        assert!(html.contains("Upload"));
+        assert!(html.contains(r#"aria-label="Upload""#));
+        assert!(html.contains(r#"aria-valuenow="75""#));
+    }
+
+    #[test]
+    fn test_progress_bar_no_percentage() {
+        let bar = ProgressBar::new(30.0).show_percentage(false);
+        let html = bar.render();
+        assert!(!html.contains("30%"));
+    }
+
+    #[test]
+    fn test_progress_bar_clamped() {
+        let bar = ProgressBar::new(150.0);
+        let html = bar.render();
+        assert!(html.contains(r#"aria-valuenow="100""#));
+    }
+}

@@ -220,6 +220,8 @@ mod tests {
         assert!(html.contains("arniko-progress-ring"));
         assert!(html.contains("75%"));
         assert!(html.contains("WARNING"));
+        assert!(html.contains(r#"role="progressbar""#));
+        assert!(html.contains(r#"aria-valuenow="75""#));
     }
 
     #[cfg(feature = "components")]

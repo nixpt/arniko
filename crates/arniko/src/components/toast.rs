@@ -196,6 +196,7 @@ mod tests {
         assert!(html.contains("arniko-toast"));
         assert!(html.contains("arniko-toast-info"));
         assert!(html.contains("Hello world"));
+        assert!(html.contains(r#"role="status""#));
     }
 
     #[cfg(feature = "components")]

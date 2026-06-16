@@ -104,6 +104,7 @@ mod tests {
 
         assert!(html.contains("arniko-input"));
         assert!(html.contains(r#"type="text""#));
+        assert!(html.contains(r#"aria-label=""#));
         assert!(!html.contains("disabled"));
     }
 

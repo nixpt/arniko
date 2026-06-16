@@ -249,6 +249,7 @@ mod tests {
         assert!(html.contains("href=\"https://example.com\""));
         assert!(html.contains("Visit"));
         assert!(html.contains("arniko-btn"));
+        assert!(html.contains(r#"role="button""#));
         assert!(!html.contains("<button"));
     }
 

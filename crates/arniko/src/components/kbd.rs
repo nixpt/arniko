@@ -38,3 +38,31 @@ impl Component for Kbd {
         ComponentMetadata::default()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_kbd_default() {
+        let kbd = Kbd::new("Ctrl+C");
+        let html = kbd.render();
+        assert!(html.contains("arniko-kbd"));
+        assert!(html.contains("Ctrl+C"));
+        assert!(html.contains("<kbd"));
+    }
+
+    #[test]
+    fn test_kbd_escapes_html() {
+        let kbd = Kbd::new("<bad>");
+        let html = kbd.render();
+        assert!(!html.contains("<bad>"));
+        assert!(html.contains("&lt;bad&gt;"));
+    }
+
+    #[test]
+    fn test_kbd_custom_class() {
+        let kbd = Kbd::new("Enter").class("hotkey");
+        assert!(kbd.render().contains("hotkey"));
+    }
+}

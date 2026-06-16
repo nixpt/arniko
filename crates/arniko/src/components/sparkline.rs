@@ -177,6 +177,7 @@ mod tests {
         let html = chart.render();
         assert!(html.contains("<svg"));
         assert!(html.contains("arniko-sparkline"));
+        assert!(html.contains(r#"role="img""#));
         assert!(!html.contains("<path"));
     }
 

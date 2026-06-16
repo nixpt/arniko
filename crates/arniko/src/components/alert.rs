@@ -105,6 +105,7 @@ mod tests {
         assert!(html.contains("arniko-alert-info"));
         assert!(html.contains("Info message"));
         assert!(html.contains("ℹ️"));
+        assert!(html.contains(r#"role="alert""#));
     }
 
     #[test]
