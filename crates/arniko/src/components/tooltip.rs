@@ -48,7 +48,7 @@ impl Tooltip {
         };
 
         format!(
-            r#"<span class="arniko-tooltip {}" data-tooltip="{}" data-tooltip-position="{}" role="tooltip">{}</span>"#,
+            r#"<span class="arniko-tooltip {}" data-tooltip="{}" data-tooltip-position="{}" role="tooltip" tabindex="0">{}</span>"#,
             escape_html(&self.class), escape_html(&self.tooltip), position_attr, escape_html(&self.text)
         )
     }

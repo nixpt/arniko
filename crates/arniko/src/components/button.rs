@@ -103,7 +103,7 @@ impl Button {
 
         if let Some(ref url) = self.href {
             format!(
-                r#"<a href="{}" class="{}"{}>{}</a>"#,
+                r#"<a href="{}" class="{}"{} role="button">{}</a>"#,
                 escape_html(url), class_str, disabled, escape_html(&self.label)
             )
         } else {

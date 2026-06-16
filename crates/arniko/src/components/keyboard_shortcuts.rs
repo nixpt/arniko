@@ -2,6 +2,19 @@
 //!
 //! Generalized from the Khukuri ShortcutHelp. Renders a modal dialog listing
 //! keyboard shortcuts with their associated actions.
+//!
+//! ## Keyboard Navigation
+//!
+//! The close button (✕) is keyboard-focusable (`tabindex="0"`).
+//! To enable Escape-to-close, register a keydown handler at the app level:
+//!
+//! ```ignore
+//! router.on_keydown(|event| {
+//!     if event.key == "Escape" {
+//!         show_shortcuts.set(false);
+//!     }
+//! });
+//! ```
 
 #[cfg(feature = "components")]
 use crate::{Component, ComponentMetadata};
@@ -84,7 +97,7 @@ impl KeyboardShortcuts {
                 <div class="arniko-shortcut-modal {}">
                     <div class="arniko-shortcut-header">
                         <span class="arniko-shortcut-title">{}</span>
-                        <span class="arniko-shortcut-close" role="button" aria-label="Close">✕</span>
+                        <span class="arniko-shortcut-close" role="button" aria-label="Close" tabindex="0">✕</span>
                     </div>
                     <div class="arniko-shortcut-body">{}</div>
                     <div class="arniko-shortcut-footer">{}</div>
