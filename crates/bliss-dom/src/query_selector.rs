@@ -68,6 +68,40 @@ impl BaseDocument {
         results.iter().map(|node| node.id).collect()
     }
 
+    /// Element-scoped query: all nodes matching `selector` within the subtree
+    /// rooted at `root_id`, EXCLUDING the root itself — DOM
+    /// `element.querySelectorAll` semantics. Unlike the document-global
+    /// [`query_selector_all`](Self::query_selector_all), this traverses from the
+    /// given node, so it also queries **detached** subtrees (e.g. a `cloneNode`
+    /// result not yet inserted) that the global query cannot reach.
+    pub fn query_selector_all_from<'input>(
+        &self,
+        root_id: usize,
+        selector: &'input str,
+    ) -> Result<SmallVec<[usize; 32]>, ParseError<'input>> {
+        let selector_list = self.try_parse_selector_list(selector)?;
+        Ok(self.query_selector_all_from_raw(root_id, &selector_list))
+    }
+
+    /// Find all nodes matching `selector_list` in the subtree rooted at
+    /// `root_id`, excluding the root. Empty if `root_id` is absent.
+    pub fn query_selector_all_from_raw(
+        &self,
+        root_id: usize,
+        selector_list: &SelectorList<SelectorImpl>,
+    ) -> SmallVec<[usize; 32]> {
+        let Some(root) = self.get_node(root_id) else {
+            return SmallVec::new();
+        };
+        let mut results = SmallVec::new();
+        query_selector::<&Node, QueryAll>(root, selector_list, &mut results, MayUseInvalidation::Yes);
+        results
+            .iter()
+            .map(|node| node.id)
+            .filter(|id| *id != root_id)
+            .collect()
+    }
+
     pub fn try_parse_selector_list<'input>(
         &self,
         input: &'input str,
