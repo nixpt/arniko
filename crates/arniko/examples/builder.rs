@@ -3,9 +3,7 @@
 //! This example shows every builder method and output format.
 //! Run with: `cargo run --example builder`
 
-use arniko::{
-    ArnikoApp, Badge, BadgeVariant, Button, ButtonSize, ButtonVariant, Card,
-};
+use arniko::{ArnikoApp, Badge, BadgeVariant, Button, ButtonSize, ButtonVariant, Card};
 
 fn main() {
     demo_minimal();
@@ -18,9 +16,7 @@ fn main() {
 
 /// Bare-minimum builder — just the skeleton.
 fn demo_minimal() {
-    let html = ArnikoApp::html()
-        .include_arniko_styles(false)
-        .render();
+    let html = ArnikoApp::html().include_arniko_styles(false).render();
 
     println!("=== Minimal ===\n{}\n", html);
     assert!(html.contains("<!DOCTYPE html>"));
@@ -34,19 +30,9 @@ fn demo_full_page() {
         .title("Dashboard")
         .base_styles(true)
         .include_arniko_styles(true)
-        .component(
-            Card::new()
-                .title("Status")
-                .body("All systems operational"),
-        )
-        .component(
-            Button::new("Refresh")
-                .variant(ButtonVariant::Accent),
-        )
-        .component(
-            Badge::new("Online")
-                .variant(BadgeVariant::Success),
-        )
+        .component(Card::new().title("Status").body("All systems operational"))
+        .component(Button::new("Refresh").variant(ButtonVariant::Accent))
+        .component(Badge::new("Online").variant(BadgeVariant::Success))
         .style("body { padding: 32px; font-family: system-ui, sans-serif; }")
         .style("h1 { color: #a78bfa; }")
         .render();
@@ -161,9 +147,7 @@ mod tests {
 
     #[test]
     fn test_builder_minimal() {
-        let html = ArnikoApp::html()
-            .include_arniko_styles(false)
-            .render();
+        let html = ArnikoApp::html().include_arniko_styles(false).render();
         assert!(html.starts_with("<!DOCTYPE html>"));
         assert!(html.contains("<meta charset=\"utf-8\">"));
     }
@@ -179,9 +163,7 @@ mod tests {
 
     #[test]
     fn test_builder_with_arniko_styles() {
-        let html = ArnikoApp::html()
-            .title("With Arniko")
-            .render(); // include_arniko_styles defaults to true
+        let html = ArnikoApp::html().title("With Arniko").render(); // include_arniko_styles defaults to true
         assert!(html.contains("arniko-btn"));
     }
 

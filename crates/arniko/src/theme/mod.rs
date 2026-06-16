@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
 pub enum ThemeMode {
     #[default]
-    Dark,      // Original dark theme
+    Dark, // Original dark theme
     Light,     // Clean light theme
     System,    // Follows OS preference
     Frosted,   // Clean white/gray glass

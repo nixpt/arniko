@@ -163,10 +163,7 @@ pub fn feed_reactive(entries_signal: Signal<Vec<FeedEntry>>) -> Box<dyn View> {
 
 /// Create a reactive feed with a builder for full configuration.
 #[cfg(feature = "reactive")]
-pub fn feed_reactive_with<F>(
-    entries_signal: Signal<Vec<FeedEntry>>,
-    build: F,
-) -> Box<dyn View>
+pub fn feed_reactive_with<F>(entries_signal: Signal<Vec<FeedEntry>>, build: F) -> Box<dyn View>
 where
     F: Fn(&mut Feed) + Send + Sync + 'static,
 {
@@ -199,7 +196,12 @@ mod tests {
     fn test_feed_with_entries() {
         let feed = Feed::new()
             .add(FeedEntry::new("14:23", "INFO", "Scan started", "info"))
-            .add(FeedEntry::new("14:24", "CRITICAL", "Vuln found", "critical"));
+            .add(FeedEntry::new(
+                "14:24",
+                "CRITICAL",
+                "Vuln found",
+                "critical",
+            ));
         let html = feed.render();
         assert!(html.contains("Scan started"));
         assert!(html.contains("Vuln found"));

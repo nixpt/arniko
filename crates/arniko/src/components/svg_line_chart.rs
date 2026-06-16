@@ -7,8 +7,8 @@
 
 #[cfg(feature = "components")]
 use {
+    super::svg_util::{build_area, build_path},
     crate::{Component, ComponentMetadata},
-    super::svg_util::{build_path, build_area},
 };
 
 /// Line style for a series.
@@ -176,8 +176,17 @@ impl SvgLineChart {
             .max(1.0);
 
         // Use the longest series to determine x-step
-        let n = self.series.iter().map(|s| s.values.len()).max().unwrap_or(1);
-        let step_x = if n > 1 { graph_w / (n - 1) as f64 } else { graph_w };
+        let n = self
+            .series
+            .iter()
+            .map(|s| s.values.len())
+            .max()
+            .unwrap_or(1);
+        let step_x = if n > 1 {
+            graph_w / (n - 1) as f64
+        } else {
+            graph_w
+        };
 
         // ── Grid lines ──
         let mut grid_svg = String::new();
@@ -267,8 +276,16 @@ impl SvgLineChart {
 
             // Data point circles
             if s.show_circles {
-                let circle_radius = if s.line_style == LineStyle::Solid { "3" } else { "2" };
-                let circle_opacity = if s.line_style == LineStyle::Solid { "0.8" } else { "0.6" };
+                let circle_radius = if s.line_style == LineStyle::Solid {
+                    "3"
+                } else {
+                    "2"
+                };
+                let circle_opacity = if s.line_style == LineStyle::Solid {
+                    "0.8"
+                } else {
+                    "0.6"
+                };
                 for &(cx, cy) in &points {
                     series_svg.push_str(&format!(
                         r##"<circle cx="{cx:.1}" cy="{cy:.1}" r="{r}" fill="{color}" opacity="{op}"/>"##,
@@ -425,8 +442,6 @@ where
     Box::new(ReactiveHtml::new(html))
 }
 
-
-
 // ── Tests ────────────────────────────────────────────────────────────────────
 
 #[cfg(test)]
@@ -445,8 +460,11 @@ mod tests {
     #[cfg(feature = "components")]
     #[test]
     fn test_svg_line_chart_single_series() {
-        let chart = SvgLineChart::new()
-            .add_series(LineSeries::new("CPU", "#00f2ff", vec![10.0, 20.0, 15.0]));
+        let chart = SvgLineChart::new().add_series(LineSeries::new(
+            "CPU",
+            "#00f2ff",
+            vec![10.0, 20.0, 15.0],
+        ));
         let html = chart.render();
         assert!(html.contains("<svg"));
         assert!(html.contains("<path"));
@@ -457,8 +475,16 @@ mod tests {
     #[test]
     fn test_svg_line_chart_multi_series() {
         let chart = SvgLineChart::new()
-            .add_series(LineSeries::new("Total", "#00f2ff", vec![5.0, 8.0, 6.0]).with_area().with_circles())
-            .add_series(LineSeries::new("Critical", "#ef4444", vec![1.0, 2.0, 1.0]).dashed().with_area());
+            .add_series(
+                LineSeries::new("Total", "#00f2ff", vec![5.0, 8.0, 6.0])
+                    .with_area()
+                    .with_circles(),
+            )
+            .add_series(
+                LineSeries::new("Critical", "#ef4444", vec![1.0, 2.0, 1.0])
+                    .dashed()
+                    .with_area(),
+            );
         let html = chart.render();
         assert!(html.contains("Total"));
         assert!(html.contains("Critical"));
@@ -490,8 +516,7 @@ mod tests {
     #[cfg(feature = "components")]
     #[test]
     fn test_svg_line_chart_empty_series_values() {
-        let chart = SvgLineChart::new()
-            .add_series(LineSeries::new("Empty", "#00f2ff", vec![]));
+        let chart = SvgLineChart::new().add_series(LineSeries::new("Empty", "#00f2ff", vec![]));
         let html = chart.render();
         assert!(html.contains("No data"));
     }
@@ -517,6 +542,10 @@ mod tests {
         let html = chart.render();
         // Should have 5 grid lines (0..=4)
         let line_count = html.matches("<line x1=").count();
-        assert!(line_count >= 5, "Expected at least 5 grid lines, got {}", line_count);
+        assert!(
+            line_count >= 5,
+            "Expected at least 5 grid lines, got {}",
+            line_count
+        );
     }
 }

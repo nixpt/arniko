@@ -6,10 +6,9 @@
 //! Run with: `cargo test -p arniko --features "reactive,launch,components,html" --test reactive_components`
 
 use arniko::components::{
-    BarEntry, ShortcutEntry, SplashConfig, ThemeState, ToastVariant,
-    bar_chart_reactive, mount_toast, mount_toast_with_variant,
-    progress_ring_reactive, shortcut_help_reactive, splash_screen_reactive,
-    theme_toggle_reactive,
+    BarEntry, ShortcutEntry, SplashConfig, ThemeState, ToastVariant, bar_chart_reactive,
+    mount_toast, mount_toast_with_variant, progress_ring_reactive, shortcut_help_reactive,
+    splash_screen_reactive, theme_toggle_reactive,
 };
 use arniko::reactive::{Reactor, Signal, View};
 use bliss_dom::{BaseDocument, DocumentConfig, DocumentMutator, qual_name};
@@ -102,7 +101,11 @@ fn test_mount_toast_visible() {
     flush_reactive(&mut doc, &mut reactor);
 
     let text = node_text(&mut doc, root_id);
-    assert!(text.contains("Hello Toast"), "Toast text should appear: {}", text);
+    assert!(
+        text.contains("Hello Toast"),
+        "Toast text should appear: {}",
+        text
+    );
 }
 
 #[test]
@@ -151,7 +154,11 @@ fn test_mount_toast_variants_render_text() {
 
         // Verify the toast text renders for each variant
         let text = node_text(&mut doc, root_id);
-        assert!(text.contains("test"), "Variant {:?}: toast should show text", variant);
+        assert!(
+            text.contains("test"),
+            "Variant {:?}: toast should show text",
+            variant
+        );
     }
 }
 
@@ -201,7 +208,11 @@ fn test_progress_ring_reactive_mounts() {
 
     let text = node_text(&mut doc, root_id);
     assert!(text.contains("75%"), "Ring should show 75%, got: {}", text);
-    assert!(text.contains("WARNING"), "Ring should show WARNING label, got: {}", text);
+    assert!(
+        text.contains("WARNING"),
+        "Ring should show WARNING label, got: {}",
+        text
+    );
 }
 
 #[test]
@@ -227,8 +238,16 @@ fn test_progress_ring_reactive_updates() {
     flush_reactive(&mut doc, &mut reactor);
 
     let text = node_text(&mut doc, root_id);
-    assert!(text.contains("90%"), "Updated ring should show 90%, got: {}", text);
-    assert!(text.contains("SECURE"), "Updated ring should show SECURE, got: {}", text);
+    assert!(
+        text.contains("90%"),
+        "Updated ring should show 90%, got: {}",
+        text
+    );
+    assert!(
+        text.contains("SECURE"),
+        "Updated ring should show SECURE, got: {}",
+        text
+    );
 }
 
 // ── BarChart Tests ───────────────────────────────────────────────────────────
@@ -251,10 +270,26 @@ fn test_bar_chart_reactive_mounts() {
     flush_reactive(&mut doc, &mut reactor);
 
     let text = node_text(&mut doc, root_id);
-    assert!(text.contains("CRITICAL"), "Chart should show CRITICAL label: {}", text);
-    assert!(text.contains("HIGH"), "Chart should show HIGH label: {}", text);
-    assert!(text.contains("5.0"), "Chart should show value 5.0: {}", text);
-    assert!(text.contains("3.0"), "Chart should show value 3.0: {}", text);
+    assert!(
+        text.contains("CRITICAL"),
+        "Chart should show CRITICAL label: {}",
+        text
+    );
+    assert!(
+        text.contains("HIGH"),
+        "Chart should show HIGH label: {}",
+        text
+    );
+    assert!(
+        text.contains("5.0"),
+        "Chart should show value 5.0: {}",
+        text
+    );
+    assert!(
+        text.contains("3.0"),
+        "Chart should show value 3.0: {}",
+        text
+    );
 }
 
 #[test]
@@ -272,7 +307,11 @@ fn test_bar_chart_reactive_empty() {
     flush_reactive(&mut doc, &mut reactor);
 
     let text = node_text(&mut doc, root_id);
-    assert!(text.contains("No data"), "Empty chart should show 'No data': {}", text);
+    assert!(
+        text.contains("No data"),
+        "Empty chart should show 'No data': {}",
+        text
+    );
 }
 
 #[test]
@@ -298,8 +337,16 @@ fn test_bar_chart_reactive_updates() {
     flush_reactive(&mut doc, &mut reactor);
 
     let text = node_text(&mut doc, root_id);
-    assert!(text.contains("B"), "Updated chart should contain B: {}", text);
-    assert!(text.contains("2.0"), "Updated chart should show value 2.0: {}", text);
+    assert!(
+        text.contains("B"),
+        "Updated chart should contain B: {}",
+        text
+    );
+    assert!(
+        text.contains("2.0"),
+        "Updated chart should show value 2.0: {}",
+        text
+    );
 }
 
 // ── KeyboardShortcuts Tests ──────────────────────────────────────────────────
@@ -325,9 +372,17 @@ fn test_shortcut_help_reactive_visible() {
 
     let text = node_text(&mut doc, root_id);
     assert!(text.contains("F5"), "Modal should show F5: {}", text);
-    assert!(text.contains("Refresh"), "Modal should show Refresh: {}", text);
+    assert!(
+        text.contains("Refresh"),
+        "Modal should show Refresh: {}",
+        text
+    );
     assert!(text.contains("Esc"), "Modal should show Esc: {}", text);
-    assert!(text.contains("Keyboard Shortcuts"), "Modal should show title: {}", text);
+    assert!(
+        text.contains("Keyboard Shortcuts"),
+        "Modal should show title: {}",
+        text
+    );
 }
 
 #[test]
@@ -348,7 +403,11 @@ fn test_shortcut_help_reactive_hidden() {
 
     // When hidden, the ReactiveHtml wrapper should have no text content
     let text = node_text(&mut doc, view_id);
-    assert!(text.is_empty(), "Hidden modal should have no text content, got: {}", text);
+    assert!(
+        text.is_empty(),
+        "Hidden modal should have no text content, got: {}",
+        text
+    );
 }
 
 #[test]
@@ -371,7 +430,11 @@ fn test_shortcut_help_reactive_toggle() {
     flush_reactive(&mut doc, &mut reactor);
 
     let text = node_text(&mut doc, root_id);
-    assert!(text.contains("F5"), "Toggled-on modal should show shortcuts: {}", text);
+    assert!(
+        text.contains("F5"),
+        "Toggled-on modal should show shortcuts: {}",
+        text
+    );
 }
 
 // ── ThemeToggle Tests ────────────────────────────────────────────────────────
@@ -400,7 +463,10 @@ fn test_theme_toggle_reactive_mounts() {
     // Verify the button with correct class exists in the rendered DOM
     let button_id = find_by_class(&mut doc, root_id, "arniko-theme-toggle")
         .expect("Should find arniko-theme-toggle button");
-    assert!(doc.get_node(button_id).is_some(), "Button node should exist");
+    assert!(
+        doc.get_node(button_id).is_some(),
+        "Button node should exist"
+    );
 }
 
 // ── SplashScreen Tests ───────────────────────────────────────────────────────
@@ -426,10 +492,26 @@ fn test_splash_screen_reactive_mounts() {
     flush_reactive(&mut doc, &mut reactor);
 
     let text = node_text(&mut doc, root_id);
-    assert!(text.contains("My App"), "Splash should show title: {}", text);
-    assert!(text.contains("v1.0"), "Splash should show subtitle: {}", text);
-    assert!(text.contains("50%"), "Splash should show progress: {}", text);
-    assert!(text.contains("Loading modules..."), "Splash should show status: {}", text);
+    assert!(
+        text.contains("My App"),
+        "Splash should show title: {}",
+        text
+    );
+    assert!(
+        text.contains("v1.0"),
+        "Splash should show subtitle: {}",
+        text
+    );
+    assert!(
+        text.contains("50%"),
+        "Splash should show progress: {}",
+        text
+    );
+    assert!(
+        text.contains("Loading modules..."),
+        "Splash should show status: {}",
+        text
+    );
 }
 
 #[test]
@@ -464,6 +546,14 @@ fn test_splash_screen_reactive_updates() {
     flush_reactive(&mut doc, &mut reactor);
 
     let text = node_text(&mut doc, root_id);
-    assert!(text.contains("100%"), "Updated splash should show 100%: {}", text);
-    assert!(text.contains("Ready!"), "Updated splash should show Ready!: {}", text);
+    assert!(
+        text.contains("100%"),
+        "Updated splash should show 100%: {}",
+        text
+    );
+    assert!(
+        text.contains("Ready!"),
+        "Updated splash should show Ready!: {}",
+        text
+    );
 }

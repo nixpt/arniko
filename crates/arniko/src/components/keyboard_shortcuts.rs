@@ -63,15 +63,19 @@ impl KeyboardShortcuts {
     }
 
     pub fn render(&self) -> String {
-        let rows: String = self.shortcuts.iter().map(|s| {
-            format!(
-                r#"<div class="arniko-shortcut-row">
+        let rows: String = self
+            .shortcuts
+            .iter()
+            .map(|s| {
+                format!(
+                    r#"<div class="arniko-shortcut-row">
                     <span class="arniko-shortcut-keys">{}</span>
                     <span class="arniko-shortcut-action">{}</span>
                 </div>"#,
-                s.keys, s.action
-            )
-        }).collect();
+                    s.keys, s.action
+                )
+            })
+            .collect();
 
         format!(
             r#"<div class="arniko-shortcut-overlay">
@@ -107,7 +111,7 @@ impl Component for KeyboardShortcuts {
 // ── Reactive View ────────────────────────────────────────────────────────────
 
 #[cfg(feature = "reactive")]
-use crate::reactive::{Signal, View, ReactiveHtml};
+use crate::reactive::{ReactiveHtml, Signal, View};
 
 /// Create a reactive shortcut help modal whose visibility is controlled by
 /// a `Signal<bool>`. When `false`, an empty string is rendered (hidden).

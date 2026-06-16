@@ -96,7 +96,9 @@ impl BarChart {
             );
         }
 
-        let max_val = self.entries.iter()
+        let max_val = self
+            .entries
+            .iter()
             .map(|e| e.value)
             .fold(0.0_f64, f64::max)
             .max(1.0);
@@ -159,13 +161,11 @@ impl Component for BarChart {
 // ── Reactive View ────────────────────────────────────────────────────────────
 
 #[cfg(feature = "reactive")]
-use crate::reactive::{Signal, View, ReactiveHtml};
+use crate::reactive::{ReactiveHtml, Signal, View};
 
 /// Create a reactive bar chart that updates when the entries signal changes.
 #[cfg(feature = "reactive")]
-pub fn bar_chart_reactive(
-    entries_signal: Signal<Vec<BarEntry>>,
-) -> Box<dyn View> {
+pub fn bar_chart_reactive(entries_signal: Signal<Vec<BarEntry>>) -> Box<dyn View> {
     let html = entries_signal.derive(move |entries| {
         BarChart {
             entries,
@@ -173,7 +173,8 @@ pub fn bar_chart_reactive(
             max_bar_width_px: 300,
             show_values: true,
             class: String::new(),
-        }.render()
+        }
+        .render()
     });
     Box::new(ReactiveHtml::new(html))
 }

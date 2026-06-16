@@ -5,8 +5,8 @@
 //! Run with:
 //!   CARGO_TARGET_DIR=/build/target-arniko cargo run -p arniko --features reactive --example todo_list
 
-use std::sync::{Arc, Mutex};
 use arniko::reactive::{Div, For, Signal, StaticHtml, Text, View, launch_reactive};
+use std::sync::{Arc, Mutex};
 
 fn main() {
     launch_reactive(|mutator, reactor, router, root| {
@@ -25,7 +25,6 @@ fn main() {
                 Box::new(StaticHtml(
                     r#"<h1 style="margin:0;color:#a855f7;font-size:26px;">Todo List</h1>"#.into(),
                 )),
-
                 // Add / clear buttons
                 Box::new(Div::styled(
                     "display:flex; gap:10px;",
@@ -50,7 +49,6 @@ fn main() {
                         )),
                     ],
                 )),
-
                 // The reactive list
                 Box::new(For::styled(
                     "display:flex; flex-direction:column; gap:8px; \
@@ -58,13 +56,12 @@ fn main() {
                     items.clone(),
                     |item| todo_row(item),
                 )),
-
                 // Item count (computed inline via a separate signal binding)
                 Box::new(Div::styled(
                     "font-size:12px; color:#52525b;",
-                    vec![Box::new(arniko::reactive::ReactiveText::new(
-                        items.derive(|v| format!("{} item{}", v.len(), if v.len() == 1 { "" } else { "s" })),
-                    ))],
+                    vec![Box::new(arniko::reactive::ReactiveText::new(items.derive(
+                        |v| format!("{} item{}", v.len(), if v.len() == 1 { "" } else { "s" }),
+                    )))],
                 )),
             ],
         );
@@ -83,7 +80,11 @@ fn main() {
             let mut n = ctr.lock().unwrap();
             *n += 1;
             let label = format!("New item {}", *n);
-            add.update(|v| { let mut v = v.clone(); v.push(label.clone()); v });
+            add.update(|v| {
+                let mut v = v.clone();
+                v.push(label.clone());
+                v
+            });
         });
 
         let rem = items.clone();

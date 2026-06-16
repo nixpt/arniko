@@ -57,7 +57,11 @@ impl StatusBadge {
             StatusVariant::Info => "arniko-status-info",
             StatusVariant::Offline => "arniko-status-offline",
         };
-        let pulse_class = if self.pulse { " arniko-status-pulse" } else { "" };
+        let pulse_class = if self.pulse {
+            " arniko-status-pulse"
+        } else {
+            ""
+        };
 
         format!(
             r#"<span class="arniko-status-badge {} {}{}">{}</span>"#,

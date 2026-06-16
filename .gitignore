@@ -10,3 +10,6 @@
 .dejavue/embedder_circuit.json
 .dejavue/timeline.jsonl.bak-*
 
+
+# khukuri secrets/persistence (fleet-gitignored)
+.khukuri/

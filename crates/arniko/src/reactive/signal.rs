@@ -22,13 +22,19 @@ pub struct Signal<T: Clone + 'static> {
 
 impl<T: Clone + 'static> Clone for Signal<T> {
     fn clone(&self) -> Self {
-        Signal { inner: Arc::clone(&self.inner) }
+        Signal {
+            inner: Arc::clone(&self.inner),
+        }
     }
 }
 
 impl<T: Clone + Send + Sync + 'static> Reactive<T> for Signal<T> {
-    fn get_value(&self) -> T { self.get() }
-    fn reactive_version(&self) -> u64 { self.version() }
+    fn get_value(&self) -> T {
+        self.get()
+    }
+    fn reactive_version(&self) -> u64 {
+        self.version()
+    }
 }
 
 impl<T: Clone + 'static> Signal<T> {

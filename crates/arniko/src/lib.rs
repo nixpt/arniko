@@ -185,9 +185,7 @@ impl ArnikoHtmlBuilder {
 
         // 2. Base CSS reset
         if self.include_reset {
-            all_styles.push_str(
-                "* { box-sizing: border-box; margin: 0; padding: 0; }\n",
-            );
+            all_styles.push_str("* { box-sizing: border-box; margin: 0; padding: 0; }\n");
         }
 
         // 3. User-provided extra styles
@@ -301,25 +299,27 @@ mod tests {
     #[test]
     fn test_builder_default_includes_arniko_styles() {
         let html = ArnikoHtmlBuilder::new().render();
-        assert!(html.contains("arniko-btn"), "default build should include arniko styles");
-        assert!(html.contains("<!DOCTYPE html>"), "should produce valid HTML");
+        assert!(
+            html.contains("arniko-btn"),
+            "default build should include arniko styles"
+        );
+        assert!(
+            html.contains("<!DOCTYPE html>"),
+            "should produce valid HTML"
+        );
     }
 
     #[cfg(feature = "html")]
     #[test]
     fn test_builder_title() {
-        let html = ArnikoHtmlBuilder::new()
-            .title("My Page")
-            .render();
+        let html = ArnikoHtmlBuilder::new().title("My Page").render();
         assert!(html.contains("<title>My Page</title>"));
     }
 
     #[cfg(feature = "html")]
     #[test]
     fn test_builder_title_escaped() {
-        let html = ArnikoHtmlBuilder::new()
-            .title("Foo & Bar <3")
-            .render();
+        let html = ArnikoHtmlBuilder::new().title("Foo & Bar <3").render();
         assert!(html.contains("Foo &amp; Bar &lt;3"));
         assert!(!html.contains("<title>Foo & Bar <3"));
     }
@@ -330,15 +330,16 @@ mod tests {
         let html = ArnikoHtmlBuilder::new()
             .include_arniko_styles(false)
             .render();
-        assert!(!html.contains("arniko-btn"), "arniko styles should be absent when opted out");
+        assert!(
+            !html.contains("arniko-btn"),
+            "arniko styles should be absent when opted out"
+        );
     }
 
     #[cfg(feature = "html")]
     #[test]
     fn test_builder_base_styles() {
-        let html = ArnikoHtmlBuilder::new()
-            .base_styles(true)
-            .render();
+        let html = ArnikoHtmlBuilder::new().base_styles(true).render();
         assert!(html.contains("box-sizing: border-box"));
     }
 
@@ -390,8 +391,10 @@ mod tests {
             .include_arniko_styles(false)
             .theme(ThemeMode::Light)
             .render();
-        assert!(html.contains("<html class=\"theme-light\">"),
-            "theme light should add class=\"theme-light\" to html tag");
+        assert!(
+            html.contains("<html class=\"theme-light\">"),
+            "theme light should add class=\"theme-light\" to html tag"
+        );
     }
 
     #[cfg(feature = "html")]
@@ -401,10 +404,14 @@ mod tests {
             .include_arniko_styles(false)
             .render();
         // Default should be a plain <html> tag (no class)
-        assert!(!html.contains("<html class="),
-            "default render should not have a class on html");
-        assert!(html.contains("<html>"),
-            "default render should have plain <html>");
+        assert!(
+            !html.contains("<html class="),
+            "default render should not have a class on html"
+        );
+        assert!(
+            html.contains("<html>"),
+            "default render should have plain <html>"
+        );
     }
 
     #[cfg(feature = "html")]
@@ -431,20 +438,27 @@ mod tests {
 
         // When UPDATE_EXPECT is set, write the current CSS as the new golden file
         if std::env::var("UPDATE_EXPECT").is_ok() {
-            std::fs::write(&golden_path, current)
-                .unwrap_or_else(|e| panic!("failed to write golden file {}: {}", golden_path.display(), e));
+            std::fs::write(&golden_path, current).unwrap_or_else(|e| {
+                panic!(
+                    "failed to write golden file {}: {}",
+                    golden_path.display(),
+                    e
+                )
+            });
             eprintln!("🖼️  Updated golden file: {}", golden_path.display());
             return;
         }
 
         // Otherwise, compare against the golden file
-        let golden = std::fs::read_to_string(&golden_path)
-            .unwrap_or_else(|e| panic!(
+        let golden = std::fs::read_to_string(&golden_path).unwrap_or_else(|e| {
+            panic!(
                 "Golden file not found at {}. \
                  Run `UPDATE_EXPECT=1 cargo test -p arniko --features components --lib` \
                  to generate it.\nError: {}",
-                golden_path.display(), e
-            ));
+                golden_path.display(),
+                e
+            )
+        });
 
         if current != golden {
             // Show a diff-like snippet

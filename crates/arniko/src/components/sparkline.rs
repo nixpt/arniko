@@ -5,8 +5,8 @@
 
 #[cfg(feature = "components")]
 use {
+    super::svg_util::{build_area, build_path},
     crate::{Component, ComponentMetadata},
-    super::svg_util::{build_path, build_area},
 };
 
 // ── HTML Component ───────────────────────────────────────────────────────────
@@ -152,10 +152,7 @@ pub fn sparkline_reactive(values_signal: Signal<Vec<f64>>) -> Box<dyn View> {
 
 /// Create a reactive sparkline with a builder for full configuration.
 #[cfg(feature = "reactive")]
-pub fn sparkline_reactive_with<F>(
-    values_signal: Signal<Vec<f64>>,
-    build: F,
-) -> Box<dyn View>
+pub fn sparkline_reactive_with<F>(values_signal: Signal<Vec<f64>>, build: F) -> Box<dyn View>
 where
     F: Fn(&mut Sparkline) + Send + Sync + 'static,
 {
@@ -166,8 +163,6 @@ where
     });
     Box::new(ReactiveHtml::new(html))
 }
-
-
 
 // ── Tests ────────────────────────────────────────────────────────────────────
 

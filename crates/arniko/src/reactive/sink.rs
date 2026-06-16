@@ -18,7 +18,10 @@ pub struct EventRouter {
 impl EventRouter {
     /// Register a click handler for a mounted node. The handler should call `signal.set()`.
     pub fn on_click(&self, node_id: usize, handler: impl Fn() + Send + Sync + 'static) {
-        self.handlers.lock().unwrap().insert(node_id, Box::new(handler));
+        self.handlers
+            .lock()
+            .unwrap()
+            .insert(node_id, Box::new(handler));
     }
 
     /// Remove a click handler.
@@ -37,7 +40,10 @@ impl EventRouter {
     /// Register an input handler for a text input element.
     /// The handler receives the current input value as a String.
     pub fn on_input(&self, node_id: usize, handler: impl Fn(String) + Send + Sync + 'static) {
-        self.input_handlers.lock().unwrap().insert(node_id, Box::new(handler));
+        self.input_handlers
+            .lock()
+            .unwrap()
+            .insert(node_id, Box::new(handler));
     }
 
     /// Remove an input handler.

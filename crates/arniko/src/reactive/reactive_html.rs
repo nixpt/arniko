@@ -3,8 +3,8 @@
 //! This is the bridge between string-based HTML generation and the live DOM tree.
 //! Use it to render component HTML strings that need to update reactively.
 
-use super::{Reactor, View};
 use super::signal::Reactive;
+use super::{Reactor, View};
 use bliss_dom::{Attribute, DocumentMutator, QualName, local_name, ns};
 
 /// A `View` that mounts a `<div>` and keeps its `innerHTML` in sync with a
@@ -49,12 +49,7 @@ impl<R: Reactive<String>> ReactiveHtml<R> {
 }
 
 impl<R: Reactive<String>> View for ReactiveHtml<R> {
-    fn mount(
-        &self,
-        mutator: &mut DocumentMutator,
-        reactor: &mut Reactor,
-        parent: usize,
-    ) -> usize {
+    fn mount(&self, mutator: &mut DocumentMutator, reactor: &mut Reactor, parent: usize) -> usize {
         let mut attrs = vec![];
         if let Some(ref cls) = self.class_name {
             attrs.push(Attribute {
@@ -69,10 +64,8 @@ impl<R: Reactive<String>> View for ReactiveHtml<R> {
             });
         }
 
-        let node_id = mutator.create_element(
-            QualName::new(None, ns!(html), local_name!("div")),
-            attrs,
-        );
+        let node_id =
+            mutator.create_element(QualName::new(None, ns!(html), local_name!("div")), attrs);
         mutator.append_children(parent, &[node_id]);
 
         // Initial render

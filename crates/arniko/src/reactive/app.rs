@@ -12,8 +12,8 @@ use winit::event::{ElementState, MouseButton, WindowEvent};
 use winit::event_loop::ActiveEventLoop;
 use winit::window::WindowId;
 
-use super::sink::{EventRouter, HandlerMap, event_router};
 use super::Reactor;
+use super::sink::{EventRouter, HandlerMap, event_router};
 
 /// ApplicationHandler that wraps BlissApplication, flushes the reactor after each event,
 /// and routes click events to registered handlers by walking the DOM ancestor chain.
@@ -95,7 +95,9 @@ impl ApplicationHandler for ReactiveApplication {
             view.request_redraw();
         }
 
-        self.inner.proxy.send_event(BlissShellEvent::Poll { window_id });
+        self.inner
+            .proxy
+            .send_event(BlissShellEvent::Poll { window_id });
     }
 }
 

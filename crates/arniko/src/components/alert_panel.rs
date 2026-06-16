@@ -302,7 +302,13 @@ mod tests {
         let panel = AlertPanel::new()
             .title("Security Alerts")
             .title_icon("⚠️")
-            .add(AlertEntry::new("a1", AlertLevel::Info, "Info", "FYI", "12:00"));
+            .add(AlertEntry::new(
+                "a1",
+                AlertLevel::Info,
+                "Info",
+                "FYI",
+                "12:00",
+            ));
         let html = panel.render();
         assert!(html.contains("Security Alerts"));
         assert!(html.contains("⚠️"));

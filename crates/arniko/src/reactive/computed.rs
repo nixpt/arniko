@@ -34,13 +34,19 @@ pub struct Computed<T: Clone + 'static> {
 
 impl<T: Clone + 'static> Clone for Computed<T> {
     fn clone(&self) -> Self {
-        Computed { inner: Arc::clone(&self.inner) }
+        Computed {
+            inner: Arc::clone(&self.inner),
+        }
     }
 }
 
 impl<T: Clone + Send + Sync + 'static> Reactive<T> for Computed<T> {
-    fn get_value(&self) -> T { self.get() }
-    fn reactive_version(&self) -> u64 { self.version() }
+    fn get_value(&self) -> T {
+        self.get()
+    }
+    fn reactive_version(&self) -> u64 {
+        self.version()
+    }
 }
 
 impl<T: Clone + Send + Sync + 'static> Computed<T> {

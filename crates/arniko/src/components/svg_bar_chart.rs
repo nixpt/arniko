@@ -283,7 +283,10 @@ pub fn svg_bar_chart_reactive(entries_signal: Signal<Vec<SvgBarEntry>>) -> Box<d
 
 /// Create a reactive SVG bar chart with a builder for full configuration.
 #[cfg(feature = "reactive")]
-pub fn svg_bar_chart_reactive_with<F>(entries_signal: Signal<Vec<SvgBarEntry>>, build: F) -> Box<dyn View>
+pub fn svg_bar_chart_reactive_with<F>(
+    entries_signal: Signal<Vec<SvgBarEntry>>,
+    build: F,
+) -> Box<dyn View>
 where
     F: Fn(&mut SvgBarChart) + Send + Sync + 'static,
 {

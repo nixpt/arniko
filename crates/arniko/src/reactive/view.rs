@@ -4,8 +4,8 @@ use std::sync::Arc;
 
 use bliss_dom::{Attribute, DocumentMutator, QualName, local_name, ns};
 
-use super::{Reactor, Signal};
 use super::signal::Reactive;
+use super::{Reactor, Signal};
 
 /// A component that mounts itself into the bliss-dom tree and registers reactive bindings.
 /// Returns the root node ID created under `parent`.
@@ -61,7 +61,10 @@ pub struct ReactiveText<T: Clone + Display + 'static, R: Reactive<T> = Signal<T>
 
 impl<T: Clone + Display + 'static, R: Reactive<T>> ReactiveText<T, R> {
     pub fn new(source: R) -> Self {
-        ReactiveText { source, _marker: PhantomData }
+        ReactiveText {
+            source,
+            _marker: PhantomData,
+        }
     }
 }
 
@@ -85,7 +88,10 @@ pub struct Div {
 
 impl Div {
     pub fn new(children: Vec<Box<dyn View>>) -> Self {
-        Div { attrs: vec![], children }
+        Div {
+            attrs: vec![],
+            children,
+        }
     }
 
     pub fn styled(style: impl Into<String>, children: Vec<Box<dyn View>>) -> Self {
@@ -93,7 +99,10 @@ impl Div {
             name: QualName::new(None, ns!(), local_name!("style")),
             value: style.into(),
         };
-        Div { attrs: vec![style_attr], children }
+        Div {
+            attrs: vec![style_attr],
+            children,
+        }
     }
 }
 
@@ -116,7 +125,10 @@ pub struct Span {
 
 impl Span {
     pub fn new(children: Vec<Box<dyn View>>) -> Self {
-        Span { attrs: vec![], children }
+        Span {
+            attrs: vec![],
+            children,
+        }
     }
 }
 
@@ -168,11 +180,13 @@ where
     R: Reactive<Vec<T>>,
 {
     /// Create an unstyled list container.
-    pub fn new(
-        source: R,
-        template: impl Fn(&T) -> Box<dyn View> + Send + Sync + 'static,
-    ) -> Self {
-        For { source, template: Arc::new(template), attrs: vec![], _marker: PhantomData }
+    pub fn new(source: R, template: impl Fn(&T) -> Box<dyn View> + Send + Sync + 'static) -> Self {
+        For {
+            source,
+            template: Arc::new(template),
+            attrs: vec![],
+            _marker: PhantomData,
+        }
     }
 
     /// Create a list container with inline CSS applied to the wrapping `<div>`.
@@ -185,7 +199,12 @@ where
             name: QualName::new(None, ns!(), local_name!("style")),
             value: style.into(),
         };
-        For { source, template: Arc::new(template), attrs: vec![style_attr], _marker: PhantomData }
+        For {
+            source,
+            template: Arc::new(template),
+            attrs: vec![style_attr],
+            _marker: PhantomData,
+        }
     }
 }
 

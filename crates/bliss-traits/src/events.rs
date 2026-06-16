@@ -139,6 +139,8 @@ pub enum DomEventKind {
     Blur,
     FocusIn,
     FocusOut,
+
+    Submit,
 }
 impl DomEventKind {
     pub fn discriminant(self) -> u8 {
@@ -182,6 +184,8 @@ impl FromStr for DomEventKind {
             "blur" => Ok(Self::Blur),
             "focusin" => Ok(Self::FocusIn),
             "focusout" => Ok(Self::FocusOut),
+
+            "submit" => Ok(Self::Submit),
             _ => Err(()),
         }
     }
@@ -223,6 +227,8 @@ pub enum DomEventData {
     Blur(BlissFocusEvent),
     FocusIn(BlissFocusEvent),
     FocusOut(BlissFocusEvent),
+
+    Submit(BlissSubmitEvent),
 }
 impl DomEventData {
     pub fn discriminant(&self) -> u8 {
@@ -270,6 +276,8 @@ impl DomEventData {
             Self::Blur { .. } => "blur",
             Self::FocusIn { .. } => "focusin",
             Self::FocusOut { .. } => "focusout",
+
+            Self::Submit { .. } => "submit",
         }
     }
 
@@ -308,6 +316,8 @@ impl DomEventData {
             Self::Blur { .. } => DomEventKind::Blur,
             Self::FocusIn { .. } => DomEventKind::FocusIn,
             Self::FocusOut { .. } => DomEventKind::FocusOut,
+
+            Self::Submit { .. } => DomEventKind::Submit,
         }
     }
 
@@ -346,6 +356,8 @@ impl DomEventData {
             Self::Blur { .. } => false,
             Self::FocusIn { .. } => false,
             Self::FocusOut { .. } => false,
+
+            Self::Submit { .. } => true,
         }
     }
 
@@ -384,6 +396,8 @@ impl DomEventData {
             Self::Blur { .. } => false,
             Self::FocusIn { .. } => true,
             Self::FocusOut { .. } => true,
+
+            Self::Submit { .. } => true,
         }
     }
 }
@@ -634,6 +648,11 @@ pub struct BlissInputEvent {
 
 #[derive(Clone, Debug)]
 pub struct BlissFocusEvent;
+
+#[derive(Clone, Debug)]
+pub struct BlissSubmitEvent {
+    pub submitter_id: usize,
+}
 
 /// Copy of Winit IME event to avoid lower-level Bliss crates depending on winit
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

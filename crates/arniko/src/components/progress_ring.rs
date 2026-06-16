@@ -16,9 +16,21 @@ pub struct RingThreshold {
 
 /// Predefined thresholds: red < 50, yellow < 80, green ≥ 80.
 pub const DEFAULT_RING_THRESHOLDS: &[RingThreshold] = &[
-    RingThreshold { up_to: 50.0, color: "#ef4444", label: "CRITICAL" },
-    RingThreshold { up_to: 80.0, color: "#f59e0b", label: "WARNING" },
-    RingThreshold { up_to: 100.0, color: "#10b981", label: "SECURE" },
+    RingThreshold {
+        up_to: 50.0,
+        color: "#ef4444",
+        label: "CRITICAL",
+    },
+    RingThreshold {
+        up_to: 80.0,
+        color: "#f59e0b",
+        label: "WARNING",
+    },
+    RingThreshold {
+        up_to: 100.0,
+        color: "#10b981",
+        label: "SECURE",
+    },
 ];
 
 // ── HTML Component ───────────────────────────────────────────────────────────
@@ -145,10 +157,16 @@ impl ProgressRing {
                 </svg>
                 {pct_text}
             </div>"#,
-            cls = self.class, w = self.size_px, h = self.size_px,
-            v = viewbox_size, c = center, r = self.radius,
-            color = color, sw = self.stroke_width,
-            circ = circumference, off = offset,
+            cls = self.class,
+            w = self.size_px,
+            h = self.size_px,
+            v = viewbox_size,
+            c = center,
+            r = self.radius,
+            color = color,
+            sw = self.stroke_width,
+            circ = circumference,
+            off = offset,
             pct_text = percentage_text
         )
     }
@@ -172,7 +190,7 @@ impl Component for ProgressRing {
 // ── Reactive View ────────────────────────────────────────────────────────────
 
 #[cfg(feature = "reactive")]
-use crate::reactive::{Signal, View, ReactiveHtml};
+use crate::reactive::{ReactiveHtml, Signal, View};
 
 /// Create a reactive progress ring that updates when the value signal changes.
 #[cfg(feature = "reactive")]

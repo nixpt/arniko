@@ -11,9 +11,9 @@ use crate::{Component, ComponentMetadata};
 pub struct SplashConfig {
     pub title: String,
     pub subtitle: String,
-    pub progress: u8,    // 0-100
+    pub progress: u8, // 0-100
     pub status: String,
-    pub logo_svg: Option<String>,  // Optional inline SVG for the logo
+    pub logo_svg: Option<String>, // Optional inline SVG for the logo
 }
 
 impl Default for SplashConfig {
@@ -70,15 +70,20 @@ impl SplashScreen {
 
     pub fn render(&self) -> String {
         let display_val = if self.display { "flex" } else { "none" };
-        let logo_html = self.config.logo_svg.as_ref().map(|svg| {
-            format!(
-                r#"<div class="arniko-splash-logo-box">
+        let logo_html = self
+            .config
+            .logo_svg
+            .as_ref()
+            .map(|svg| {
+                format!(
+                    r#"<div class="arniko-splash-logo-box">
                     {}
                     <div class="arniko-splash-pulse-ring"></div>
                 </div>"#,
-                svg
-            )
-        }).unwrap_or_default();
+                    svg
+                )
+            })
+            .unwrap_or_default();
 
         let subtitle_html = if self.config.subtitle.is_empty() {
             String::new()
@@ -135,16 +140,12 @@ impl Component for SplashScreen {
 // ── Reactive View ────────────────────────────────────────────────────────────
 
 #[cfg(feature = "reactive")]
-use crate::reactive::{Signal, View, ReactiveHtml};
+use crate::reactive::{ReactiveHtml, Signal, View};
 
 /// Create a reactive splash screen that updates when the config signal changes.
 #[cfg(feature = "reactive")]
-pub fn splash_screen_reactive(
-    config_signal: &Signal<SplashConfig>,
-) -> Box<dyn View> {
-    let html = config_signal.derive(|config| {
-        SplashScreen::new(config.clone()).render()
-    });
+pub fn splash_screen_reactive(config_signal: &Signal<SplashConfig>) -> Box<dyn View> {
+    let html = config_signal.derive(|config| SplashScreen::new(config.clone()).render());
     Box::new(ReactiveHtml::new(html))
 }
 

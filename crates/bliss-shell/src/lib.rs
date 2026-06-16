@@ -199,4 +199,22 @@ impl ShellProvider for BlissShellProvider {
         };
         files.unwrap_or_default()
     }
+
+    /// Show a platform-native context menu at the given screen coordinates.
+    ///
+    /// winit does not provide a native context menu API, so this requires
+    /// platform-specific shell integration. The context menu event is still
+    /// properly dispatched to the script engine — scripts can handle it via
+    /// JavaScript event listeners and render custom in-app menus.
+    ///
+    /// Platform-specific implementation notes:
+    /// - Linux: Requires a GUI toolkit (GTK popover via gtk-rs) or
+    ///   xdg-desktop-portal menu (ashpd/zbus)
+    /// - macOS: Uses NSMenu via objc2
+    /// - Windows: Uses TrackPopupMenu via winapi
+    fn show_context_menu(&self, x: f64, y: f64) {
+        let _ = (x, y);
+        // No native context menu is available without platform-specific
+        // GUI toolkit dependencies. The event system handles the rest.
+    }
 }

@@ -15,13 +15,19 @@ use arniko::reactive::{
 fn main() {
     launch_reactive(|mutator, reactor, router, root| {
         let count = Signal::new(0i32);
-        let step  = Signal::new(1i32);
+        let step = Signal::new(1i32);
 
         // ── Derived values ────────────────────────────────────────────────────
         let doubled: Computed<i32> = count.derive(|n| n * 2);
-        let sum:     Computed<i32> = Computed::from2(count.clone(), step.clone(), |c, s| c + s);
-        let label:   Computed<&'static str> = count.derive(|n| {
-            if n > 0 { "positive" } else if n < 0 { "negative" } else { "zero" }
+        let sum: Computed<i32> = Computed::from2(count.clone(), step.clone(), |c, s| c + s);
+        let label: Computed<&'static str> = count.derive(|n| {
+            if n > 0 {
+                "positive"
+            } else if n < 0 {
+                "negative"
+            } else {
+                "zero"
+            }
         });
 
         // ── Layout ────────────────────────────────────────────────────────────
@@ -34,9 +40,9 @@ fn main() {
                 Box::new(StaticHtml(
                     r#"<h1 style="margin:0;color:#a855f7;font-size:26px;">
                            Computed Signals
-                       </h1>"#.into(),
+                       </h1>"#
+                        .into(),
                 )),
-
                 // Counter display + controls
                 Box::new(Div::styled(
                     "display:flex; flex-direction:column; align-items:center; gap:16px; \
@@ -72,7 +78,6 @@ fn main() {
                         )),
                     ],
                 )),
-
                 // Derived values table
                 Box::new(Div::styled(
                     "display:flex; flex-direction:column; gap:10px; \
@@ -84,7 +89,6 @@ fn main() {
                         row("label", Box::new(ReactiveText::new(label))),
                     ],
                 )),
-
                 // Step control
                 Box::new(Div::styled(
                     "display:flex; align-items:center; gap:12px; font-size:13px; color:#71717a;",
@@ -110,19 +114,28 @@ fn main() {
 
         // ── Wire click handlers ───────────────────────────────────────────────
         let counter_card = mutator.child_ids(ui_id)[1];
-        let btns_row     = mutator.child_ids(counter_card)[1];
-        let btns         = mutator.child_ids(btns_row);
+        let btns_row = mutator.child_ids(counter_card)[1];
+        let btns = mutator.child_ids(btns_row);
 
-        let step_row    = mutator.child_ids(ui_id)[3];
-        let step_btns   = [mutator.child_ids(step_row)[1], mutator.child_ids(step_row)[3]];
+        let step_row = mutator.child_ids(ui_id)[3];
+        let step_btns = [
+            mutator.child_ids(step_row)[1],
+            mutator.child_ids(step_row)[3],
+        ];
 
         let dec = count.clone();
-        let s   = step.clone();
-        router.on_click(btns[0], move || { let s = s.get(); dec.update(|n| n - s); });
+        let s = step.clone();
+        router.on_click(btns[0], move || {
+            let s = s.get();
+            dec.update(|n| n - s);
+        });
 
         let inc = count.clone();
-        let s   = step.clone();
-        router.on_click(btns[1], move || { let s = s.get(); inc.update(|n| n + s); });
+        let s = step.clone();
+        router.on_click(btns[1], move || {
+            let s = s.get();
+            inc.update(|n| n + s);
+        });
 
         let rst = count.clone();
         router.on_click(btns[2], move || rst.set(0));

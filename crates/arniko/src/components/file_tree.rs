@@ -106,41 +106,58 @@ impl FileTree {
             return self.render_empty();
         }
 
-        let rows: String = self.state.entries.iter().map(|e| {
-            let indent = "&nbsp;&nbsp;".repeat(e.depth);
-            let icon = if e.is_directory {
-                "📁"
-            } else {
-                match e.metadata_class.as_deref() {
-                    Some("test") => "🧪",
-                    _ => "📄",
-                }
-            };
-            let name = e.path.split('/').last().unwrap_or(&e.path);
-            let row_class = if e.is_directory {
-                "arniko-filetree-dir"
-            } else {
-                match e.metadata_class.as_deref() {
-                    Some("test") => "arniko-filetree-test",
-                    _ => "arniko-filetree-file",
-                }
-            };
-            let selected_class = self.state.selected_file.as_ref().map(|s| s == &e.path).unwrap_or(false);
-            let selected_attr = if selected_class { " arniko-filetree-selected" } else { "" };
-            format!(
-                r#"<div class="arniko-filetree-row {}{}" data-path="{}">
+        let rows: String = self
+            .state
+            .entries
+            .iter()
+            .map(|e| {
+                let indent = "&nbsp;&nbsp;".repeat(e.depth);
+                let icon = if e.is_directory {
+                    "📁"
+                } else {
+                    match e.metadata_class.as_deref() {
+                        Some("test") => "🧪",
+                        _ => "📄",
+                    }
+                };
+                let name = e.path.split('/').last().unwrap_or(&e.path);
+                let row_class = if e.is_directory {
+                    "arniko-filetree-dir"
+                } else {
+                    match e.metadata_class.as_deref() {
+                        Some("test") => "arniko-filetree-test",
+                        _ => "arniko-filetree-file",
+                    }
+                };
+                let selected_class = self
+                    .state
+                    .selected_file
+                    .as_ref()
+                    .map(|s| s == &e.path)
+                    .unwrap_or(false);
+                let selected_attr = if selected_class {
+                    " arniko-filetree-selected"
+                } else {
+                    ""
+                };
+                format!(
+                    r#"<div class="arniko-filetree-row {}{}" data-path="{}">
                     <span class="arniko-filetree-indent">{}</span>
                     <span class="arniko-filetree-icon">{}</span>
                     <span class="arniko-filetree-name">{}</span>
                 </div>"#,
-                row_class, selected_attr, e.path, indent, icon, name
-            )
-        }).collect();
+                    row_class, selected_attr, e.path, indent, icon, name
+                )
+            })
+            .collect();
 
         let content_preview = match &self.state.file_content {
             Some(content) => {
                 let preview = content.lines().take(20).collect::<Vec<_>>().join("\n");
-                let escaped = preview.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;");
+                let escaped = preview
+                    .replace('&', "&amp;")
+                    .replace('<', "&lt;")
+                    .replace('>', "&gt;");
                 format!(
                     r##"<div class="arniko-filetree-preview">
                         <div class="arniko-filetree-preview-header">Preview</div>
@@ -224,10 +241,7 @@ pub fn file_tree_reactive(state_signal: Signal<FileTreeState>) -> Box<dyn View> 
 
 /// Create a reactive file tree with a builder for full configuration.
 #[cfg(feature = "reactive")]
-pub fn file_tree_reactive_with<F>(
-    state_signal: Signal<FileTreeState>,
-    build: F,
-) -> Box<dyn View>
+pub fn file_tree_reactive_with<F>(state_signal: Signal<FileTreeState>, build: F) -> Box<dyn View>
 where
     F: Fn(&mut FileTree) + Send + Sync + 'static,
 {
@@ -279,9 +293,7 @@ mod tests {
     #[cfg(feature = "components")]
     #[test]
     fn test_file_tree_custom_title() {
-        let tree = FileTree::new()
-            .title("Project Source")
-            .title_icon("🗂️");
+        let tree = FileTree::new().title("Project Source").title_icon("🗂️");
         let html = tree.render();
         assert!(html.contains("Project Source"));
         assert!(html.contains("🗂️"));

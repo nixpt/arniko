@@ -18,12 +18,15 @@ struct ReactiveBinding<T: Clone + 'static, R: Reactive<T>> {
 }
 
 impl<T: Clone + 'static, R: Reactive<T>> Binding for ReactiveBinding<T, R> {
-    fn flush(&mut self, mutator: &mut DocumentMutator) {
+    fn flush(&mut self, mutator: &mut DocumentMutator) -> bool {
         let version = self.source.reactive_version();
         if version != self.last_version {
             self.last_version = version;
             let value = self.source.get_value();
             (self.patch)(mutator, &value);
+            true
+        } else {
+            false
         }
     }
 }
@@ -52,10 +55,10 @@ where
     T: Clone + Send + Sync + 'static,
     R: Reactive<Vec<T>>,
 {
-    fn flush(&mut self, mutator: &mut DocumentMutator) {
+    fn flush(&mut self, mutator: &mut DocumentMutator) -> bool {
         let version = self.source.reactive_version();
         if version == self.last_version {
-            return;
+            return false;
         }
         self.last_version = version;
         let list = self.source.get_value();
@@ -73,13 +76,12 @@ where
             let id = view.mount(mutator, &mut stub, self.container_id);
             self.mounted_ids.push(id);
         }
+        true
     }
 }
 
 /// Tracks reactive→DOM patch bindings. Call `flush` after mutating signals to apply patches.
 pub struct Reactor {
-    bindings: Vec<Box<dyn Binding>>,
-}
     bindings: Vec<Box<dyn Binding>>,
 }
 

@@ -33,7 +33,8 @@ impl ThemeToggle {
     pub fn render(&self) -> String {
         format!(
             r#"<button class="arniko-theme-toggle {}" title="Current: {}">{}</button>"#,
-            self.class, self.current,
+            self.class,
+            self.current,
             format!("{} → {}", self.current, self.next)
         )
     }
@@ -57,7 +58,7 @@ impl Component for ThemeToggle {
 // ── Reactive View ────────────────────────────────────────────────────────────
 
 #[cfg(feature = "reactive")]
-use crate::reactive::{Signal, View, ReactiveHtml};
+use crate::reactive::{ReactiveHtml, Signal, View};
 
 /// The theme state for a reactive toggle — current theme name and the next one.
 #[cfg(feature = "reactive")]
@@ -69,12 +70,8 @@ pub struct ThemeState {
 
 /// Create a reactive theme toggle that updates when the theme signal changes.
 #[cfg(feature = "reactive")]
-pub fn theme_toggle_reactive(
-    theme_signal: &Signal<ThemeState>,
-) -> Box<dyn View> {
-    let html = theme_signal.derive(|state| {
-        ThemeToggle::new(&state.current, &state.next).render()
-    });
+pub fn theme_toggle_reactive(theme_signal: &Signal<ThemeState>) -> Box<dyn View> {
+    let html = theme_signal.derive(|state| ThemeToggle::new(&state.current, &state.next).render());
     Box::new(ReactiveHtml::new(html))
 }
 

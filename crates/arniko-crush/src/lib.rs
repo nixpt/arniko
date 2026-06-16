@@ -16,14 +16,15 @@
 //! HALT
 //! ```
 //!
-//! The host must register the capabilities:
+//! The host must register the capabilities. `arniko-crush` exposes its own
+//! [`register`] function (rather than a `HostCapsBuilder` method) to avoid a
+//! circular dependency on `crush-lang-sdk`:
 //!
 //! ```rust,no_run
 //! use crush_lang_sdk::HostCapsBuilder;
 //!
-//! let host_caps = HostCapsBuilder::new()
-//!     .arniko(true)
-//!     .build();
+//! let mut host_caps = HostCapsBuilder::new().build();
+//! arniko_crush::register(&mut host_caps);
 //! ```
 
 pub mod caps;

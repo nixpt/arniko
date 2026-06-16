@@ -256,8 +256,8 @@ pub fn display(input: stylo::Display) -> taffy::Display {
         // TODO: Support table layout in Taffy
         #[cfg(feature = "grid")]
         stylo::DisplayInside::Table => taffy::Display::Grid,
-        unsupported => {
-            log_fallback!(&format!("display:{:?}", unsupported), "DEFAULT");
+        _ => {
+            log_fallback!("unsupported display value", "DEFAULT");
             taffy::Display::DEFAULT
         }
     };

@@ -3,8 +3,6 @@
 //! This module provides a comprehensive set of UI components
 //! that can render to HTML strings or native UI elements.
 
-pub mod styles;
-mod svg_util;
 pub mod alert;
 pub mod alert_panel;
 pub mod badge;
@@ -23,13 +21,15 @@ pub mod progress_bar;
 pub mod progress_ring;
 pub mod separator;
 pub mod skeleton;
-pub mod splash_screen;
 pub mod sparkline;
 pub mod spinner;
+pub mod splash_screen;
 pub mod status_badge;
 pub mod status_grid;
+pub mod styles;
 pub mod svg_bar_chart;
 pub mod svg_line_chart;
+mod svg_util;
 pub mod theme_toggle;
 pub mod toast;
 pub mod tooltip;
@@ -53,9 +53,9 @@ pub use progress_bar::*;
 pub use progress_ring::*;
 pub use separator::*;
 pub use skeleton::*;
-pub use splash_screen::*;
 pub use sparkline::*;
 pub use spinner::*;
+pub use splash_screen::*;
 pub use status_badge::*;
 pub use status_grid::*;
 pub use svg_bar_chart::*;

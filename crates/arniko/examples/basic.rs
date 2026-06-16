@@ -26,13 +26,11 @@ fn demo_individual_components() {
     println!("Card:\n{}\n", card.render());
 
     // Alert with warning variant
-    let alert = Alert::new("Warning message")
-        .variant(arniko::alert::AlertVariant::Warning);
+    let alert = Alert::new("Warning message").variant(arniko::alert::AlertVariant::Warning);
     println!("Alert:\n{}\n", alert.render());
 
     // Badge with error variant
-    let badge = Badge::new("New")
-        .variant(arniko::badge::BadgeVariant::Error);
+    let badge = Badge::new("New").variant(arniko::badge::BadgeVariant::Error);
     println!("Badge:\n{}\n", badge.render());
 
     // Component metadata
@@ -84,4 +82,3 @@ mod tests {
         assert!(html.contains("Test"));
     }
 }
-
