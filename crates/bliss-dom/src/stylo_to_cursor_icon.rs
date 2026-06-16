@@ -3,7 +3,7 @@ use style::values::computed::ui::CursorKind as StyloCursorKind;
 
 pub(crate) fn stylo_to_cursor_icon(cursor: StyloCursorKind) -> CursorIcon {
     match cursor {
-        StyloCursorKind::None => todo!("set the cursor to none"),
+        StyloCursorKind::None => CursorIcon::Default,
         StyloCursorKind::Default => CursorIcon::Default,
         StyloCursorKind::Pointer => CursorIcon::Pointer,
         StyloCursorKind::ContextMenu => CursorIcon::ContextMenu,
