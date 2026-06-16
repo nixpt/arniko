@@ -13,7 +13,23 @@ use winit::event_loop::ActiveEventLoop;
 use winit::window::WindowId;
 
 use super::Reactor;
+use super::signal::{Signal, WakeFn};
 use super::sink::{EventRouter, HandlerMap, event_router};
+
+/// Reactive runtime context — holds a wake closure so `Signal::set()` can
+/// wake the event loop. Passed into the `launch_reactive` setup closure.
+pub struct ReactiveRuntime {
+    wake_fn: WakeFn,
+}
+
+impl ReactiveRuntime {
+    /// Wire a signal so that `signal.set()` wakes the event loop and triggers
+    /// a reactor flush. Call this in the `launch_reactive` setup closure for
+    /// every signal that may be mutated from a timer / async task / thread.
+    pub fn wire<T: Clone + 'static>(&self, signal: &Signal<T>) {
+        signal.set_waker(self.wake_fn.clone());
+    }
+}
 
 /// ApplicationHandler that wraps BlissApplication, flushes the reactor after each event,
 /// and routes click events to registered handlers by walking the DOM ancestor chain.
@@ -42,6 +58,19 @@ impl ApplicationHandler for ReactiveApplication {
 
     fn proxy_wake_up(&mut self, event_loop: &dyn ActiveEventLoop) {
         self.inner.proxy_wake_up(event_loop);
+        // Self-driven flush: timer / async / thread-driven Signal::set()
+        // calls wake the loop via the proxy but don't generate a WindowEvent.
+        // Flush the reactor here so those updates reach the DOM.
+        for view in self.inner.windows.values_mut() {
+            let mut inner = view.doc.inner_mut();
+            let mut mutator = inner.mutate();
+            if let Ok(mut reactor) = self.reactor.lock() {
+                reactor.flush(&mut mutator, None);
+            }
+            drop(mutator);
+            drop(inner);
+            view.request_redraw();
+        }
     }
 
     fn window_event(
@@ -116,7 +145,7 @@ impl ApplicationHandler for ReactiveApplication {
 ///
 /// For GPU effects (blur, transforms, …), use [`launch_reactive_configured`] instead.
 pub fn launch_reactive(
-    setup: impl FnOnce(&mut bliss::dom::DocumentMutator, &mut Reactor, &mut EventRouter, usize),
+    setup: impl FnOnce(&mut bliss::dom::DocumentMutator, &mut Reactor, &mut EventRouter, usize, &ReactiveRuntime),
 ) {
     launch_reactive_configured(setup, |_| {});
 }
@@ -142,11 +171,20 @@ pub fn launch_reactive(
 /// );
 /// ```
 pub fn launch_reactive_configured(
-    setup: impl FnOnce(&mut bliss::dom::DocumentMutator, &mut Reactor, &mut EventRouter, usize),
+    setup: impl FnOnce(&mut bliss::dom::DocumentMutator, &mut Reactor, &mut EventRouter, usize, &ReactiveRuntime),
     configure_renderer: impl FnOnce(&mut VelloWindowRenderer),
 ) {
     let event_loop = create_default_event_loop();
     let (proxy, receiver) = BlissShellProxy::new(event_loop.create_proxy());
+
+    // Reactive runtime — the waker uses proxy.wake_up() so it works
+    // before any WindowId is known (window is created after setup).
+    let rt = ReactiveRuntime {
+        wake_fn: Arc::new({
+            let proxy = proxy.clone();
+            move || proxy.wake_up()
+        }),
+    };
 
     let mut doc = HtmlDocument::from_html(
         r#"<!DOCTYPE html><html><head></head><body id="arniko-root"></body></html>"#,
@@ -168,7 +206,7 @@ pub fn launch_reactive_configured(
 
         let mut reactor = Reactor::new();
         let mut mutator = inner.mutate();
-        setup(&mut mutator, &mut reactor, &mut router, root_id);
+        setup(&mut mutator, &mut reactor, &mut router, root_id, &rt);
         reactor
     };
 

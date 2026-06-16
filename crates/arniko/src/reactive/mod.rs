@@ -11,7 +11,7 @@ mod view;
 pub use anyrender_vello::{VelloScenePainter, VelloWindowRenderer};
 pub use crate::mustang::SceneScheduler;
 
-pub use app::{launch_reactive, launch_reactive_configured};
+pub use app::{ReactiveRuntime, launch_reactive, launch_reactive_configured};
 pub use computed::Computed;
 pub use keyboard_types;
 pub use reactive_html::ReactiveHtml;

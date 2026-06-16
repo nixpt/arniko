@@ -19,7 +19,7 @@ fn main() {
 
     launch_reactive_configured(
         // ── DOM + signal setup ─────────────────────────────────────────────────
-        |mutator, reactor, router, root| {
+        |mutator, reactor, router, root, _rt| {
             let count = Signal::new(0i32);
 
             let ui = Div::styled(

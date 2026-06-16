@@ -6,7 +6,7 @@
 use arniko::reactive::{Div, ReactiveText, Signal, StaticHtml, Text, View, launch_reactive};
 
 fn main() {
-    launch_reactive(|mutator, reactor, router, root| {
+    launch_reactive(|mutator, reactor, router, root, _rt| {
         let count = Signal::new(0i32);
 
         // ── Layout ─────────────────────────────────────────────────────────────

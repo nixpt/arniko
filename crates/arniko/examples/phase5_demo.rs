@@ -26,7 +26,7 @@ fn main() {
 
     launch_reactive_configured(
         // ── DOM + signal setup ────────────────────────────────────────────────
-        |mutator: &mut DocumentMutator, reactor: &mut Reactor, router: &mut EventRouter, root| {
+        |mutator: &mut DocumentMutator, reactor: &mut Reactor, router: &mut EventRouter, root, _rt| {
             let count = Signal::new(0i32);
 
             // Use DirectDomMutator to demonstrate the Phase 5 mutation API.

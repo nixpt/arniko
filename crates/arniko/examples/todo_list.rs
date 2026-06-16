@@ -9,7 +9,7 @@ use arniko::reactive::{Div, For, Signal, StaticHtml, Text, View, launch_reactive
 use std::sync::{Arc, Mutex};
 
 fn main() {
-    launch_reactive(|mutator, reactor, router, root| {
+    launch_reactive(|mutator, reactor, router, root, _rt| {
         let items: Signal<Vec<String>> = Signal::new(vec![
             "Learn arniko".into(),
             "Build a UI".into(),

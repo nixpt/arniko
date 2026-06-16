@@ -13,7 +13,7 @@ use arniko::reactive::{
 };
 
 fn main() {
-    launch_reactive(|mutator, reactor, router, root| {
+    launch_reactive(|mutator, reactor, router, root, _rt| {
         let count = Signal::new(0i32);
         let step = Signal::new(1i32);
 
