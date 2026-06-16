@@ -170,7 +170,19 @@ impl ServoStylesheetLoader for StylesheetLoader {
             source_location: location,
         };
 
-        let url = import.url.url().unwrap().clone();
+        let url = match import.url.url() {
+            Some(url) => url.clone(),
+            None => {
+                // Malformed CSS @import URL — return a refused import
+                return ServoArc::new(lock.wrap(ImportRule {
+                    url: import.url,
+                    stylesheet: ImportSheet::new_refused(),
+                    supports: import.supports,
+                    layer: import.layer,
+                    source_location: import.source_location,
+                }));
+            }
+        };
         let import = ServoArc::new(lock.wrap(import));
         self.net_provider.fetch(
             self.doc_id,
@@ -396,8 +408,8 @@ pub(crate) fn fetch_font_face(
                         return None;
                     }
 
-                    let url = url_source.url.url().unwrap().as_ref().clone();
-                    Some((url, format))
+                    let url = url_source.url.url()?;
+                    Some((url.as_ref().clone(), format))
                 });
 
             if let Some((url, format)) = preferred_source {

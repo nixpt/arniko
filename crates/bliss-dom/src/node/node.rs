@@ -523,7 +523,11 @@ impl Node {
         {
             if !input_data.is_multiline {
                 let content_box_height = self.final_layout.content_box_height();
-                let input_height = input_data.editor.try_layout().unwrap().height() / scale as f32;
+                let input_height = input_data
+                    .editor
+                    .try_layout()
+                    .map(|layout| layout.height() / scale as f32)
+                    .unwrap_or(0.0);
                 let y_offset = ((content_box_height - input_height) / 2.0).max(0.0);
 
                 return y_offset as f64;
@@ -1128,7 +1132,9 @@ impl Node {
 
         // Inline children
         if self.flags.is_inline_root() {
-            let element_data = &self.element_data().unwrap();
+            let Some(element_data) = self.element_data() else {
+                return None;
+            };
             if let Some(ild) = element_data.inline_layout_data.as_ref() {
                 let layout = &ild.layout;
                 let scale = layout.scale();

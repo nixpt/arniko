@@ -583,7 +583,10 @@ fn collect_complex_layout_children(
                     doc.create_node(NodeData::AnonymousBlock(ElementData::new(NAME, Vec::new())));
 
                 // Set style data
-                let parent_style = doc.nodes[container_node_id].primary_styles().unwrap();
+                let Some(parent_style) = doc.nodes[container_node_id].primary_styles() else {
+                    // Parent has no computed styles — skip anonymous block creation
+                    return;
+                };
                 let read_guard = doc.guard.read();
                 let guards = StylesheetGuards::same(&read_guard);
                 let style = doc.stylist.style_for_anonymous::<&Node>(
@@ -827,7 +830,11 @@ pub(crate) fn find_inline_layout_embedded_boxes(
             NodeData::Comment | NodeData::Text(_) => {
                 node.remove_damage(CONSTRUCT_DESCENDENT | CONSTRUCT_FC | CONSTRUCT_BOX);
             }
-            NodeData::Document | NodeData::ShadowRoot { .. } => unreachable!(),
+            NodeData::Document | NodeData::ShadowRoot { .. } => {
+                // Document and ShadowRoot nodes should not appear as inline
+                // children. If they do (internal state corruption), skip silently
+                // rather than panicking.
+            }
         }
     }
 }
@@ -1081,7 +1088,10 @@ pub(crate) fn build_inline_layout_into(
             NodeData::Comment => {
                 // node.remove_damage(CONSTRUCT_DESCENDENT | CONSTRUCT_FC | CONSTRUCT_BOX);
             }
-            NodeData::Document | NodeData::ShadowRoot { .. } => unreachable!(),
+            NodeData::Document | NodeData::ShadowRoot { .. } => {
+                // Document and ShadowRoot nodes should not appear as inline
+                // children. If they do (internal state corruption), skip silently.
+            }
         }
     }
 }

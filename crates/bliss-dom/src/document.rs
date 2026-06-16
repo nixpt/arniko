@@ -588,7 +588,9 @@ impl BaseDocument {
 
     /// Set base url for resolving linked resources (stylesheets, images, fonts, etc)
     pub fn set_base_url(&mut self, url: &str) {
-        self.url = DocumentUrl::from(Url::parse(url).unwrap());
+        self.url = DocumentUrl::from(Url::parse(url).unwrap_or_else(|_| {
+            Url::parse("about:blank").unwrap()
+        }));
     }
 
     pub fn guard(&self) -> &SharedRwLock {
