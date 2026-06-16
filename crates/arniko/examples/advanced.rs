@@ -7,7 +7,7 @@ use arniko::ArnikoApp;
 use arniko::config::ThemeConfig;
 use arniko::mustang::{
     ColorAdjustParams, CompositeResult, Compositor, CompositorConfig, Effect, MustangCompositor,
-    MustangConfig, Region, TransformParams,
+    MustangConfig, Region, TransformParams, VelloScenePainter,
 };
 
 fn main() {
@@ -244,8 +244,10 @@ fn demo_mustang_gpu() {
 
     println!("\nApplying {} GPU effects to scene:", effects.len());
 
-    // Apply effects to scene
-    let result = mustang.apply_scene_effects(&mut scene, &effects, (800, 600));
+    // Apply effects to scene. apply_scene_effects wants an `anyrender::PaintScene`;
+    // wrap the raw vello::Scene in the VelloScenePainter adapter.
+    let mut painter = VelloScenePainter::new(&mut scene);
+    let result = mustang.apply_scene_effects(&mut painter, &effects, (800, 600));
 
     println!("\nScene Effect Results:");
     println!("  - Native effects applied: {}", result.native_applied);
@@ -395,7 +397,8 @@ mod tests {
         let effects = vec![Effect::blur(".test", 5.0, 100, 100)];
 
         let mut scene = vello::Scene::new();
-        let result = mustang.apply_scene_effects(&mut scene, &effects, (100, 100));
+        let mut painter = VelloScenePainter::new(&mut scene);
+        let result = mustang.apply_scene_effects(&mut painter, &effects, (100, 100));
 
         assert_eq!(result.native_applied, 1);
         assert_eq!(result.deferred_count(), 0);

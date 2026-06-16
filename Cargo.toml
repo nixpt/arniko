@@ -90,7 +90,7 @@ anyrender       = "0.7"
 anyrender_vello = { path = "crates/anyrender_vello", version = "0.7" }
 anyrender_svg   = "0.8"
 wgpu            = "27"
-vello           = { version = "0.6", features = ["wgpu"] }
+vello           = { version = "0.7", features = ["wgpu"] }
 peniko          = "0.6.0"
 kurbo           = "0.13"
 skrifa          = { version = "0.40", default-features = false, features = ["std"] }
