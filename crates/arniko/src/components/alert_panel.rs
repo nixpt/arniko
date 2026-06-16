@@ -6,6 +6,8 @@
 
 #[cfg(feature = "components")]
 use crate::{Component, ComponentMetadata};
+#[cfg(feature = "components")]
+use crate::components::escape_html;
 
 // ── Data Types ───────────────────────────────────────────────────────────────
 
@@ -137,9 +139,9 @@ impl AlertPanel {
                 </div>"#,
                     e.level.class(),
                     e.level.icon(),
-                    e.title,
-                    e.message,
-                    e.timestamp,
+                    escape_html(&e.title),
+                    escape_html(&e.message),
+                    escape_html(&e.timestamp),
                 )
             })
             .collect();
@@ -151,7 +153,7 @@ impl AlertPanel {
         {rows}
     </div>
 </div>"#,
-            class = self.class,
+            class = escape_html(&self.class),
             header = header,
             rows = rows,
         )
@@ -166,7 +168,7 @@ impl AlertPanel {
                     <span class="arniko-alertpanel-header-icon">{}</span>
                     <span class="arniko-alertpanel-header-title">{} ({})</span>
                 </div>"#,
-                    icon, title, count
+                    icon, escape_html(title), count
                 )
             }
             (Some(title), None) => {
@@ -174,7 +176,7 @@ impl AlertPanel {
                     r#"<div class="arniko-alertpanel-header">
                     <span class="arniko-alertpanel-header-title">{} ({})</span>
                 </div>"#,
-                    title, count
+                    escape_html(title), count
                 )
             }
             _ => String::new(),
@@ -187,8 +189,8 @@ impl AlertPanel {
     <span class="arniko-alertpanel-allclear-icon">🛡️</span>
     <span class="arniko-alertpanel-allclear-text">{}</span>
 </div>"#,
-            self.empty_message,
-            class = self.class,
+            escape_html(&self.empty_message),
+            class = escape_html(&self.class),
         )
     }
 }

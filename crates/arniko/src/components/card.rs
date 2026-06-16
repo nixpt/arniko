@@ -3,6 +3,7 @@
 //! Provides card components with title and body content.
 
 use crate::{Component, ComponentMetadata};
+use crate::components::escape_html;
 
 pub struct Card {
     title: Option<String>,
@@ -38,18 +39,21 @@ impl Card {
         let title_html = self
             .title
             .as_ref()
-            .map(|t| format!(r#"<div class="arniko-card-title">{}</div>"#, t))
+            .map(|t| format!(r#"<div class="arniko-card-title">{}</div>"#, escape_html(t)))
             .unwrap_or_default();
 
         let body_html = self
             .body
             .as_ref()
-            .map(|b| format!(r#"<div class="arniko-card-body">{}</div>"#, b))
+            .map(|b| format!(r#"<div class="arniko-card-body">{}</div>"#, escape_html(b)))
             .unwrap_or_default();
 
         format!(
-            r#"<div class="arniko-card {}">{}{}</div>"#,
-            self.class, title_html, body_html
+            r#"<div class="arniko-card {}" role="region" aria-label="{}">{}{}</div>"#,
+            escape_html(&self.class),
+            escape_html(self.title.as_deref().unwrap_or("Card")),
+            title_html,
+            body_html
         )
     }
 }
@@ -157,7 +161,7 @@ mod tests {
             .body("Body with <strong>bold</strong> text");
 
         let html = card.render();
-        assert!(html.contains("HTML <em>Content</em>"));
-        assert!(html.contains("Body with <strong>bold</strong> text"));
+        assert!(html.contains("HTML &lt;em&gt;Content&lt;/em&gt;"));
+        assert!(html.contains("Body with &lt;strong&gt;bold&lt;/strong&gt; text"));
     }
 }

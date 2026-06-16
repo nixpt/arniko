@@ -3,6 +3,7 @@
 //! Provides metric card components for displaying data with icons and trends.
 
 use crate::{Component, ComponentMetadata};
+use crate::components::escape_html;
 
 #[derive(Clone, PartialEq, Default)]
 pub enum MetricColor {
@@ -93,7 +94,7 @@ impl MetricCard {
             .map(|icon| {
                 format!(
                     r#"<div class="arniko-metric-icon {}">{}</div>"#,
-                    color_class, icon
+                    color_class, escape_html(icon)
                 )
             })
             .unwrap_or_default();
@@ -101,7 +102,7 @@ impl MetricCard {
         let subtitle_html = self
             .subtitle
             .as_ref()
-            .map(|subtitle| format!(r#"<div class="arniko-metric-subtitle">{}</div>"#, subtitle))
+            .map(|subtitle| format!(r#"<div class="arniko-metric-subtitle">{}</div>"#, escape_html(subtitle)))
             .unwrap_or_default();
 
         let trend_html = if !matches!(self.trend, MetricTrend::Stable) {
@@ -125,10 +126,10 @@ impl MetricCard {
                     {}
                 </div>
             </div>"#,
-            self.class,
+            escape_html(&self.class),
             color_class,
-            self.title,
-            self.value,
+            escape_html(&self.title),
+            escape_html(&self.value),
             trend_html,
             if self.subtitle.is_some() {
                 ""

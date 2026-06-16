@@ -5,6 +5,8 @@
 
 #[cfg(feature = "components")]
 use crate::{Component, ComponentMetadata};
+#[cfg(feature = "components")]
+use crate::components::escape_html;
 
 /// A single bar entry in the chart.
 #[derive(Clone, Debug)]
@@ -91,8 +93,8 @@ impl BarChart {
     pub fn render(&self) -> String {
         if self.entries.is_empty() {
             return format!(
-                r#"<div class="arniko-bar-chart {}"><div class="arniko-bar-chart-empty">No data</div></div>"#,
-                self.class
+                r#"<div class="arniko-bar-chart {}" role="img" aria-label="Bar chart"><div class="arniko-bar-chart-empty">No data</div></div>"#,
+                escape_html(&self.class)
             );
         }
 
@@ -125,12 +127,12 @@ impl BarChart {
                     </div>
                     {}
                 </div>"#,
-                entry.label, pct, entry.color, glow_css, value_text
+                escape_html(&entry.label), pct, entry.color, glow_css, value_text
             )
         }).collect();
 
         format!(
-            r#"<div class="arniko-bar-chart {}">{}</div>"#,
+            r#"<div class="arniko-bar-chart {}" role="img" aria-label="Bar chart">{}</div>"#,
             self.class, bars
         )
     }

@@ -5,6 +5,8 @@
 
 #[cfg(feature = "components")]
 use crate::{Component, ComponentMetadata};
+#[cfg(feature = "components")]
+use crate::components::escape_html;
 
 /// A single shortcut entry.
 #[derive(Clone, Debug)]
@@ -72,23 +74,23 @@ impl KeyboardShortcuts {
                     <span class="arniko-shortcut-keys">{}</span>
                     <span class="arniko-shortcut-action">{}</span>
                 </div>"#,
-                    s.keys, s.action
+                    escape_html(&s.keys), escape_html(&s.action)
                 )
             })
             .collect();
 
         format!(
-            r#"<div class="arniko-shortcut-overlay">
+            r#"<div class="arniko-shortcut-overlay" role="dialog" aria-label="Keyboard shortcuts">
                 <div class="arniko-shortcut-modal {}">
                     <div class="arniko-shortcut-header">
                         <span class="arniko-shortcut-title">{}</span>
-                        <span class="arniko-shortcut-close">✕</span>
+                        <span class="arniko-shortcut-close" role="button" aria-label="Close">✕</span>
                     </div>
                     <div class="arniko-shortcut-body">{}</div>
                     <div class="arniko-shortcut-footer">{}</div>
                 </div>
             </div>"#,
-            self.class, self.title, rows, self.footer
+            escape_html(&self.class), escape_html(&self.title), rows, escape_html(&self.footer)
         )
     }
 }

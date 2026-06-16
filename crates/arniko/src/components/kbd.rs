@@ -1,6 +1,7 @@
 //! Kbd (Keyboard) component for Arniko
 
 use crate::{Component, ComponentMetadata};
+use crate::components::escape_html;
 
 pub struct Kbd {
     key: String,
@@ -23,7 +24,7 @@ impl Kbd {
     pub fn render(&self) -> String {
         format!(
             r#"<kbd class="arniko-kbd {}">{}</kbd>"#,
-            self.class, self.key
+            escape_html(&self.class), escape_html(&self.key)
         )
     }
 }

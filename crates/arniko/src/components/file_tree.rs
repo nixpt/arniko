@@ -140,13 +140,15 @@ impl FileTree {
                 } else {
                     ""
                 };
+                let tree_role = if e.is_directory { "group" } else { "treeitem" };
                 format!(
-                    r#"<div class="arniko-filetree-row {}{}" data-path="{}">
+                    r#"<div class="arniko-filetree-row {}{}" data-path="{}" role="{}">
                     <span class="arniko-filetree-indent">{}</span>
                     <span class="arniko-filetree-icon">{}</span>
                     <span class="arniko-filetree-name">{}</span>
                 </div>"#,
-                    row_class, selected_attr, e.path, indent, icon, name
+                    row_class, selected_attr, e.path, tree_role,
+                    indent, icon, name
                 )
             })
             .collect();
@@ -170,7 +172,7 @@ impl FileTree {
         };
 
         format!(
-            r##"<div class="arniko-filetree {}">
+            r##"<div class="arniko-filetree {}" role="tree" aria-label="{}">
                 <div class="arniko-filetree-header">
                     <span class="arniko-filetree-header-icon">{}</span>
                     <span class="arniko-filetree-header-title">{}</span>
@@ -181,20 +183,20 @@ impl FileTree {
                     {}
                 </div>
             </div>"##,
-            self.class, self.title_icon, self.title, self.state.root, rows, content_preview
+            self.class, self.title, self.title_icon, self.title, self.state.root, rows, content_preview
         )
     }
 
     fn render_empty(&self) -> String {
         format!(
-            r##"<div class="arniko-filetree {}">
+            r##"<div class="arniko-filetree {}" role="tree" aria-label="{}">
                 <div class="arniko-filetree-header">
                     <span class="arniko-filetree-header-icon">{}</span>
                     <span class="arniko-filetree-header-title">{}</span>
                 </div>
                 <div class="arniko-filetree-empty">{}</div>
             </div>"##,
-            self.class, self.title_icon, self.title, self.empty_message
+            self.class, self.title, self.title_icon, self.title, self.empty_message
         )
     }
 }

@@ -66,7 +66,7 @@ impl Sparkline {
     pub fn render(&self) -> String {
         if self.values.is_empty() {
             return format!(
-                r#"<svg width="100%" height="{h}" viewBox="0 0 {w} {h}" xmlns="http://www.w3.org/2000/svg" class="arniko-sparkline {class}"></svg>"#,
+                r#"<svg width="100%" height="{h}" viewBox="0 0 {w} {h}" xmlns="http://www.w3.org/2000/svg" class="arniko-sparkline {class}" role="img" aria-label="Sparkline chart"></svg>"#,
                 h = self.height as usize,
                 w = self.width as usize,
                 class = self.class,
@@ -96,7 +96,7 @@ impl Sparkline {
         let area_path = build_area(&points, self.height - self.padding);
 
         format!(
-            r#"<svg width="100%" height="{h}" viewBox="0 0 {w} {h}" xmlns="http://www.w3.org/2000/svg" class="arniko-sparkline {class}">
+            r#"<svg width="100%" height="{h}" viewBox="0 0 {w} {h}" xmlns="http://www.w3.org/2000/svg" class="arniko-sparkline {class}" role="img" aria-label="Sparkline chart">
                 <path d="{area}" fill="{color}" opacity="0.15" stroke="none"/>
                 <path d="{line}" fill="none" stroke="{color}" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
             </svg>"#,

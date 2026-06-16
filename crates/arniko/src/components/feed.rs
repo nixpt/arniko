@@ -5,6 +5,8 @@
 
 #[cfg(feature = "components")]
 use crate::{Component, ComponentMetadata};
+#[cfg(feature = "components")]
+use crate::components::escape_html;
 
 // ── Data Types ───────────────────────────────────────────────────────────────
 
@@ -93,14 +95,18 @@ impl Feed {
                     <span class="arniko-feed-text">{}</span>
                 </div>
                 "#,
-                entry.class, entry.timestamp, entry.class, entry.level, entry.text,
+                escape_html(&entry.class),
+                escape_html(&entry.timestamp),
+                escape_html(&entry.class),
+                escape_html(&entry.level),
+                escape_html(&entry.text),
             ));
         }
 
         if items_html.is_empty() {
             items_html = format!(
                 r#"<div class="arniko-feed-empty">{}</div>"#,
-                self.empty_message
+                escape_html(&self.empty_message)
             );
         }
 
@@ -111,12 +117,12 @@ impl Feed {
                     <span class="arniko-feed-header-icon">{}</span>
                     <span class="arniko-feed-header-title">{}</span>
                 </div>
-                <div class="arniko-feed-body">
+                <div class="arniko-feed-body" role="log" aria-label="{}">
                     {}
                 </div>
             </div>
             "##,
-            self.class, self.title_icon, self.title, items_html
+            escape_html(&self.class), escape_html(&self.title_icon), escape_html(&self.title), escape_html(&self.title), items_html
         )
     }
 }

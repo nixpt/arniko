@@ -5,6 +5,8 @@
 
 #[cfg(feature = "components")]
 use crate::{Component, ComponentMetadata};
+#[cfg(feature = "components")]
+use crate::components::escape_html;
 
 #[cfg(feature = "reactive")]
 use crate::reactive::{Div, Reactor, Signal, Text, View};
@@ -79,8 +81,8 @@ impl Toast {
         };
 
         format!(
-            r#"<div class="arniko-toast {} {}" style="{}">{}</div>"#,
-            variant_class, self.class, position_style, self.message
+            r#"<div class="arniko-toast {} {}" style="{}" role="status" aria-live="polite">{}</div>"#,
+            variant_class, escape_html(&self.class), position_style, escape_html(&self.message)
         )
     }
 }

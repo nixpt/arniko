@@ -5,6 +5,8 @@
 
 #[cfg(feature = "components")]
 use crate::{Component, ComponentMetadata};
+#[cfg(feature = "components")]
+use crate::components::escape_html;
 
 /// A theme toggle button that displays the current theme and cycles to the next.
 #[cfg(feature = "components")]
@@ -32,10 +34,12 @@ impl ThemeToggle {
 
     pub fn render(&self) -> String {
         format!(
-            r#"<button class="arniko-theme-toggle {}" title="Current: {}">{}</button>"#,
-            self.class,
-            self.current,
-            format!("{} → {}", self.current, self.next)
+            r#"<button class="arniko-theme-toggle {}" title="Current: {}" aria-label="Switch theme from {} to {}">{}</button>"#,
+            escape_html(&self.class),
+            escape_html(&self.current),
+            escape_html(&self.current),
+            escape_html(&self.next),
+            format!("{} → {}", escape_html(&self.current), escape_html(&self.next))
         )
     }
 }

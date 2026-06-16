@@ -4,6 +4,7 @@
 //! Maps to capsule-ui's Panel component.
 
 use crate::{Component, ComponentMetadata};
+use crate::components::escape_html;
 
 pub struct Panel {
     title: Option<String>,
@@ -53,7 +54,7 @@ impl Panel {
         let icon_html = self
             .icon
             .as_ref()
-            .map(|i| format!(r#"<span class="arniko-panel-icon">{}</span>"#, i))
+            .map(|i| format!(r#"<span class="arniko-panel-icon">{}</span>"#, escape_html(i)))
             .unwrap_or_default();
 
         let close_btn = if self.closable {
@@ -65,7 +66,7 @@ impl Panel {
         let header_html = match &self.title {
             Some(t) => format!(
                 r#"<div class="arniko-panel-header">{}<span class="arniko-panel-title">{}</span>{}</div>"#,
-                icon_html, t, close_btn
+                icon_html, escape_html(t), close_btn
             ),
             None => String::new(),
         };
@@ -73,12 +74,12 @@ impl Panel {
         let body_html = self
             .body
             .as_ref()
-            .map(|b| format!(r#"<div class="arniko-panel-body">{}</div>"#, b))
+            .map(|b| format!(r#"<div class="arniko-panel-body">{}</div>"#, escape_html(b)))
             .unwrap_or_default();
 
         format!(
             r#"<div class="arniko-panel {}">{}{}</div>"#,
-            self.class, header_html, body_html
+            escape_html(&self.class), header_html, body_html
         )
     }
 }

@@ -4,6 +4,7 @@
 //! Maps to capsule-ui's StatusBadge component.
 
 use crate::{Component, ComponentMetadata};
+use crate::components::escape_html;
 
 #[derive(Clone, Copy, PartialEq, Default)]
 pub enum StatusVariant {
@@ -64,8 +65,8 @@ impl StatusBadge {
         };
 
         format!(
-            r#"<span class="arniko-status-badge {} {}{}">{}</span>"#,
-            variant_class, self.class, pulse_class, self.label
+            r#"<span class="arniko-status-badge {} {}{}" role="status">{}</span>"#,
+            variant_class, escape_html(&self.class), pulse_class, escape_html(&self.label)
         )
     }
 }

@@ -1,6 +1,7 @@
 //! Tooltip component for Arniko
 
 use crate::{Component, ComponentMetadata};
+use crate::components::escape_html;
 
 #[derive(Clone, PartialEq, Default)]
 pub enum TooltipPosition {
@@ -47,8 +48,8 @@ impl Tooltip {
         };
 
         format!(
-            r#"<span class="arniko-tooltip {}" data-tooltip="{}" data-tooltip-position="{}">{}</span>"#,
-            self.class, self.tooltip, position_attr, self.text
+            r#"<span class="arniko-tooltip {}" data-tooltip="{}" data-tooltip-position="{}" role="tooltip">{}</span>"#,
+            escape_html(&self.class), escape_html(&self.tooltip), position_attr, escape_html(&self.text)
         )
     }
 

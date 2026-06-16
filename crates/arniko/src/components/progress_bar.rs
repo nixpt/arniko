@@ -1,6 +1,7 @@
 //! ProgressBar component for Arniko
 
 use crate::{Component, ComponentMetadata};
+use crate::components::escape_html;
 
 #[derive(Clone, PartialEq, Default)]
 pub enum ProgressColor {
@@ -83,20 +84,27 @@ impl ProgressBar {
                 <span class="arniko-progress-label">{}</span>
                 <span class="arniko-progress-pct">{}</span>
             </div>"#,
-                label_text, percentage_text
+                escape_html(label_text), percentage_text
             )
         } else {
             String::new()
         };
 
+        let aria_label = self.label.as_deref().unwrap_or("Progress");
+
         format!(
-            r#"<div class="arniko-progress {}">
+            r#"<div class="arniko-progress {}" role="progressbar" aria-valuenow="{}" aria-valuemin="0" aria-valuemax="100" aria-label="{}">
                 {}
                 <div class="arniko-progress-track">
                     <div class="arniko-progress-bar {}" style="width: {}%"></div>
                 </div>
             </div>"#,
-            self.class, header_html, color_class, percentage
+            escape_html(&self.class),
+            percentage as u32,
+            escape_html(aria_label),
+            header_html,
+            color_class,
+            percentage
         )
     }
 }

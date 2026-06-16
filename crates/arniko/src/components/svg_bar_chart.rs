@@ -7,6 +7,8 @@
 
 #[cfg(feature = "components")]
 use crate::{Component, ComponentMetadata};
+#[cfg(feature = "components")]
+use crate::components::escape_html;
 
 /// A single bar entry in the SVG chart.
 #[derive(Clone, Debug)]
@@ -176,11 +178,11 @@ impl SvgBarChart {
 "##,
                     y_label = y + 10.0,
                     y_rect = y + 2.0,
-                    label = label,
+                    label = escape_html(&label),
                     bar_x = self.label_width,
                     bar_h = self.bar_height,
                     width = width,
-                    color = entry.color,
+                    color = escape_html(&entry.color),
                     x_val = self.label_width + width + 6.0,
                     value_str = value_str,
                 )
@@ -188,17 +190,19 @@ impl SvgBarChart {
             .collect();
 
         let header = self.render_header();
+        let chart_label = self.title.as_deref().unwrap_or("Bar chart");
         format!(
             r#"<div class="arniko-svgbar-chart {}">{header}
-    <svg width="100%" height="{height}" viewBox="0 0 {vw} {height}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMin meet" class="arniko-svgbar-svg">
+    <svg width="100%" height="{height}" viewBox="0 0 {vw} {height}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMin meet" class="arniko-svgbar-svg" role="img" aria-label="{chart_label}">
         {bars}
     </svg>
 </div>
 "#,
-            self.class,
+            escape_html(&self.class),
             header = header,
             height = total_height,
             vw = viewbox_width,
+            chart_label = escape_html(chart_label),
             bars = bars,
         )
     }
@@ -211,7 +215,7 @@ impl SvgBarChart {
                         <span class="arniko-svgbar-icon">{}</span>
                         <span class="arniko-svgbar-title">{}</span>
                     </div>"#,
-                    icon, title
+                    escape_html(icon), escape_html(title)
                 )
             }
             (Some(title), None) => {
@@ -219,7 +223,7 @@ impl SvgBarChart {
                     r#"<div class="arniko-svgbar-header">
                         <span class="arniko-svgbar-title">{}</span>
                     </div>"#,
-                    title
+                    escape_html(title)
                 )
             }
             _ => String::new(),
@@ -233,7 +237,7 @@ impl SvgBarChart {
     <div class="arniko-svgbar-empty">{}</div>
 </div>
 "#,
-            self.class, self.empty_message
+            escape_html(&self.class), self.empty_message
         )
     }
 }

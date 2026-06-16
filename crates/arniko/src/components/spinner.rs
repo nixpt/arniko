@@ -41,7 +41,7 @@ impl Spinner {
         };
 
         format!(
-            r#"<div class="arniko-spinner{}{}"></div>"#,
+            r#"<div class="arniko-spinner{}{}" role="status" aria-label="Loading"></div>"#,
             size_class, self.class
         )
     }

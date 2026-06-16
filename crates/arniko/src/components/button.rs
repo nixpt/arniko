@@ -4,6 +4,7 @@
 //! Supports rendering as both `<button>` and `<a>` (link) elements.
 
 use crate::{Component, ComponentMetadata};
+use crate::components::escape_html;
 
 #[derive(Clone, PartialEq, Default)]
 pub enum ButtonVariant {
@@ -103,12 +104,12 @@ impl Button {
         if let Some(ref url) = self.href {
             format!(
                 r#"<a href="{}" class="{}"{}>{}</a>"#,
-                url, class_str, disabled, self.label
+                escape_html(url), class_str, disabled, escape_html(&self.label)
             )
         } else {
             format!(
                 r#"<button class="{}"{}>{}</button>"#,
-                class_str, disabled, self.label
+                class_str, disabled, escape_html(&self.label)
             )
         }
     }

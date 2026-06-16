@@ -9,6 +9,7 @@
 use {
     super::svg_util::{build_area, build_path},
     crate::{Component, ComponentMetadata},
+    crate::components::escape_html,
 };
 
 /// Line style for a series.
@@ -224,7 +225,7 @@ impl SvgLineChart {
                     r##"<text x="{x:.1}" y="{y:.1}" text-anchor="middle" font-size="9" fill="#4a6b82" font-family="JetBrains Mono,monospace">{label}</text>"##,
                     x = x,
                     y = self.height - 10.0,
-                    label = label,
+                    label = escape_html(label),
                 ));
             }
         }
@@ -306,11 +307,10 @@ impl SvgLineChart {
                     r##"<rect x="{x:.1}" y="{y:.1}" width="10" height="3" fill="{color}" rx="1"/>
                         <text x="{tx:.1}" y="{ty:.1}" font-size="10" fill="#8ba3b8" font-family="JetBrains Mono,monospace">{name}</text>"##,
                     x = lx,
-                    y = ly,
-                    color = s.color,
-                    tx = lx + 16.0,
-                    ty = ly + 4.0,
-                    name = s.name,
+                    y = ly,                        color = s.color,
+                        tx = lx + 16.0,
+                        ty = ly + 4.0,
+                        name = escape_html(&s.name),
                 ));
             }
         }
@@ -325,9 +325,10 @@ impl SvgLineChart {
         };
 
         let header = self.render_header();
+        let chart_label = self.title.as_deref().unwrap_or("Line chart");
         format!(
             r##"<div class="arniko-linechart {}">{header}
-    <svg width="100%" height="{height}" viewBox="0 0 {width} {height}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMin meet" class="arniko-linechart-svg">
+    <svg width="100%" height="{height}" viewBox="0 0 {width} {height}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMin meet" class="arniko-linechart-svg" role="img" aria-label="{chart_label}">
         {grid}
         {y_labels}
         {x_labels}
@@ -336,10 +337,11 @@ impl SvgLineChart {
     </svg>
 </div>
 "##,
-            self.class,
+            escape_html(&self.class),
             header = header,
             height = self.height,
             width = self.width,
+            chart_label = escape_html(chart_label),
             grid = grid_svg,
             y_labels = y_labels_svg,
             x_labels = x_labels_svg,
@@ -356,7 +358,7 @@ impl SvgLineChart {
                         <span class="arniko-linechart-icon">{}</span>
                         <span class="arniko-linechart-title">{}</span>
                     </div>"#,
-                    icon, title
+                    escape_html(icon), escape_html(title)
                 )
             }
             (Some(title), None) => {
@@ -364,7 +366,7 @@ impl SvgLineChart {
                     r#"<div class="arniko-linechart-header">
                         <span class="arniko-linechart-title">{}</span>
                     </div>"#,
-                    title
+                    escape_html(title)
                 )
             }
             _ => String::new(),
@@ -378,7 +380,7 @@ impl SvgLineChart {
     <div class="arniko-linechart-empty">{}</div>
 </div>
 "#,
-            self.class, self.empty_message
+            escape_html(&self.class), escape_html(&self.empty_message)
         )
     }
 }

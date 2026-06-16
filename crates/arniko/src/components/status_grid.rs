@@ -1,6 +1,7 @@
 //! StatusGrid component for Arniko
 
 use crate::{Component, ComponentMetadata};
+use crate::components::escape_html;
 
 #[derive(Clone, PartialEq, Default)]
 pub enum StatusState {
@@ -69,7 +70,7 @@ impl StatusIndicator {
                     <span class="arniko-status-text">{}</span>
                 </div>
             </div>"#,
-            self.class, self.label, state_class, pulse_class, self.value
+            escape_html(&self.class), escape_html(&self.label), state_class, pulse_class, escape_html(&self.value)
         )
     }
 }
@@ -126,7 +127,7 @@ impl StatusGrid {
             r#"<div class="arniko-status-grid {}" style="grid-template-columns: repeat({}, 1fr);">
                 {}
             </div>"#,
-            self.class, self.columns, items_html
+            escape_html(&self.class), self.columns, items_html
         )
     }
 }

@@ -34,7 +34,7 @@ impl Skeleton {
 
     pub fn render(&self) -> String {
         format!(
-            r#"<div class="arniko-skeleton {}" style="width: {}; height: {};"></div>"#,
+            r#"<div class="arniko-skeleton {}" style="width: {}; height: {};" role="status" aria-busy="true"></div>"#,
             self.class, self.width, self.height
         )
     }

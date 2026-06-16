@@ -3,6 +3,7 @@
 //! Provides alert components for notifications and messages.
 
 use crate::{Component, ComponentMetadata};
+use crate::components::escape_html;
 
 #[derive(Clone, PartialEq, Default)]
 pub enum AlertVariant {
@@ -47,14 +48,14 @@ impl Alert {
         };
 
         format!(
-            r#"<div class="arniko-alert {} {}">
+            r#"<div class="arniko-alert {} {}" role="alert" aria-live="polite">
                 <div class="arniko-alert-icon">{}</div>
                 <div class="arniko-alert-message">{}</div>
             </div>"#,
             variant_class,
-            self.class,
+            escape_html(&self.class),
             self.icon(),
-            self.message
+            escape_html(&self.message)
         )
     }
 

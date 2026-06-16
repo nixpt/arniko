@@ -4,6 +4,7 @@
 //! Maps to capsule-ui's EmptyState component.
 
 use crate::{Component, ComponentMetadata};
+use crate::components::escape_html;
 
 pub struct EmptyState {
     icon: Option<String>,
@@ -48,13 +49,13 @@ impl EmptyState {
         let icon_html = self
             .icon
             .as_ref()
-            .map(|i| format!(r#"<div class="arniko-empty-icon">{}</div>"#, i))
+            .map(|i| format!(r#"<div class="arniko-empty-icon">{}</div>"#, escape_html(i)))
             .unwrap_or_default();
 
         let desc_html = self
             .description
             .as_ref()
-            .map(|d| format!(r#"<p class="arniko-empty-desc">{}</p>"#, d))
+            .map(|d| format!(r#"<p class="arniko-empty-desc">{}</p>"#, escape_html(d)))
             .unwrap_or_default();
 
         let action_html = self
@@ -64,8 +65,8 @@ impl EmptyState {
             .unwrap_or_default();
 
         format!(
-            r#"<div class="arniko-empty-state {}">{}<h3 class="arniko-empty-title">{}</h3>{}{}</div>"#,
-            self.class, icon_html, self.title, desc_html, action_html
+            r#"<div class="arniko-empty-state {}" role="status">{}<h3 class="arniko-empty-title">{}</h3>{}{}</div>"#,
+            escape_html(&self.class), icon_html, escape_html(&self.title), desc_html, action_html
         )
     }
 }

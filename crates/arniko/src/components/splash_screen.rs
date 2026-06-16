@@ -5,6 +5,8 @@
 
 #[cfg(feature = "components")]
 use crate::{Component, ComponentMetadata};
+#[cfg(feature = "components")]
+use crate::components::escape_html;
 
 /// Configuration for the splash screen's appearance.
 #[derive(Clone, Debug)]
@@ -90,12 +92,12 @@ impl SplashScreen {
         } else {
             format!(
                 r#"<div class="arniko-splash-subtitle">{}</div>"#,
-                self.config.subtitle
+                escape_html(&self.config.subtitle)
             )
         };
 
         format!(
-            r#"<div class="arniko-splash-overlay {}" style="opacity:{};display:{};">
+            r#"<div class="arniko-splash-overlay {}" style="opacity:{};display:{};" role="progressbar" aria-valuenow="{}" aria-valuemin="0" aria-valuemax="100" aria-label="{}">
                 <div class="arniko-splash-container">
                     {}
                     <div class="arniko-splash-title">{}</div>
@@ -106,18 +108,20 @@ impl SplashScreen {
                         </div>
                         <div class="arniko-splash-progress-pct">{}%</div>
                     </div>
-                    <div class="arniko-splash-status">{}</div>
+                    <div class="arniko-splash-status" aria-live="polite">{}</div>
                 </div>
             </div>"#,
-            self.class,
+            escape_html(&self.class),
             self.opacity,
             display_val,
+            self.config.progress,
+            escape_html(&self.config.title),
             logo_html,
-            self.config.title,
+            escape_html(&self.config.title),
             subtitle_html,
             self.config.progress,
             self.config.progress,
-            self.config.status
+            escape_html(&self.config.status)
         )
     }
 }

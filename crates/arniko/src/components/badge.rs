@@ -3,6 +3,7 @@
 //! Provides badge components for status indicators and labels.
 
 use crate::{Component, ComponentMetadata};
+use crate::components::escape_html;
 
 #[derive(Clone, PartialEq, Default)]
 pub enum BadgeVariant {
@@ -51,8 +52,8 @@ impl Badge {
         };
 
         format!(
-            r#"<span class="arniko-badge {} {}">{}</span>"#,
-            variant_class, self.class, self.text
+            r#"<span class="arniko-badge {} {}" role="status">{}</span>"#,
+            variant_class, escape_html(&self.class), escape_html(&self.text)
         )
     }
 }

@@ -67,3 +67,21 @@ pub use tooltip::*;
 /// The default Arniko stylesheet. Include this in your HTML `<style>` tag.
 /// Assembled at compile time from per-component CSS files in the [`styles`] module.
 pub use styles::ARNIKO_STYLES;
+
+/// Escape HTML-special characters in user-provided strings so they render
+/// inert when interpolated into HTML output. Prevents XSS.
+///
+/// Escapes: `&` → `&amp;`, `<` → `&lt;`, `>` → `&gt;`, `"` → `&quot;`
+pub fn escape_html(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    for c in s.chars() {
+        match c {
+            '&' => out.push_str("&amp;"),
+            '<' => out.push_str("&lt;"),
+            '>' => out.push_str("&gt;"),
+            '"' => out.push_str("&quot;"),
+            _ => out.push(c),
+        }
+    }
+    out
+}

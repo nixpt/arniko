@@ -144,7 +144,7 @@ impl ProgressRing {
         };
 
         format!(
-            r#"<div class="arniko-progress-ring {cls}" style="width:{w}px;height:{h}px;">
+            r#"<div class="arniko-progress-ring {cls}" style="width:{w}px;height:{h}px;" role="progressbar" aria-valuenow="{pct:.0}" aria-valuemin="0" aria-valuemax="100" aria-label="{label}">
                 <svg class="arniko-ring-svg" viewBox="0 0 {v} {v}" xmlns="http://www.w3.org/2000/svg">
                     <circle class="arniko-ring-bg" cx="{c}" cy="{c}" r="{r}"
                         fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="{sw}" />
@@ -167,6 +167,8 @@ impl ProgressRing {
             sw = self.stroke_width,
             circ = circumference,
             off = offset,
+            pct = pct,
+            label = label,
             pct_text = percentage_text
         )
     }

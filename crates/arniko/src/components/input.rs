@@ -3,6 +3,7 @@
 //! Provides customizable input components for forms and user input.
 
 use crate::{Component, ComponentMetadata};
+use crate::components::escape_html;
 
 pub struct Input {
     input_type: String,
@@ -60,12 +61,20 @@ impl Input {
         let name = if self.name.is_empty() {
             String::new()
         } else {
-            format!(r#" name="{}""#, self.name)
+            format!(r#" name="{}""#, escape_html(&self.name))
         };
 
+        let aria_label = if self.name.is_empty() { &self.placeholder } else { &self.name };
+
         format!(
-            r#"<input class="arniko-input {}" type="{}" placeholder="{}" value="{}"{}{} />"#,
-            self.class, self.input_type, self.placeholder, self.value, name, disabled
+            r#"<input class="arniko-input {}" type="{}" placeholder="{}" value="{}" aria-label="{}"{}{} />"#,
+            escape_html(&self.class),
+            escape_html(&self.input_type),
+            escape_html(&self.placeholder),
+            escape_html(&self.value),
+            escape_html(aria_label),
+            name,
+            disabled
         )
     }
 }
