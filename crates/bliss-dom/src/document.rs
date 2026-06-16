@@ -639,7 +639,7 @@ impl BaseDocument {
     /// we return all possibilities instead of just the first
     /// in order to allow the caller to decide which one is correct
     pub fn label_bound_input_element(&self, label_node_id: usize) -> Option<&Node> {
-        let label_element = self.nodes[label_node_id].element_data()?;
+        let label_element = self.get_node(label_node_id)?.element_data()?;
         if let Some(target_element_dom_id) = label_element.attr(local_name!("for")) {
             TreeTraverser::new(self)
                 .filter_map(|id| {
@@ -695,30 +695,39 @@ impl BaseDocument {
     }
 
     pub fn set_style_property(&mut self, node_id: usize, name: &str, value: &str) {
-        self.nodes[node_id]
-            .element_data_mut()
+        let Some(node) = self.nodes.get_mut(node_id) else {
+            return;
+        };
+        node.element_data_mut()
             .unwrap()
             .set_style_property(name, value, &self.guard, self.url.url_extra_data());
     }
 
     pub fn remove_style_property(&mut self, node_id: usize, name: &str) {
-        self.nodes[node_id]
-            .element_data_mut()
+        let Some(node) = self.nodes.get_mut(node_id) else {
+            return;
+        };
+        node.element_data_mut()
             .unwrap()
             .remove_style_property(name, &self.guard, self.url.url_extra_data());
     }
 
     pub fn set_sub_document(&mut self, node_id: usize, sub_document: Box<dyn Document>) {
-        self.nodes[node_id]
-            .element_data_mut()
+        let Some(node) = self.get_node_mut(node_id) else {
+            return;
+        };
+        node.element_data_mut()
             .unwrap()
             .set_sub_document(sub_document);
         self.sub_document_nodes.insert(node_id);
     }
 
     pub fn remove_sub_document(&mut self, node_id: usize) {
-        self.nodes[node_id]
-            .element_data_mut()
+        let Some(node) = self.get_node_mut(node_id) else {
+            self.sub_document_nodes.remove(&node_id);
+            return;
+        };
+        node.element_data_mut()
             .unwrap()
             .remove_sub_document();
         self.sub_document_nodes.remove(&node_id);
@@ -952,7 +961,10 @@ impl BaseDocument {
     }
 
     pub fn upsert_stylesheet_for_node(&mut self, node_id: usize) {
-        let raw_styles = self.nodes[node_id].text_content();
+        let Some(node) = self.get_node(node_id) else {
+            return;
+        };
+        let raw_styles = node.text_content();
         let sheet = self.make_stylesheet(raw_styles, Origin::Author);
         self.add_stylesheet_for_node(sheet, node_id);
     }
@@ -976,7 +988,10 @@ impl BaseDocument {
         );
 
         // Store data on element
-        let element = &mut self.nodes[node_id].element_data_mut().unwrap();
+        let Some(node) = self.get_node_mut(node_id) else {
+            return;
+        };
+        let element = node.element_data_mut().unwrap();
         element.special_data = SpecialElementData::Stylesheet(stylesheet.clone());
 
         // TODO: Nodes could potentially get reused so ordering by node_id might be wrong.
@@ -1155,7 +1170,9 @@ impl BaseDocument {
     }
 
     pub fn snapshot_node(&mut self, node_id: usize) {
-        let node = &mut self.nodes[node_id];
+        let Some(node) = self.nodes.get_mut(node_id) else {
+            return;
+        };
         let opaque_node_id = TNode::opaque(&&*node);
         node.has_snapshot = true;
         node.snapshot_handled
@@ -1216,7 +1233,10 @@ impl BaseDocument {
 
     pub fn snapshot_node_and(&mut self, node_id: usize, cb: impl FnOnce(&mut Node)) {
         self.snapshot_node(node_id);
-        cb(&mut self.nodes[node_id]);
+        let Some(node) = self.nodes.get_mut(node_id) else {
+            return;
+        };
+        cb(node);
     }
 
     // Takes (x, y) co-ordinates (relative to the viewport)
@@ -1227,8 +1247,9 @@ impl BaseDocument {
 
     pub fn focus_next_node(&mut self) -> Option<usize> {
         let focussed_node_id = self.get_focussed_node_id()?;
+        let focussed_node = self.get_node(focussed_node_id)?;
         let id = self
-            .next_node(&self.nodes[focussed_node_id], |node| node.is_focussable())
+            .next_node(focussed_node, |node| node.is_focussable())
             // Wrap around: when at the last focusable, continue from the document root
             .or_else(|| self.next_node(self.root_node(), |node| node.is_focussable()))?;
         self.set_focus_to(id);
@@ -1238,8 +1259,9 @@ impl BaseDocument {
     /// Move focus to the previous focusable node in document order (reverse Tab).
     pub fn focus_prev_node(&mut self) -> Option<usize> {
         let focussed_node_id = self.get_focussed_node_id()?;
+        let focussed_node = self.get_node(focussed_node_id)?;
         let id = self
-            .prev_node(&self.nodes[focussed_node_id], |node| node.is_focussable())
+            .prev_node(focussed_node, |node| node.is_focussable())
             // Wrap around: when at the first focusable, find the last focusable in the document
             .or_else(|| self.prev_node(self.root_node(), |node| node.is_focussable()))?;
         self.set_focus_to(id);
@@ -1449,7 +1471,7 @@ impl BaseDocument {
     }
 
     pub fn get_cursor(&self) -> Option<CursorIcon> {
-        let node = &self.nodes[self.get_hover_node_id()?];
+        let node = self.get_node(self.get_hover_node_id()?)?;
 
         if let Some(subdoc) = node.subdoc().map(|doc| doc.inner()) {
             return subdoc.get_cursor();

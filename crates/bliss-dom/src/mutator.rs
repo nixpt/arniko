@@ -81,38 +81,45 @@ impl DocumentMutator<'_> {
     // Query methods
 
     pub fn node_has_parent(&self, node_id: usize) -> bool {
-        self.doc.nodes[node_id].parent.is_some()
+        self.doc.get_node(node_id).is_some_and(|n| n.parent.is_some())
     }
 
     pub fn previous_sibling_id(&self, node_id: usize) -> Option<usize> {
-        self.doc.nodes[node_id].backward(1).map(|node| node.id)
+        self.doc.get_node(node_id)?.backward(1).map(|node| node.id)
     }
 
     pub fn next_sibling_id(&self, node_id: usize) -> Option<usize> {
-        self.doc.nodes[node_id].forward(1).map(|node| node.id)
+        self.doc.get_node(node_id)?.forward(1).map(|node| node.id)
     }
 
     pub fn parent_id(&self, node_id: usize) -> Option<usize> {
-        self.doc.nodes[node_id].parent
+        self.doc.get_node(node_id)?.parent
     }
 
     pub fn last_child_id(&self, node_id: usize) -> Option<usize> {
-        self.doc.nodes[node_id].children.last().copied()
+        self.doc.get_node(node_id)?.children.last().copied()
     }
 
     pub fn child_ids(&self, node_id: usize) -> Vec<usize> {
-        self.doc.nodes[node_id].children.clone()
+        self.doc.get_node(node_id).map(|n| n.children.clone()).unwrap_or_default()
     }
 
     pub fn element_name(&self, node_id: usize) -> Option<&QualName> {
-        self.doc.nodes[node_id].element_data().map(|el| &el.name)
+        self.doc.get_node(node_id)?.element_data().map(|el| &el.name)
     }
 
     pub fn node_at_path(&self, start_node_id: usize, path: &[u8]) -> usize {
-        let mut current = &self.doc.nodes[start_node_id];
+        let Some(mut current) = self.doc.get_node(start_node_id) else {
+            return start_node_id;
+        };
         for i in path {
-            let new_id = current.children[*i as usize];
-            current = &self.doc.nodes[new_id];
+            let Some(new_id) = current.children.get(*i as usize) else {
+                return current.id;
+            };
+            let Some(next) = self.doc.get_node(*new_id) else {
+                return current.id;
+            };
+            current = next;
         }
         current.id
     }
@@ -161,7 +168,9 @@ impl DocumentMutator<'_> {
     // Node mutation methods
 
     pub fn set_node_text(&mut self, node_id: usize, value: &str) {
-        let node = &mut self.doc.nodes[node_id];
+        let Some(node) = self.doc.get_node_mut(node_id) else {
+            return;
+        };
 
         let text = match node.data {
             NodeData::Text(ref mut text) => text,
@@ -191,7 +200,9 @@ impl DocumentMutator<'_> {
     }
 
     pub fn append_text_to_node(&mut self, node_id: usize, text: &str) -> Result<(), AppendTextErr> {
-        let node = &mut self.doc.nodes[node_id];
+        let Some(node) = self.doc.get_node_mut(node_id) else {
+            return Err(AppendTextErr::NotTextNode);
+        };
         node.insert_damage(ALL_DAMAGE);
         node.mark_ancestors_dirty();
         match node.text_data_mut() {
@@ -204,7 +215,9 @@ impl DocumentMutator<'_> {
     }
 
     pub fn add_attrs_if_missing(&mut self, node_id: usize, attrs: Vec<Attribute>) {
-        let node = &mut self.doc.nodes[node_id];
+        let Some(node) = self.doc.get_node_mut(node_id) else {
+            return;
+        };
         node.insert_damage(ALL_DAMAGE);
         let element_data = node.element_data_mut().expect("Not an element");
 
@@ -223,6 +236,9 @@ impl DocumentMutator<'_> {
     }
 
     pub fn set_attribute(&mut self, node_id: usize, name: QualName, value: &str) {
+        if self.doc.nodes.get(node_id).is_none() {
+            return;
+        }
         self.doc.snapshot_node(node_id);
 
         let node = &mut self.doc.nodes[node_id];
@@ -304,6 +320,9 @@ impl DocumentMutator<'_> {
     }
 
     pub fn clear_attribute(&mut self, node_id: usize, name: QualName) {
+        if self.doc.nodes.get(node_id).is_none() {
+            return;
+        }
         self.doc.snapshot_node(node_id);
 
         let node = &mut self.doc.nodes[node_id];
@@ -380,7 +399,9 @@ impl DocumentMutator<'_> {
 
     /// Remove the node from it's parent but don't drop it
     pub fn remove_node(&mut self, node_id: usize) {
-        let node = &mut self.doc.nodes[node_id];
+        let Some(node) = self.doc.get_node_mut(node_id) else {
+            return;
+        };
 
         // Update child_idx values
         if let Some(parent_id) = node.parent.take() {
@@ -396,6 +417,9 @@ impl DocumentMutator<'_> {
     }
 
     pub fn remove_and_drop_node(&mut self, node_id: usize) -> Option<Node> {
+        if self.doc.get_node(node_id).is_none() {
+            return None;
+        }
         self.process_removed_subtree(node_id);
 
         let node = self.doc.drop_node_ignoring_parent(node_id);
@@ -426,7 +450,9 @@ impl DocumentMutator<'_> {
     }
 
     pub fn remove_and_drop_all_children(&mut self, node_id: usize) {
-        let parent = &mut self.doc.nodes[node_id];
+        let Some(parent) = self.doc.get_node_mut(node_id) else {
+            return;
+        };
         let parent_is_in_doc = parent.flags.is_in_document();
 
         // TODO: make this fine grained / conditional based on ElementSelectorFlags
@@ -463,7 +489,9 @@ impl DocumentMutator<'_> {
     }
 
     pub fn insert_nodes_before(&mut self, anchor_node_id: usize, new_node_ids: &[usize]) {
-        let parent_id = self.doc.nodes[anchor_node_id].parent.unwrap();
+        let Some(parent_id) = self.doc.get_node(anchor_node_id).and_then(|n| n.parent) else {
+            return;
+        };
         self.add_children_to_parent(parent_id, new_node_ids, &|parent, child_ids| {
             let node_child_idx = parent.index_of_child(anchor_node_id).unwrap();
             parent
@@ -536,12 +564,18 @@ impl DocumentMutator<'_> {
     }
 
     pub fn reparent_children(&mut self, old_parent_id: usize, new_parent_id: usize) {
-        let child_ids = std::mem::take(&mut self.doc.nodes[old_parent_id].children);
+        let Some(old_parent) = self.doc.get_node_mut(old_parent_id) else {
+            return;
+        };
+        let child_ids = std::mem::take(&mut old_parent.children);
         self.maybe_record_node(old_parent_id);
         self.append_children(new_parent_id, &child_ids);
     }
 
     pub fn replace_node_with(&mut self, anchor_node_id: usize, new_node_ids: &[usize]) {
+        if self.doc.get_node(anchor_node_id).is_none() {
+            return;
+        }
         self.insert_nodes_before(anchor_node_id, new_node_ids);
         self.remove_node(anchor_node_id);
     }
@@ -554,8 +588,10 @@ impl<'doc> DocumentMutator<'doc> {
         }
 
         if let Some(id) = self.title_node {
-            let title = self.doc.nodes[id].text_content();
-            self.doc.shell_provider.set_window_title(title);
+            if let Some(node) = self.doc.get_node(id) {
+                let title = node.text_content();
+                self.doc.shell_provider.set_window_title(title);
+            }
         }
 
         // Add/Update inline stylesheets (<style> elements)
@@ -576,6 +612,9 @@ impl<'doc> DocumentMutator<'doc> {
     }
 
     pub fn set_inner_html(&mut self, node_id: usize, html: &str) {
+        if self.doc.get_node(node_id).is_none() {
+            return;
+        }
         self.remove_and_drop_all_children(node_id);
         self.doc
             .html_parser_provider

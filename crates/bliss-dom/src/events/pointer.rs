@@ -223,14 +223,14 @@ pub(crate) fn handle_pointermove<F: FnMut(DomEvent)>(
             y: node.final_layout.padding.top + node.final_layout.border.top,
         };
         if !text_input_data.is_multiline {
-            let layout = text_input_data.editor.try_layout().unwrap();
-            let content_box_height = node.final_layout.content_box_height();
-            let input_height = layout.height() / layout.scale();
-            let y_offset = ((content_box_height - input_height) / 2.0).max(0.0);
+            if let Some(layout) = text_input_data.editor.try_layout() {
+                let content_box_height = node.final_layout.content_box_height();
+                let input_height = layout.height() / layout.scale();
+                let y_offset = ((content_box_height - input_height) / 2.0).max(0.0);
 
-            content_box_offset.y += y_offset;
+                content_box_offset.y += y_offset;
+            }
         }
-
         let x = (hit.x - content_box_offset.x) as f64 * doc.viewport.scale_f64();
         let y = (hit.y - content_box_offset.y) as f64 * doc.viewport.scale_f64();
 
@@ -310,11 +310,12 @@ pub(crate) fn handle_pointerdown(
                         y: node.final_layout.padding.top + node.final_layout.border.top,
                     };
                     if !text_input_data.is_multiline {
-                        let layout = text_input_data.editor.try_layout().unwrap();
-                        let content_box_height = node.final_layout.content_box_height();
-                        let input_height = layout.height() / layout.scale();
-                        let y_offset = ((content_box_height - input_height) / 2.0).max(0.0);
-                        content_box_offset.y += y_offset;
+                        if let Some(layout) = text_input_data.editor.try_layout() {
+                            let content_box_height = node.final_layout.content_box_height();
+                            let input_height = layout.height() / layout.scale();
+                            let y_offset = ((content_box_height - input_height) / 2.0).max(0.0);
+                            content_box_offset.y += y_offset;
+                        }
                     }
                     ClickTarget::TextInput { content_box_offset }
                 } else {
@@ -386,10 +387,12 @@ pub(crate) fn handle_pointerup<F: FnMut(DomEvent)>(
     mut dispatch_event: F,
 ) {
     if doc.devtools().highlight_hover {
-        let mut node = doc.get_node(target).unwrap();
+        let Some(mut node) = doc.get_node(target) else {
+            return;
+        };
         if event.button == MouseEventButton::Secondary {
             if let Some(parent_id) = node.layout_parent.get() {
-                node = doc.get_node(parent_id).unwrap();
+                node = doc.get_node(parent_id).unwrap_or(node);
             }
         }
         doc.debug_log_node(node.id);
@@ -479,23 +482,25 @@ pub(crate) fn handle_click(
                     break 'matched true;
                 }
                 local_name!("input") if el.attr(local_name!("type")) == Some("radio") => {
-                    let radio_set = el.attr(local_name!("name")).unwrap().to_string();
-                    BaseDocument::toggle_radio(doc, radio_set, node_id);
+                    let radio_set = el.attr(local_name!("name")).map(|s| s.to_string());
+                    if let Some(radio_set) = radio_set {
+                        BaseDocument::toggle_radio(doc, radio_set, node_id);
 
-                    // TODO: make input event conditional on value actually changing
-                    let value = String::from("true");
-                    dispatch_event(DomEvent::new(
-                        node_id,
-                        DomEventData::Input(BlissInputEvent { value }),
-                    ));
+                        // TODO: make input event conditional on value actually changing
+                        let value = String::from("true");
+                        dispatch_event(DomEvent::new(
+                            node_id,
+                            DomEventData::Input(BlissInputEvent { value }),
+                        ));
 
-                    generate_focus_events(
-                        doc,
-                        &mut |doc| {
-                            doc.set_focus_to(node_id);
-                        },
-                        dispatch_event,
-                    );
+                        generate_focus_events(
+                            doc,
+                            &mut |doc| {
+                                doc.set_focus_to(node_id);
+                            },
+                            dispatch_event,
+                        );
+                    }
 
                     break 'matched true;
                 }
@@ -505,10 +510,12 @@ pub(crate) fn handle_click(
                         doc.label_bound_input_element(node_id).map(|n| n.id)
                     {
                         // Apply default click event action for target node
-                        let target_node = doc.get_node_mut(target_node_id).unwrap();
-                        let syn_event = target_node.synthetic_click_event_data(event.mods);
-                        handle_click(doc, target_node_id, &syn_event, dispatch_event);
-                        break 'matched true;
+                        if let Some(target_node) = doc.get_node_mut(target_node_id) {
+                            let syn_event = target_node.synthetic_click_event_data(event.mods);
+                            drop(target_node);
+                            handle_click(doc, target_node_id, &syn_event, dispatch_event);
+                            break 'matched true;
+                        }
                     }
                 }
                 local_name!("a") => {
@@ -570,12 +577,16 @@ pub(crate) fn handle_click(
                     } else {
                         el.special_data = SpecialElementData::FileInput(files.into())
                     }
-                    let child_label_id = doc.nodes[node_id].children[1];
-                    let child_text_id = doc.nodes[child_label_id].children[0];
-                    let text_data = doc.nodes[child_text_id]
-                        .text_data_mut()
-                        .expect("Text data not found");
-                    text_data.content = text_content;
+
+                    // Update file input label text (safe access pattern)
+                    if let (Some(&child_label_id), Some(&child_text_id)) = (
+                        doc.nodes[node_id].children.get(1),
+                        doc.nodes[node_id].children.get(1).and_then(|&clid| doc.nodes[clid].children.first()),
+                    ) {
+                        if let Some(text_data) = doc.nodes[child_text_id].text_data_mut() {
+                            text_data.content = text_content;
+                        }
+                    }
                 }
                 _ => {}
             }
