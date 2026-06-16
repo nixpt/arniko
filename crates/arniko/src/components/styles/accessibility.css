@@ -1,0 +1,14 @@
+/* ── Reduced Motion ──────────────────────────
+   Disables all CSS animations, transitions, and smooth scrolling
+   when the user has prefers-reduced-motion: reduce enabled.
+   Uses 0.01ms (not 0s) so transitionend/animationend events still fire. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

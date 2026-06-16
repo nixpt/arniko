@@ -46,6 +46,7 @@ pub const ARNIKO_STYLES: &str = concat!(
     include_str!("file_tree.css"),
     include_str!("empty_state.css"),
     include_str!("panel.css"),
+    include_str!("accessibility.css"),
 );
 
 /// Light-theme CSS variables only (no component styles).
