@@ -23,6 +23,9 @@
   padding: 4px 8px; border-radius: 4px; transition: color 0.2s ease;
 }
 .arniko-shortcut-close:hover { color: var(--arniko-error); }
+.arniko-shortcut-close:focus-visible {
+  outline: none; box-shadow: var(--arniko-focus-ring); border-radius: 4px;
+}
 .arniko-shortcut-body {
   display: flex; flex-direction: column; gap: 8px;
 }

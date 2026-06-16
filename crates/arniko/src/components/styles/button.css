@@ -5,7 +5,8 @@
   text-decoration: none;
   transition: all 0.2s; padding: 8px 16px; height: 36px;
 }
-.arniko-btn:disabled { opacity: 0.5; pointer-events: none; }
+.arniko-btn:disabled { opacity: 0.5; pointer-events: none; cursor: not-allowed; }
+.arniko-btn:focus-visible { outline: none; box-shadow: var(--arniko-focus-ring); }
 .arniko-btn-default { background: var(--arniko-btn-default); color: var(--arniko-white); }
 .arniko-btn-default:hover { filter: brightness(1.1); }
 .arniko-btn-destructive { background: var(--arniko-btn-destructive); color: var(--arniko-white); }

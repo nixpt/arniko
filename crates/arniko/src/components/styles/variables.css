@@ -65,4 +65,7 @@
 
   /* ── Splash Screen ── */
   --arniko-splash-bg: #06090e;
+
+  /* ── Focus / Keyboard Navigation ── */
+  --arniko-focus-ring: 0 0 0 2px var(--arniko-bg-surface), 0 0 0 4px var(--arniko-accent);
 }

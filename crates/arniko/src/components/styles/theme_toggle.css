@@ -9,3 +9,6 @@
 .arniko-theme-toggle:hover {
   background: rgba(0,242,255,0.12); transform: scale(1.05);
 }
+.arniko-theme-toggle:focus-visible {
+  outline: none; box-shadow: var(--arniko-focus-ring);
+}

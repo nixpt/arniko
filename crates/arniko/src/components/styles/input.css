@@ -3,3 +3,5 @@
   padding: 8px 12px; color: var(--arniko-text-body); font-size: 14px; width: 100%;
 }
 .arniko-input:focus { outline: none; border-color: var(--arniko-accent); }
+.arniko-input:focus-visible { outline: none; box-shadow: var(--arniko-focus-ring); border-color: var(--arniko-accent); }
+.arniko-input:disabled { opacity: 0.5; cursor: not-allowed; }
