@@ -134,8 +134,13 @@ impl<'dom> BlissDomPainter<'dom> {
                             .resolve_to_absolute(&current_color)
                     })
             } else {
-                let current_color = root_element.primary_styles().unwrap().clone_color();
-                Some(html_color.resolve_to_absolute(&current_color))
+                root_element
+                    .primary_styles()
+                    .map(|s| {
+                        let current_color = s.clone_color();
+                        Some(html_color.resolve_to_absolute(&current_color))
+                    })
+                    .flatten()
             }
         };
 
@@ -265,6 +270,9 @@ impl<'dom> BlissDomPainter<'dom> {
             return;
         }
 
+        if node.element_data().is_none() {
+            return;
+        }
         let mut cx = self.element_cx(node, layout, box_position);
 
         cx.draw_outline(scene);
@@ -433,13 +441,12 @@ impl<'dom> BlissDomPainter<'dom> {
         }
 
         let element = node.element_data().unwrap();
-
         ElementCx {
             context: self,
             frame,
-            scale,
             style,
             pos: box_position,
+            scale,
             node,
             element,
             transform,
@@ -504,12 +511,11 @@ fn convert_rect(rect: &parley::BoundingBox) -> kurbo::Rect {
 impl ElementCx<'_> {
     fn draw_inline_layout(&self, scene: &mut impl PaintScene, pos: Point) {
         if self.node.flags.is_inline_root() {
-            let text_layout = self.element
-                .inline_layout_data
-                .as_ref()
-                .unwrap_or_else(|| {
-                    panic!("Tried to render node marked as inline root that does not have an inline layout: {:?}", self.node);
-                });
+            let Some(text_layout) = self.element.inline_layout_data.as_ref() else {
+                // Node is marked as inline root but has no inline layout —
+                // malformed DOM or stale state. Skip rendering.
+                return;
+            };
 
             let transform =
                 Affine::translate((pos.x * self.scale, pos.y * self.scale)) * self.transform;
@@ -575,12 +581,14 @@ impl ElementCx<'_> {
             }
 
             // Render text
-            crate::text::stroke_text(
-                scene,
-                input_data.editor.try_layout().unwrap().lines(),
-                self.context.dom,
-                transform,
-            );
+            if let Some(layout) = input_data.editor.try_layout() {
+                crate::text::stroke_text(
+                    scene,
+                    layout.lines(),
+                    self.context.dom,
+                    transform,
+                );
+            }
         }
     }
 
@@ -605,7 +613,7 @@ impl ElementCx<'_> {
                 .and_then(|text_layout| text_layout.layout.lines().next())
             {
                 (first_text_line.metrics().baseline
-                    - layout.lines().next().unwrap().metrics().baseline)
+                    - layout.lines().next().map(|l| l.metrics().baseline).unwrap_or(0.0))
                     / layout.scale()
             } else {
                 0.0

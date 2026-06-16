@@ -199,8 +199,9 @@ impl<Rend: WindowRenderer> View<Rend> {
         self.renderer
             .resume(Arc::new(self.window.clone()), width, height);
         if !self.renderer.is_active() {
-            panic!("Renderer failed to resume");
-        };
+            eprintln!("bliss-shell: renderer failed to resume for window {:?}", window_id);
+            return;
+        }
 
         // Render
         let insets = self.safe_area_insets.to_logical(scale);
