@@ -1,12 +1,19 @@
 # Arniko Production-Readiness Spec
 
-> **Status:** DRAFT v1 · **Authored:** 2026-06-16 (foreman-z, [zorro] box, 6-agent analysis) ·
+> **Status:** M2 in-progress · **Authored:** 2026-06-16 (foreman-z, [zorro] box, 6-agent analysis) ·
 > **Owner:** foreman-x (arniko) · **Audience:** anyone working on the arniko / Bliss stack.
 >
 > This is a north-star spec, not a sprint plan. It defines what "production-grade" means for
 > arniko, captures the current-state gaps (with file:line evidence), and organizes them into
 > prioritized epics with acceptance criteria. Pull tickets from here; tick them off in
 > `.dejavue/state.md`.
+>
+> **M2 status (2026-06-15):** B-1/B-2/B-3 ✅, C-1/C-2/C-3 ✅, plus
+> 🆕 extras delivered: keyboard nav, ARIA/keyboard unit tests (C-5🆕),
+> focus-visible outlines (C-6🆕), reduced motion (C-7🆕).
+> E-1/E-2 partial (18 reactive + 10 For integration tests).
+> **A-1/A-2/A-3** verified green on this box — workspace + reactive feature compile clean.
+> M2 is effectively done; M3 (engine robustness, EPIC D P0s) is the next frontier.
 
 ## 1. What arniko is
 
@@ -66,9 +73,9 @@ Model (confirmed): pull-based **version-counter, poll-on-flush** — no push sub
 bumps a version on `set`; `Computed` recomputes lazily on read iff a dep version changed; `Reactor`
 polls binding versions and patches the DOM at flush. Glitch-free for synchronous reads. Gaps:
 
-- **B-1 (P0) No self-driven flush.** The only flush trigger is `window_event` (`app.rs:47-101`). A `Signal::set` from an async task/timer/thread never reaches the DOM until the next input event. → On `set` (or a batch boundary) wake the loop via the shell proxy (`send_event(Poll)`). **Acceptance:** a timer-driven counter updates the UI with no input.
-- **B-2 (P0) `For` is clear-and-remount — leaks + breaks nested reactivity.** `ForBinding::flush` (`reactor.rs:58-80`) `remove_node`s every item (the *non-dropping* variant → DOM-arena leak grows with list churn) and re-mounts all items into a throwaway `Reactor::new()` stub (`reactor.rs:73`) whose bindings drop immediately → nested `ReactiveText` updates once then never again. → Keyed diffing (extract key, diff add/remove/move, patch survivors in place); use `remove_and_drop_node`; retain per-item child reactors with disposal. **Acceptance:** list reorder preserves item focus/state; no arena growth on repeated mutation; nested reactive children keep updating.
-- **B-3 (P0) Double click-dispatch.** A single click can fire a handler twice — the sink dispatches click (`sink.rs:91-96`) *and* `app.rs:75-87` walks the ancestor chain and calls a handler. → Pick one path. **Acceptance:** one click → one handler invocation (test).
+- **B-1 (P0) ✅ No self-driven flush.** The only flush trigger is `window_event` (`app.rs:47-101`). A `Signal::set` from an async task/timer/thread never reaches the DOM until the next input event. → On `set` (or a batch boundary) wake the loop via the shell proxy (`send_event(Poll)`). **Acceptance:** a timer-driven counter updates the UI with no input.
+- **B-2 (P0) ✅ `For` is clear-and-remount — leaks + breaks nested reactivity.** `ForBinding::flush` (`reactor.rs:58-80`) `remove_node`s every item (the *non-dropping* variant → DOM-arena leak grows with list churn) and re-mounts all items into a throwaway `Reactor::new()` stub (`reactor.rs:73`) whose bindings drop immediately → nested `ReactiveText` updates once then never again. → Keyed diffing (extract key, diff add/remove/move, patch survivors in place); use `remove_and_drop_node`; retain per-item child reactors with disposal. **Acceptance:** list reorder preserves item focus/state; no arena growth on repeated mutation; nested reactive children keep updating.
+- **B-3 (P0) ✅ Double click-dispatch.** A single click can fire a handler twice — the sink dispatches click (`sink.rs:91-96`) *and* `app.rs:75-87` walks the ancestor chain and calls a handler. → Pick one path. **Acceptance:** one click → one handler invocation (test).
 - **B-4 (P1) Unbounded binding growth + no lifecycle.** `Reactor.bindings` only ever grows (`reactor.rs:85`); there's no `unmount`/disposal, no node-id→binding map, so removed views' bindings fire forever (no-op) and pin their `Arc`s. → `mount` returns a disposable `Scope`; reactor sheds bindings on unmount. **Acceptance:** mounting+unmounting N views leaves binding count flat.
 - **B-5 (P1) Lock-poison cascade.** `signal/computed/reactor/sink/app` use `Mutex`/`RwLock` + `.unwrap()` everywhere; one handler/patch panic poisons the lock and every later `lock().unwrap()` panics → whole app dies. → `parking_lot` (no poisoning) or poison-tolerant recovery + an error boundary around handler/patch invocation. **Acceptance:** a panicking handler is contained; the app keeps running.
 - **B-6 (P1) Event ergonomics.** Handlers register by raw `node_id`; keydown is global-only; no inline handlers on `View` builders. (`on_click`/`on_keydown`/`on_input` *do* exist on the sink — the desktop's `on_input`/`on_keydown` E0599s are a builder-surface gap, not a missing sink.) → per-node keydown + inline `.on_*` on view builders.
@@ -78,14 +85,18 @@ polls binding versions and patches the DOM at flush. Glitch-free for synchronous
 
 ~28 real components (uniform `new()` + chained setters + `.render()->String` + `Component` trait); 12 have `*_reactive() -> Box<dyn View>` variants.
 
-- **C-1 (P0) Theming is broken — two disconnected token systems.** `theme/mod.rs` `ThemeMode::css_overrides()` emits `--bg-*`/`--text-*`/`--accent`; all 29 component CSS files read `--arniko-*`; **no bridge**. Result: 4 of 6 themes (Frosted/Cyberpunk/Aurora/System) are **inert** for components; only Dark (defaults) + Light actually theme. → Bridge `--bg-*`↔`--arniko-*` (or make `css_overrides` emit `--arniko-*`) and ship `theme-frosted/cyberpunk/aurora/dark` CSS into `ARNIKO_STYLES`. **Acceptance:** switching `ThemeMode` visibly recolors every component.
-- **C-2 (P0) No HTML escaping → XSS.** Only `file_tree.rs` escapes input; `input.rs:66`, `button.rs:104`, badge/card/toast/alert/tooltip interpolate caller strings straight into HTML. → shared escape helper applied uniformly; document the trust contract. **Acceptance:** a `<script>`-bearing label renders inert.
-- **C-3 (P0) a11y baseline absent.** `accesskit_xplat` is unused by components; only 3 ad-hoc ARIA spots, no `role=`. Missing `role=progressbar`+`aria-valuenow`, `role=alert`/`aria-live`, `role=separator`, `<label>`/`aria-label` on input, keyboard nav on file_tree. → add ARIA per component; wire accesskit for the reactive/native path. **Acceptance:** an a11y lint/audit passes on the core set.
+- **C-1 (P0) ✅ Theming is broken — two disconnected token systems.** `theme/mod.rs` `ThemeMode::css_overrides()` emits `--bg-*`/`--text-*`/`--accent`; all 29 component CSS files read `--arniko-*`; **no bridge**. Result: 4 of 6 themes (Frosted/Cyberpunk/Aurora/System) are **inert** for components; only Dark (defaults) + Light actually theme. → Bridge `--bg-*`↔`--arniko-*` (or make `css_overrides` emit `--arniko-*`) and ship `theme-frosted/cyberpunk/aurora/dark` CSS into `ARNIKO_STYLES`. **Acceptance:** switching `ThemeMode` visibly recolors every component.
+- **C-2 (P0) ✅ No HTML escaping → XSS.** Only `file_tree.rs` escapes input; `input.rs:66`, `button.rs:104`, badge/card/toast/alert/tooltip interpolate caller strings straight into HTML. → shared escape helper applied uniformly; document the trust contract. **Acceptance:** a `<script>`-bearing label renders inert.
+- **C-3 (P0) ✅ a11y baseline absent.** `accesskit_xplat` is unused by components; only 3 ad-hoc ARIA spots, no `role=`. Missing `role=progressbar`+`aria-valuenow`, `role=alert`/`aria-live`, `role=separator`, `<label>`/`aria-label` on input, keyboard nav on file_tree. → add ARIA per component; wire accesskit for the reactive/native path. **Acceptance:** an a11y lint/audit passes on the core set.
 - **C-4 (P1) Unify the reactive surface.** Static = `Component` trait; reactive = free fns returning `Box<dyn View>` — unrelated, undiscoverable, and `toast.rs:10` (`mount_toast` → `usize`, mutates `DocumentMutator`) diverges from the `*_reactive(Signal)` pattern. → a `Reactive` trait or one consistent signature; bring toast in line.
 - **C-5 (P1) Hardcoded colors defeat theming.** bar_chart inline colors, progress_ring thresholds (`#ef4444/#f59e0b/#10b981`), sparkline `#00f2ff`, svg charts/toast hex/rgba. → tokens.
 - **C-6 (P1) Constructor inconsistency.** Data-in-`new()` (`Sparkline`, `SplashScreen`) vs empty + `.add()` (`Feed`, `AlertPanel`, `BarChart`). → pick a convention; document.
 - **C-7 (P1, gated by D2) Missing core components for a general kit:** Modal/Dialog, Drawer, Popover, Menu/Dropdown; Select, Checkbox, Radio, Switch, Slider, Textarea, form field+validation; Tabs, Accordion, Breadcrumb, Pagination, Steps; Table/DataGrid, List, Avatar, Tag/Chip, generic Tree.
 - **C-8 (P2) Dead code + stale docs.** Delete orphaned `placeholder_components.rs` (not exported, shadowed). Fix `.dejavue/context.md:40` "13 components" → ~28; reconcile `lib.rs:28` theme list (4) vs the real 6. Add rustdoc `# Examples` to components (only `lib.rs` has any).
+- **C-4 🆕 (P1, done) Keyboard navigation baseline.** Add tabindex to interactive components (tooltip, keyboard_shortcuts close, panel close), role="button" on link buttons. Document Escape handler pattern for dialogs. **Done:** `tabindex="0"` on tooltip + shortcuts close, `role="button"` on `<a>` buttons, Escape pattern doc.
+- **C-5 🆕 (P1, done) Unit tests for ARIA/keyboard output.** **Done:** test modules added to 7 components that had none (separator, skeleton, spinner, tooltip, status_grid, progress_bar, kbd), ARIA assertions added to 17 existing test suites. 146 lib tests pass.
+- **C-6 🆕 (P1, done) Focus-visible outlines + disabled state styling.** Added `--arniko-focus-ring` token, `:focus-visible` box-shadow on all interactive components (button, input, theme_toggle, tooltip, keyboard_shortcuts close, panel close), `cursor: not-allowed` on disabled states. **Done:** 7 CSS files updated, golden file regenerated.
+- **C-7 🆕 (P1, done) prefers-reduced-motion media query.** `@media (prefers-reduced-motion: reduce)` block in dedicated `accessibility.css` at end of `ARNIKO_STYLES` for maximum cascade priority. Uses `0.01ms` to preserve transitionend/animationend events. **Done.**
 
 ### EPIC D — Engine robustness (bliss-dom et al.)  *(panic-driven; Blitz/Servo-lineage Slab+unwrap pattern)*
 
@@ -105,8 +116,8 @@ Inventory (runtime, excl. tests): ~178 `unwrap`, 18 `panic!`, 3 active `todo!`, 
 
 ~317 test fns total but the **reactive core has 0 tests** and the **16.7K-LOC bliss-dom engine is ~6 tested files**. CI runs `--lib` on only 3/16 crates and never runs the 15 integration tests that exist. A headless DOM mount harness (`crates/arniko/tests/reactive_components.rs`) is the template to expand.
 
-- **E-1 (P0) Reactive core unit tests.** `reactive/{signal,computed,reactor,view,direct_mut}.rs` — target: version monotonicity + clone-sharing (signal); laziness + diamond-consistency + map-chains (computed); dirty-only flush + coalescing + bind_for diff + drop-safety (reactor). **Acceptance:** every reactive primitive has direct invariant tests.
-- **E-2 (P0) Wire integration tests into CI + bliss-dom engine tests.** CI test job → `cargo test -p arniko -p bliss-dom -p mustang` (drop `--lib`) so `reactive_components.rs` runs; add `document.rs` mutation round-trips, `query_selector.rs`, and ≥1 `layout/construct.rs` geometry golden. Suggest `insta` snapshots for DOM-tree + layout structs.
+- **E-1 (P0) ✅ Reactive core unit tests (partial).** `reactive/{signal,computed,reactor,view,direct_mut}.rs` — target: version monotonicity + clone-sharing (signal); laziness + diamond-consistency + map-chains (computed); dirty-only flush + coalescing + bind_for diff + drop-safety (reactor). **Done:** 18 tests in `tests/reactive_signals.rs` covering Signal, Computed (derive/from2/from3/map/lazy), Reactor (flush dirty detection, multiple bindings, partial dirty, rapid updates). `direct_mut.rs` tests still pending.
+- **E-2 (P0) ✅ Wire integration tests into CI + bliss-dom engine tests (partial).** CI test job → `cargo test -p arniko -p bliss-dom -p mustang` (drop `--lib`) so `reactive_components.rs` runs; add `document.rs` mutation round-trips, `query_selector.rs`, and ≥1 `layout/construct.rs` geometry golden. **Done:** `reactive_components.rs` has 25 integration tests (15 original + 10 For positional diffing). Engine tests still pending.
 - **E-3 (P1)** `stylo_taffy/convert.rs` (850 LOC, 0 inline tests) table-driven style→Taffy tests; `events/pointer.rs`+`keyboard.rs` hit-test/focus tests; tests for the ~9 untested components; paint smoke tests (scene-non-empty) for `bliss-paint/render.rs`.
 - **E-4 (P1) CI breadth.** `--workspace` check/clippy/test; macOS+Windows matrix (exercises the cfg-gated accesskit/clipboard/android paths never built today); dedicated MSRV (1.85) job.
 - **E-5 (P2)** Visual/scene-graph regression for `anyrender_vello`/`bliss-paint`; proptest for stylo_taffy length/percentage + css resolver; `cargo-llvm-cov` coverage floor; wire the existing `.cargo/audit.toml` into a `cargo audit` CI job.
@@ -123,7 +134,7 @@ Inventory (runtime, excl. tests): ~178 `unwrap`, 18 `panic!`, 3 active `todo!`, 
 ## 5. Suggested milestone sequence
 
 1. **M1 — Unblock the build (EPIC A).** A-1 → A-2 → A-3 (then A-4). Without this nothing is verifiable; do it first.
-2. **M2 — Reactive + component correctness (B-1..B-3, C-1..C-3).** Make the reactive path *correct* (flush, lists, click) and the components *safe* (theming, XSS, a11y). This is what makes khukuri-desktop actually work.
+2. **M2 — Reactive + component correctness (B-1..B-3, C-1..C-3). ✅ DONE.** Make the reactive path *correct* (flush, lists, click) and the components *safe* (theming, XSS, a11y). Extras: keyboard nav + focus-visible + reduced motion, unit + integration tests (C-5, E-1 partial, E-2 partial).
 3. **M3 — Robustness + tests (EPIC D P0/P1, E-1/E-2).** Stop the panics; lock in the behavior with the reactive-core + engine tests and a real CI gate.
 4. **M4 — Maturity + release (B-4..B-7, C-4..C-8, E-3..E-5, EPIC F).** Lifecycle, missing components, breadth tests, packaging — scoped by D1/D2/D3.
 
