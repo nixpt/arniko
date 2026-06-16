@@ -1,0 +1,56 @@
+/* ═══════════════════════════════════════
+   Arniko Frosted Theme Overrides
+   ═══════════════════════════════════════
+   Clean white/gray glass with subtle blue accent.
+   Apply class="theme-frosted" to <html> or <body>.
+   ═══════════════════════════════════════ */
+
+.theme-frosted {
+  --arniko-bg-surface: #f8fafc;
+  --arniko-bg-elevated: #ffffff;
+  --arniko-bg-input: #ffffff;
+  --arniko-bg-subtle: #e2e8f0;
+  --arniko-bg-shimmer: #cbd5e1;
+  --arniko-bg-hover: rgba(148, 163, 184, 0.15);
+
+  --arniko-text-primary: #0f172a;
+  --arniko-text-body: #334155;
+  --arniko-text-secondary: #475569;
+  --arniko-text-muted: #64748b;
+  --arniko-text-subtle: #94a3b8;
+
+  --arniko-border: #cbd5e1;
+  --arniko-border-light: rgba(0, 0, 0, 0.06);
+  --arniko-border-accent: rgba(59, 130, 246, 0.2);
+
+  --arniko-accent: #3b82f6;
+  --arniko-accent-glow: rgba(59, 130, 246, 0.2);
+
+  --arniko-cyan: #08a3b2;
+  --arniko-purple: #8b5cf6;
+  --arniko-white: #ffffff;
+
+  --arniko-btn-default: #2563eb;
+  --arniko-btn-destructive: #dc2626;
+  --arniko-btn-outline-border: #cbd5e1;
+  --arniko-btn-secondary-bg: #f1f5f9;
+  --arniko-btn-accent-bg: #3b82f6;
+
+  --arniko-success: #16a34a;
+  --arniko-success-bg: #f0fdf4;
+  --arniko-success-border: #bbf7d0;
+
+  --arniko-error: #dc2626;
+  --arniko-error-bg: #fef2f2;
+  --arniko-error-border: #fecaca;
+
+  --arniko-warning: #d97706;
+  --arniko-warning-bg: #fffbf0;
+  --arniko-warning-border: #fde68a;
+
+  --arniko-info: #2563eb;
+  --arniko-info-bg: #f0f6ff;
+  --arniko-info-border: #bfdbfe;
+
+  --arniko-splash-bg: #f8fafc;
+}

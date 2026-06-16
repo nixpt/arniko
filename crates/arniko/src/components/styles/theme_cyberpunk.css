@@ -1,0 +1,56 @@
+/* ═══════════════════════════════════════
+   Arniko Cyberpunk Theme Overrides
+   ═══════════════════════════════════════
+   Dark theme with neon green/cyan accents.
+   Apply class="theme-cyberpunk" to <html> or <body>.
+   ═══════════════════════════════════════ */
+
+.theme-cyberpunk {
+  --arniko-bg-surface: #05050a;
+  --arniko-bg-elevated: #0a0a14;
+  --arniko-bg-input: #0a0a14;
+  --arniko-bg-subtle: #151525;
+  --arniko-bg-shimmer: #1e1e30;
+  --arniko-bg-hover: rgba(16, 185, 129, 0.12);
+
+  --arniko-text-primary: #ecfdf5;
+  --arniko-text-body: #d1fae5;
+  --arniko-text-secondary: #a7f3d0;
+  --arniko-text-muted: #6ee7b7;
+  --arniko-text-subtle: #34d399;
+
+  --arniko-border: rgba(16, 185, 129, 0.2);
+  --arniko-border-light: rgba(16, 185, 129, 0.08);
+  --arniko-border-accent: rgba(34, 211, 238, 0.25);
+
+  --arniko-accent: #22d3ee;
+  --arniko-accent-glow: rgba(34, 211, 238, 0.3);
+
+  --arniko-cyan: #22d3ee;
+  --arniko-purple: #a855f7;
+  --arniko-white: #ffffff;
+
+  --arniko-btn-default: #10b981;
+  --arniko-btn-destructive: #dc2626;
+  --arniko-btn-outline-border: rgba(16, 185, 129, 0.3);
+  --arniko-btn-secondary-bg: #151525;
+  --arniko-btn-accent-bg: #14b8a6;
+
+  --arniko-success: #34d399;
+  --arniko-success-bg: rgba(16, 185, 129, 0.12);
+  --arniko-success-border: rgba(52, 211, 153, 0.2);
+
+  --arniko-error: #f87171;
+  --arniko-error-bg: rgba(239, 68, 68, 0.12);
+  --arniko-error-border: rgba(248, 113, 113, 0.2);
+
+  --arniko-warning: #fbbf24;
+  --arniko-warning-bg: rgba(245, 158, 11, 0.12);
+  --arniko-warning-border: rgba(251, 191, 36, 0.2);
+
+  --arniko-info: #60a5fa;
+  --arniko-info-bg: rgba(96, 165, 250, 0.12);
+  --arniko-info-border: rgba(96, 165, 250, 0.2);
+
+  --arniko-splash-bg: #05050a;
+}

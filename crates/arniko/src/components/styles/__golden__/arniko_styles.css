@@ -67,6 +67,64 @@
   --arniko-splash-bg: #06090e;
 }
 /* ═══════════════════════════════════════
+   Arniko Dark Theme Overrides
+   ═══════════════════════════════════════
+   Apply class="theme-dark" to <html> or <body>.
+   The :root block in variables.css already provides
+   dark defaults; this class is here for explicit mode
+   switching and parity with the other theme classes.
+   ═══════════════════════════════════════ */
+
+.theme-dark {
+  --arniko-bg-surface: #18181b;
+  --arniko-bg-elevated: #18181b;
+  --arniko-bg-input: #18181b;
+  --arniko-bg-subtle: #27272a;
+  --arniko-bg-shimmer: #3f3f46;
+  --arniko-bg-hover: rgba(255, 255, 255, 0.05);
+
+  --arniko-text-primary: #f5f5f5;
+  --arniko-text-body: #e4e4e7;
+  --arniko-text-secondary: #a1a1aa;
+  --arniko-text-muted: #71717a;
+  --arniko-text-subtle: #52525b;
+
+  --arniko-border: #27272a;
+  --arniko-border-light: rgba(0, 242, 255, 0.06);
+  --arniko-border-accent: rgba(0, 242, 255, 0.15);
+
+  --arniko-accent: #6366f1;
+  --arniko-accent-glow: rgba(99, 102, 241, 0.3);
+
+  --arniko-cyan: #00f2ff;
+  --arniko-purple: #a855f7;
+  --arniko-white: #ffffff;
+
+  --arniko-btn-default: #2563eb;
+  --arniko-btn-destructive: #dc2626;
+  --arniko-btn-outline-border: #374151;
+  --arniko-btn-secondary-bg: #374151;
+  --arniko-btn-accent-bg: #7c3aed;
+
+  --arniko-success: #22c55e;
+  --arniko-success-bg: #052e16;
+  --arniko-success-border: #166534;
+
+  --arniko-error: #ef4444;
+  --arniko-error-bg: #450a0a;
+  --arniko-error-border: #991b1b;
+
+  --arniko-warning: #f59e0b;
+  --arniko-warning-bg: #422006;
+  --arniko-warning-border: #854d0e;
+
+  --arniko-info: #60a5fa;
+  --arniko-info-bg: #172554;
+  --arniko-info-border: #1e3a8a;
+
+  --arniko-splash-bg: #06090e;
+}
+/* ═══════════════════════════════════════
    Arniko Light Theme Overrides
    ═══════════════════════════════════════
    Apply class="theme-light" to <html> or <body>
@@ -121,6 +179,174 @@
   --arniko-info-border: #bfdbfe;
 
   --arniko-splash-bg: #f8f8f8;
+}
+/* ═══════════════════════════════════════
+   Arniko Frosted Theme Overrides
+   ═══════════════════════════════════════
+   Clean white/gray glass with subtle blue accent.
+   Apply class="theme-frosted" to <html> or <body>.
+   ═══════════════════════════════════════ */
+
+.theme-frosted {
+  --arniko-bg-surface: #f8fafc;
+  --arniko-bg-elevated: #ffffff;
+  --arniko-bg-input: #ffffff;
+  --arniko-bg-subtle: #e2e8f0;
+  --arniko-bg-shimmer: #cbd5e1;
+  --arniko-bg-hover: rgba(148, 163, 184, 0.15);
+
+  --arniko-text-primary: #0f172a;
+  --arniko-text-body: #334155;
+  --arniko-text-secondary: #475569;
+  --arniko-text-muted: #64748b;
+  --arniko-text-subtle: #94a3b8;
+
+  --arniko-border: #cbd5e1;
+  --arniko-border-light: rgba(0, 0, 0, 0.06);
+  --arniko-border-accent: rgba(59, 130, 246, 0.2);
+
+  --arniko-accent: #3b82f6;
+  --arniko-accent-glow: rgba(59, 130, 246, 0.2);
+
+  --arniko-cyan: #08a3b2;
+  --arniko-purple: #8b5cf6;
+  --arniko-white: #ffffff;
+
+  --arniko-btn-default: #2563eb;
+  --arniko-btn-destructive: #dc2626;
+  --arniko-btn-outline-border: #cbd5e1;
+  --arniko-btn-secondary-bg: #f1f5f9;
+  --arniko-btn-accent-bg: #3b82f6;
+
+  --arniko-success: #16a34a;
+  --arniko-success-bg: #f0fdf4;
+  --arniko-success-border: #bbf7d0;
+
+  --arniko-error: #dc2626;
+  --arniko-error-bg: #fef2f2;
+  --arniko-error-border: #fecaca;
+
+  --arniko-warning: #d97706;
+  --arniko-warning-bg: #fffbf0;
+  --arniko-warning-border: #fde68a;
+
+  --arniko-info: #2563eb;
+  --arniko-info-bg: #f0f6ff;
+  --arniko-info-border: #bfdbfe;
+
+  --arniko-splash-bg: #f8fafc;
+}
+/* ═══════════════════════════════════════
+   Arniko Cyberpunk Theme Overrides
+   ═══════════════════════════════════════
+   Dark theme with neon green/cyan accents.
+   Apply class="theme-cyberpunk" to <html> or <body>.
+   ═══════════════════════════════════════ */
+
+.theme-cyberpunk {
+  --arniko-bg-surface: #05050a;
+  --arniko-bg-elevated: #0a0a14;
+  --arniko-bg-input: #0a0a14;
+  --arniko-bg-subtle: #151525;
+  --arniko-bg-shimmer: #1e1e30;
+  --arniko-bg-hover: rgba(16, 185, 129, 0.12);
+
+  --arniko-text-primary: #ecfdf5;
+  --arniko-text-body: #d1fae5;
+  --arniko-text-secondary: #a7f3d0;
+  --arniko-text-muted: #6ee7b7;
+  --arniko-text-subtle: #34d399;
+
+  --arniko-border: rgba(16, 185, 129, 0.2);
+  --arniko-border-light: rgba(16, 185, 129, 0.08);
+  --arniko-border-accent: rgba(34, 211, 238, 0.25);
+
+  --arniko-accent: #22d3ee;
+  --arniko-accent-glow: rgba(34, 211, 238, 0.3);
+
+  --arniko-cyan: #22d3ee;
+  --arniko-purple: #a855f7;
+  --arniko-white: #ffffff;
+
+  --arniko-btn-default: #10b981;
+  --arniko-btn-destructive: #dc2626;
+  --arniko-btn-outline-border: rgba(16, 185, 129, 0.3);
+  --arniko-btn-secondary-bg: #151525;
+  --arniko-btn-accent-bg: #14b8a6;
+
+  --arniko-success: #34d399;
+  --arniko-success-bg: rgba(16, 185, 129, 0.12);
+  --arniko-success-border: rgba(52, 211, 153, 0.2);
+
+  --arniko-error: #f87171;
+  --arniko-error-bg: rgba(239, 68, 68, 0.12);
+  --arniko-error-border: rgba(248, 113, 113, 0.2);
+
+  --arniko-warning: #fbbf24;
+  --arniko-warning-bg: rgba(245, 158, 11, 0.12);
+  --arniko-warning-border: rgba(251, 191, 36, 0.2);
+
+  --arniko-info: #60a5fa;
+  --arniko-info-bg: rgba(96, 165, 250, 0.12);
+  --arniko-info-border: rgba(96, 165, 250, 0.2);
+
+  --arniko-splash-bg: #05050a;
+}
+/* ═══════════════════════════════════════
+   Arniko Aurora Theme Overrides
+   ═══════════════════════════════════════
+   Light pastel theme with pink/purple accents.
+   Apply class="theme-aurora" to <html> or <body>.
+   ═══════════════════════════════════════ */
+
+.theme-aurora {
+  --arniko-bg-surface: #f5f3ff;
+  --arniko-bg-elevated: #ffffff;
+  --arniko-bg-input: #ffffff;
+  --arniko-bg-subtle: #ede9fe;
+  --arniko-bg-shimmer: #ddd6fe;
+  --arniko-bg-hover: rgba(147, 51, 234, 0.08);
+
+  --arniko-text-primary: #1f2937;
+  --arniko-text-body: #374151;
+  --arniko-text-secondary: #4b5563;
+  --arniko-text-muted: #9ca3af;
+  --arniko-text-subtle: #d1d5db;
+
+  --arniko-border: rgba(147, 51, 234, 0.15);
+  --arniko-border-light: rgba(147, 51, 234, 0.06);
+  --arniko-border-accent: rgba(236, 72, 153, 0.2);
+
+  --arniko-accent: #ec4899;
+  --arniko-accent-glow: rgba(236, 72, 153, 0.2);
+
+  --arniko-cyan: #22d3ee;
+  --arniko-purple: #a855f7;
+  --arniko-white: #ffffff;
+
+  --arniko-btn-default: #ec4899;
+  --arniko-btn-destructive: #dc2626;
+  --arniko-btn-outline-border: rgba(147, 51, 234, 0.25);
+  --arniko-btn-secondary-bg: #f5f3ff;
+  --arniko-btn-accent-bg: #a855f7;
+
+  --arniko-success: #16a34a;
+  --arniko-success-bg: #f0fdf4;
+  --arniko-success-border: #bbf7d0;
+
+  --arniko-error: #dc2626;
+  --arniko-error-bg: #fef2f2;
+  --arniko-error-border: #fecaca;
+
+  --arniko-warning: #d97706;
+  --arniko-warning-bg: #fffbf0;
+  --arniko-warning-border: #fde68a;
+
+  --arniko-info: #2563eb;
+  --arniko-info-bg: #f0f6ff;
+  --arniko-info-border: #bfdbfe;
+
+  --arniko-splash-bg: #f5f3ff;
 }
 .arniko-btn {
   display: inline-flex; align-items: center; justify-content: center;

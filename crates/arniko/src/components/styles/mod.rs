@@ -13,7 +13,11 @@
 /// references so themes work out of the box.
 pub const ARNIKO_STYLES: &str = concat!(
     include_str!("variables.css"),
+    include_str!("theme_dark.css"),
     include_str!("theme_light.css"),
+    include_str!("theme_frosted.css"),
+    include_str!("theme_cyberpunk.css"),
+    include_str!("theme_aurora.css"),
     include_str!("button.css"),
     include_str!("card.css"),
     include_str!("input.css"),
