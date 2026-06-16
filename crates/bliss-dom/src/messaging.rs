@@ -78,7 +78,7 @@ impl Default for InMemoryDocumentMessaging {
 
 impl DocumentMessaging for InMemoryDocumentMessaging {
     fn post_message(&self, source_doc: usize, target_doc: usize, message: DocumentMessage) {
-        let handlers = self.handlers.lock().unwrap();
+        let handlers = self.handlers.lock().unwrap_or_else(|e| e.into_inner());
 
         if let Some(handler) = handlers.get(&target_doc) {
             // Call the handler with the source document ID
@@ -93,22 +93,22 @@ impl DocumentMessaging for InMemoryDocumentMessaging {
         doc_id: usize,
         handler: Box<dyn Fn(usize, DocumentMessage) + Send + Sync>,
     ) {
-        let mut handlers = self.handlers.lock().unwrap();
+        let mut handlers = self.handlers.lock().unwrap_or_else(|e| e.into_inner());
         handlers.insert(doc_id, handler);
     }
 
     fn unregister_handler(&self, doc_id: usize) {
-        let mut handlers = self.handlers.lock().unwrap();
+        let mut handlers = self.handlers.lock().unwrap_or_else(|e| e.into_inner());
         handlers.remove(&doc_id);
     }
 
     fn has_handler(&self, doc_id: usize) -> bool {
-        let handlers = self.handlers.lock().unwrap();
+        let handlers = self.handlers.lock().unwrap_or_else(|e| e.into_inner());
         handlers.contains_key(&doc_id)
     }
 
     fn handler_count(&self) -> usize {
-        let handlers = self.handlers.lock().unwrap();
+        let handlers = self.handlers.lock().unwrap_or_else(|e| e.into_inner());
         handlers.len()
     }
 }
@@ -233,7 +233,7 @@ mod tests {
         messaging.register_handler(
             2,
             Box::new(move |source, msg| {
-                *received_clone.lock().unwrap() = Some((source, msg));
+                *received_clone.lock().unwrap_or_else(|e| e.into_inner()) = Some((source, msg));
             }),
         );
 
@@ -242,7 +242,7 @@ mod tests {
         messaging.post_message(1, 2, message.clone());
 
         // Check message was received
-        let result = received.lock().unwrap().clone();
+        let result = received.lock().unwrap_or_else(|e| e.into_inner()).clone();
         assert!(result.is_some());
         let (source, received_msg) = result.unwrap();
         assert_eq!(source, 1);
@@ -309,14 +309,14 @@ mod tests {
         inner.register_handler(
             2,
             Box::new(move |_, _| {
-                *received_doc2_clone.lock().unwrap() = true;
+                *received_doc2_clone.lock().unwrap_or_else(|e| e.into_inner()) = true;
             }),
         );
 
         inner.register_handler(
             3,
             Box::new(move |_, _| {
-                *received_doc3_clone.lock().unwrap() = true;
+                *received_doc3_clone.lock().unwrap_or_else(|e| e.into_inner()) = true;
             }),
         );
 
@@ -328,8 +328,8 @@ mod tests {
         // This should be blocked
         filter.post_message(1, 3, message);
 
-        assert!(*received_doc2.lock().unwrap());
-        assert!(!*received_doc3.lock().unwrap()); // Should remain false
+        assert!(*received_doc2.lock().unwrap_or_else(|e| e.into_inner()));
+        assert!(!*received_doc3.lock().unwrap_or_else(|e| e.into_inner())); // Should remain false
     }
 
     #[test]

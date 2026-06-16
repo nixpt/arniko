@@ -186,12 +186,12 @@ mod tests {
         let received_clone = received.clone();
 
         let scheduler = CallbackDocumentScheduler::new(move |doc_id, event| {
-            *received_clone.lock().unwrap() = Some((doc_id, event));
+            *received_clone.lock().unwrap_or_else(|e| e.into_inner()) = Some((doc_id, event));
         });
 
         scheduler.post(123, make_test_event());
 
-        let result = received.lock().unwrap().take();
+        let result = received.lock().unwrap_or_else(|e| e.into_inner()).take();
         assert!(result.is_some());
         let (doc_id, _) = result.unwrap();
         assert_eq!(doc_id, 123);

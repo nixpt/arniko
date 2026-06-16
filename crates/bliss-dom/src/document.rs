@@ -1143,7 +1143,7 @@ impl BaseDocument {
 
                 // TODO: Implement FontInfoOveride
                 // TODO: Investigate eliminating double-box
-                let mut global_font_ctx = self.font_ctx.lock().unwrap();
+                let mut global_font_ctx = self.font_ctx.lock().unwrap_or_else(|e| e.into_inner());
                 global_font_ctx
                     .collection
                     .register_fonts(font.clone(), None);
@@ -1709,7 +1709,7 @@ impl BaseDocument {
             .element_data_mut()
             .and_then(|el| el.text_input_data_mut())
         {
-            let mut font_ctx = self.font_ctx.lock().unwrap();
+            let mut font_ctx = self.font_ctx.lock().unwrap_or_else(|e| e.into_inner());
             let layout_ctx = &mut self.layout_ctx;
             let driver = text_input.editor.driver(&mut font_ctx, layout_ctx);
             cb(driver)

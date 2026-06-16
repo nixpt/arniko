@@ -236,7 +236,7 @@ pub(crate) fn handle_pointermove<F: FnMut(DomEvent)>(
 
         text_input_data
             .editor
-            .driver(&mut doc.font_ctx.lock().unwrap(), &mut doc.layout_ctx)
+            .driver(&mut doc.font_ctx.lock().unwrap_or_else(|e| e.into_inner()), &mut doc.layout_ctx)
             .extend_selection_to_point(x as f32, y as f32);
 
         changed = true;
@@ -349,7 +349,7 @@ pub(crate) fn handle_pointerdown(
             let node = &mut doc.nodes[actual_target];
             let el = node.data.downcast_element_mut().unwrap();
             if let SpecialElementData::TextInput(ref mut text_input_data) = el.special_data {
-                let mut font_ctx = doc.font_ctx.lock().unwrap();
+                let mut font_ctx = doc.font_ctx.lock().unwrap_or_else(|e| e.into_inner());
                 let mut driver = text_input_data
                     .editor
                     .driver(&mut font_ctx, &mut doc.layout_ctx);

@@ -284,7 +284,7 @@ impl DocumentMutator<'_> {
             if let Some(input_data) = element.text_input_data_mut() {
                 // Update text input value
                 input_data.set_text(
-                    &mut self.doc.font_ctx.lock().unwrap(),
+                    &mut self.doc.font_ctx.lock().unwrap_or_else(|e| e.into_inner()),
                     &mut self.doc.layout_ctx,
                     value,
                 );
@@ -357,7 +357,7 @@ impl DocumentMutator<'_> {
         if name.local == local_name!("value") {
             if let Some(input_data) = element.text_input_data_mut() {
                 input_data.set_text(
-                    &mut self.doc.font_ctx.lock().unwrap(),
+                    &mut self.doc.font_ctx.lock().unwrap_or_else(|e| e.into_inner()),
                     &mut self.doc.layout_ctx,
                     "",
                 );

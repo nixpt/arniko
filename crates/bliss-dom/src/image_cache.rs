@@ -78,15 +78,15 @@ fn image_size(image: &ImageData) -> usize {
 
 impl DomImageCache for DomImageCacheAdapter {
     fn get(&self, url: &str) -> Option<Arc<ImageData>> {
-        let cache = self.cache.lock().unwrap();
+        let cache = self.cache.lock().unwrap_or_else(|e| e.into_inner());
         cache.get(url).cloned()
     }
 
     fn insert(&self, url: String, image: ImageData) {
         let size = image_size(&image);
 
-        let mut cache = self.cache.lock().unwrap();
-        let mut current_bytes = self.current_bytes.lock().unwrap();
+        let mut cache = self.cache.lock().unwrap_or_else(|e| e.into_inner());
+        let mut current_bytes = self.current_bytes.lock().unwrap_or_else(|e| e.into_inner());
 
         // Remove old entry if exists
         if let Some(old_entry) = cache.get(&url) {
@@ -99,8 +99,8 @@ impl DomImageCache for DomImageCacheAdapter {
     }
 
     fn evict(&self, url: &str) {
-        let mut cache = self.cache.lock().unwrap();
-        let mut current_bytes = self.current_bytes.lock().unwrap();
+        let mut cache = self.cache.lock().unwrap_or_else(|e| e.into_inner());
+        let mut current_bytes = self.current_bytes.lock().unwrap_or_else(|e| e.into_inner());
 
         if let Some(old_entry) = cache.remove(url) {
             let old_size = image_size(old_entry.as_ref());
@@ -109,12 +109,12 @@ impl DomImageCache for DomImageCacheAdapter {
     }
 
     fn memory_usage(&self) -> usize {
-        *self.current_bytes.lock().unwrap()
+        *self.current_bytes.lock().unwrap_or_else(|e| e.into_inner())
     }
 
     fn clear(&self) {
-        let mut cache = self.cache.lock().unwrap();
-        let mut current_bytes = self.current_bytes.lock().unwrap();
+        let mut cache = self.cache.lock().unwrap_or_else(|e| e.into_inner());
+        let mut current_bytes = self.current_bytes.lock().unwrap_or_else(|e| e.into_inner());
 
         cache.clear();
         *current_bytes = 0;
@@ -174,31 +174,31 @@ impl PendingImageRegistry {
 
     /// Register a node as waiting for an image
     pub fn register(&self, url: String, node_id: usize, image_type: ImageType) {
-        let mut pending = self.pending.lock().unwrap();
+        let mut pending = self.pending.lock().unwrap_or_else(|e| e.into_inner());
         pending.entry(url).or_default().push((node_id, image_type));
     }
 
     /// Get and clear all nodes waiting for an image
     pub fn take_waiting(&self, url: &str) -> Vec<(usize, ImageType)> {
-        let mut pending = self.pending.lock().unwrap();
+        let mut pending = self.pending.lock().unwrap_or_else(|e| e.into_inner());
         pending.remove(url).unwrap_or_default()
     }
 
     /// Check if any nodes are waiting for an image
     pub fn has_waiting(&self, url: &str) -> bool {
-        let pending = self.pending.lock().unwrap();
+        let pending = self.pending.lock().unwrap_or_else(|e| e.into_inner());
         pending.contains_key(url)
     }
 
     /// Clear all pending registrations
     pub fn clear(&self) {
-        let mut pending = self.pending.lock().unwrap();
+        let mut pending = self.pending.lock().unwrap_or_else(|e| e.into_inner());
         pending.clear();
     }
 
     /// Get count of pending URLs
     pub fn pending_count(&self) -> usize {
-        let pending = self.pending.lock().unwrap();
+        let pending = self.pending.lock().unwrap_or_else(|e| e.into_inner());
         pending.len()
     }
 }

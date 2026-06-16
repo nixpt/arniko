@@ -74,7 +74,7 @@ pub(crate) fn handle_keypress<F: FnMut(DomEvent)>(
             let key_event = event.clone();
             let generated_event = apply_keypress_event(
                 input_data,
-                &mut doc.font_ctx.lock().unwrap(),
+                &mut doc.font_ctx.lock().unwrap_or_else(|e| e.into_inner()),
                 &mut doc.layout_ctx,
                 &*doc.shell_provider,
                 event,

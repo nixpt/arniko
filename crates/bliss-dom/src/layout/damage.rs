@@ -351,7 +351,7 @@ impl BaseDocument {
                 }
             } else if let Some(input) = element.text_input_data_mut() {
                 input.editor.set_scale(scale);
-                let mut font_ctx = font_ctx.lock().unwrap();
+                let mut font_ctx = font_ctx.lock().unwrap_or_else(|e| e.into_inner());
                 input.editor.refresh_layout(&mut font_ctx, layout_ctx);
                 node.insert_damage(ONLY_RELAYOUT);
             }

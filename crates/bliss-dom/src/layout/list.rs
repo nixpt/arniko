@@ -82,7 +82,7 @@ fn node_list_item_child(
             }
 
             // Create a parley tree builder
-            let mut font_ctx = doc.font_ctx.lock().unwrap();
+            let mut font_ctx = doc.font_ctx.lock().unwrap_or_else(|e| e.into_inner());
             let mut builder = doc.layout_ctx.tree_builder(
                 &mut font_ctx,
                 doc.viewport.scale(),
