@@ -29,25 +29,28 @@
 //! m.remove_node(old_child_id)?;
 //! ```
 
-use bliss_dom::{DocumentMutator, QualName, local_name};
+use bliss_dom::{DocumentMutator, QualName, qual_name};
 
 use crate::mustang::scheduler::SceneScheduler;
 
 /// Direct DOM mutation API. Wraps a `DocumentMutator` and notifies a
 /// `SceneScheduler` on every successful mutation.
-pub struct DirectDomMutator<'doc, 'sched> {
-    inner: &'doc mut DocumentMutator<'doc>,
+pub struct DirectDomMutator<'doc, 'data, 'sched> {
+    inner: &'doc mut DocumentMutator<'data>,
     scheduler: &'sched SceneScheduler,
 }
 
-impl<'doc, 'sched> DirectDomMutator<'doc, 'sched> {
-    pub fn new(inner: &'doc mut DocumentMutator<'doc>, scheduler: &'sched SceneScheduler) -> Self {
+impl<'doc, 'data, 'sched> DirectDomMutator<'doc, 'data, 'sched> {
+    pub fn new(
+        inner: &'doc mut DocumentMutator<'data>,
+        scheduler: &'sched SceneScheduler,
+    ) -> Self {
         Self { inner, scheduler }
     }
 
     /// Borrow the underlying `DocumentMutator` for operations not
     /// covered by this trait (escape hatch).
-    pub fn raw(&mut self) -> &mut DocumentMutator<'doc> {
+    pub fn raw(&mut self) -> &mut DocumentMutator<'data> {
         self.inner
     }
 
@@ -127,14 +130,14 @@ impl<'doc, 'sched> DirectDomMutator<'doc, 'sched> {
     /// Convenience: set the `id` attribute. Notifies the scheduler.
     pub fn set_id(&mut self, node_id: usize, id: &str) {
         self.inner
-            .set_attribute(node_id, local_name!("id").into(), id);
+            .set_attribute(node_id, qual_name!("id"), id);
         self.scheduler.on_dom_changed();
     }
 
     /// Convenience: set the `class` attribute. Notifies the scheduler.
     pub fn set_class(&mut self, node_id: usize, class: &str) {
         self.inner
-            .set_attribute(node_id, local_name!("class").into(), class);
+            .set_attribute(node_id, qual_name!("class"), class);
         self.scheduler.on_dom_changed();
     }
 }

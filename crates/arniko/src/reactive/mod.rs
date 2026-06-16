@@ -9,7 +9,7 @@ mod view;
 
 // Re-export renderer types needed to write set_scene_effects hooks.
 pub use anyrender_vello::{VelloScenePainter, VelloWindowRenderer};
-pub use arniko_mustang::SceneScheduler;
+pub use crate::mustang::SceneScheduler;
 
 pub use app::{launch_reactive, launch_reactive_configured};
 pub use computed::Computed;

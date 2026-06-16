@@ -35,7 +35,7 @@ fn setup_doc() -> (BaseDocument, usize) {
 /// Flush the reactor and drop the mutator, returning doc for assertions.
 fn flush_reactive(doc: &mut BaseDocument, reactor: &mut Reactor) {
     let mut mutator = doc.mutate();
-    reactor.flush(&mut mutator);
+    reactor.flush(&mut mutator, None);
     drop(mutator);
 }
 

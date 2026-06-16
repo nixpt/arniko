@@ -13,7 +13,7 @@ components = ["html"]        # UI components
 gpu = ["mustang/gpu"]        # GPU acceleration via Mustang
 networking = ["exo-bliss-net"]        # Exosphere networking
 launch = ["bliss"]           # Native window launch via bliss
-reactive = ["bliss", "bliss-dom", "anyrender_vello", "winit", "keyboard-types"]  # Reactive Signal + View + EventSink + launch
+reactive = ["bliss", "bliss-dom", "anyrender_vello", "winit", "keyboard-types", "mustang"]  # Reactive Signal + View + EventSink + launch (mustang: SceneScheduler hook)
 full = ["html", "components", "gpu", "networking", "launch", "reactive"]
 
 [dependencies]
@@ -113,3 +113,7 @@ required-features = ["launch"]
 [[example]]
 name = "advanced"
 required-features = ["gpu"]
+
+[[example]]
+name = "phase5_demo"
+required-features = ["reactive", "gpu"]

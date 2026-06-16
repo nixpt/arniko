@@ -89,7 +89,9 @@ impl ApplicationHandler for ReactiveApplication {
             // Flush all dirty signal patches into the DOM.
             let mut inner = view.doc.inner_mut();
             let mut mutator = inner.mutate();
-            self.reactor.lock().unwrap().flush(&mut mutator);
+            // No SceneScheduler in the non-GPU reactive launch path → no GPU
+            // re-application coordination needed.
+            self.reactor.lock().unwrap().flush(&mut mutator, None);
             drop(mutator);
             drop(inner);
             view.request_redraw();

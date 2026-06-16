@@ -47,8 +47,9 @@ pub mod reactive;
 pub mod css;
 
 // Mustang is now an external crate at crates/platform/rendering/mustang
-// Re-export it when gpu feature is enabled
-#[cfg(feature = "gpu")]
+// Re-export it when gpu or reactive is enabled (reactive's SceneScheduler hook
+// lives in mustang; it is a hard dependency, so this only controls the re-export).
+#[cfg(any(feature = "gpu", feature = "reactive"))]
 pub extern crate mustang;
 
 pub mod config;

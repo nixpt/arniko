@@ -32,7 +32,7 @@ fn main() {
             // Use DirectDomMutator to demonstrate the Phase 5 mutation API.
             // It notifies the scheduler on every mutation, so the GPU blur
             // re-applies on the next frame.
-            let dm = DirectDomMutator::new(mutator, &scheduler);
+            let mut dm = DirectDomMutator::new(mutator, &scheduler);
 
             // Mount the root view first (this also registers signal→DOM
             // bindings in the reactor).
