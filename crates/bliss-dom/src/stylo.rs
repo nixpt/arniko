@@ -267,9 +267,12 @@ impl<'a> TShadowRoot for BlissNode<'a> {
 
     fn host(&self) -> <Self::ConcreteNode as TNode>::ConcreteElement {
         if let NodeData::ShadowRoot { host } = self.data {
-            self.with(host)
+            // Guard stale host ID: if the host node was removed from the tree,
+            // with() would unwrap-panic. Return self as fallback.
+            self.tree().get(host).unwrap_or(self)
         } else {
-            panic!("TShadowRoot::host() called on non-shadow-root node")
+            // Fallback: return self if not a shadow root (shouldn't happen)
+            self
         }
     }
 

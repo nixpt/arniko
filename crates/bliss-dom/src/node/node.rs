@@ -262,7 +262,7 @@ impl Node {
         match index {
             0 => self.after,
             1 => self.before,
-            _ => panic!("Invalid pseudo element index"),
+            _ => None,
         }
     }
 
@@ -270,7 +270,7 @@ impl Node {
         match index {
             0 => self.after = value,
             1 => self.before = value,
-            _ => panic!("Invalid pseudo element index"),
+            _ => {},
         }
     }
 

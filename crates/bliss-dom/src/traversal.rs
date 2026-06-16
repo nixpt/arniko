@@ -114,9 +114,10 @@ impl BaseDocument {
             }
 
             let Some(parent_id) = node.layout_parent.get() else {
-                // Shouldn't be reachable unless invalid node_id is passed
-                // as root node is always non-anonymous
-                panic!("Node does not exist or does not have a non-anonymous parent");
+                // No non-anonymous ancestor found — return the node itself.
+                // This is reachable if an anonymous node's layout_parent
+                // chain is broken (e.g., DOM manipulation during layout).
+                return node.id;
             };
 
             node_id = parent_id;

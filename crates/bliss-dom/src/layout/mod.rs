@@ -230,15 +230,17 @@ impl BaseDocument {
                 }
 
                 if node.flags.is_table_root() {
-                    let SpecialElementData::TableRoot(context) = &self.nodes[node_id.into()]
-                        .data
-                        .downcast_element()
-                        .unwrap()
-                        .special_data
-                    else {
-                        panic!("Node marked as table root but doesn't have TableContext");
+                    let Some(el) = self.nodes[node_id.into()].data.downcast_element() else {
+                        // Element marked as table root but can't downcast —
+                        // malformed DOM. Skip table layout gracefully.
+                        return taffy::LayoutOutput::HIDDEN;
                     };
-                    let context = Arc::clone(context);
+                    let SpecialElementData::TableRoot(ref ctx) = el.special_data else {
+                        // Node is marked as table root but has no TableContext —
+                        // malformed DOM. Skip table layout gracefully.
+                        return taffy::LayoutOutput::HIDDEN;
+                    };
+                    let context = Arc::clone(ctx);
 
                     let mut table_wrapper = TableTreeWrapper {
                         doc: self,
