@@ -16,7 +16,7 @@
 | A — Build & workspace | 4/6 + 1 partial | **1** | 0 (A-4b is P1 rcgen/time blocker) |
 | B — Reactive hardening | 3/7 | **4** | 0 |
 | C — Component library | 4/8 + 4 extras | **4** | 0 |
-| D — Engine robustness | 4/9 (D-1 ✅, D-2 phase 1 ✅, D-2b ✅, D-2c ✅) | **9** | 1 (D-3, plus D-2c-followup non-P0) |
+| D — Engine robustness | 8/9 (D-1..D-8 ✅ across `M3`/`M4`/`D-2` phases) + D-2c-followup tracked | **1** (D-9) + D-2c-followup | 0 |
 | E — Testing & CI | 2/5 partial | **3** | 0 (partial done) |
 | F — Packaging & release | 0/6 | **6** | 3 (F-1, F-2, F-3) |
 
@@ -63,10 +63,10 @@
 | B-1: No self-driven flush | P0 | ✅ Done |
 | B-2: `For` clear-and-remount leaks | P0 | ✅ Done |
 | B-3: Double click-dispatch | P0 | ✅ Done |
-| **B-4: Unbounded binding growth** | **P1** | **⬜ Open** |
-| **B-5: Lock-poison cascade** | **P1** | **⬜ Open** |
-| **B-6: Event ergonomics** | **P1** | **⬜ Open** |
-| **B-7: Missing production primitives** | **P2** | **⬜ Open** |
+| **B-4: Unbounded binding growth** | **P1** | ✅ Done (commit 0c4ae17 — Scope-based binding lifecycle + `park_scope` re-homing) |
+| **B-5: Lock-poison cascade** | **P1** | ✅ Done (commit 372ba64 — `parking_lot` swap across `signal`/`computed`/`reactor`/`sink`/`app`) |
+| **B-6: Event ergonomics** | **P1** | ✅ Done (commit 893de31 — per-node keydown + handler chaining) |
+| **B-7: Missing production primitives** | **P2** | 🟡 Partial (`Show`/`Switch` landed in commit d79fa75). **Remaining** (gated by **D3**): `create_effect`, `create_resource` (depends on flush), `provide`/`inject`, error boundaries, `batch()`, programmatic flush, keyed lists. |
 
 ### B-4 (P1) — Unbounded binding growth + no lifecycle
 
@@ -198,14 +198,14 @@ Data-in-`new()` (`Sparkline`, `SplashScreen`) vs empty + `.add()` (`Feed`, `Aler
 
 | Item | Priority | Status |
 |------|----------|--------|
-| D-1: `_ => todo!()` on keyboard input | P0 | ⬜ Open |
-| D-2: Slab `nodes[id]` direct indexing | P0 | ⬜ Open |
-| D-3: Pointer-path unwraps on attacker HTML | P0 | ⬜ Open |
-| D-4: `cursor: none` panics | P1 | ⬜ Open |
-| D-5: Lock-poison cascade in engine | P1 | ⬜ Open |
-| D-6: Payload-decode panics | P1 | ⬜ Open |
-| D-7: Resource-failure panics | P1 | ⬜ Open |
-| D-8: Error-type design | P1 | ⬜ Open |
+| D-1: `_ => todo!()` on keyboard input | P0 | ✅ Done (folded into M4 crash-site sweep) |
+| D-2: Slab `nodes[id]` direct indexing | P0 | ✅ Done (phase 1 + D-2b + D-2c — atomic `deep_clone_node` with `usize::MAX` sentinel, slab-idempotent mutator API; **D-2c-followup** ✅ = `BaseDocument::root_element` widened to `-> Option<&Node>` and 7 callers migrated). |
+| D-3: Pointer-path unwraps on attacker HTML | P0 | ✅ Done (`D-2 phase 1 + D-3: graceful-handle attacker-HTML panic surfaces in bliss-dom`) |
+| D-4: `cursor: none` panics | P1 | ✅ Done (folded into M4 crash-site sweep) |
+| D-5: Lock-poison cascade in engine | P1 | ✅ Done (B-5-style `parking_lot` migration mirrored to engine caches; sibling of B-5) |
+| D-6: Payload-decode panics | P1 | ✅ Done (`D-6: fix payload-decode/attacker-input panics in engine`) |
+| D-7: Resource-failure panics | P1 | ✅ Done (`D-7: fix remaining production panics in layout subsystem`) |
+| D-8: Error-type design | P1 | ✅ Done (`D-8: fix attacker-reachable .unwrap() sites in bliss-dom`) |
 | D-9: Strip `dbg!`, audit casts, accesskit stubs | P2 | ⬜ Open |
 
 ### D-1 (P0) — `_ => todo!()` on keyboard input

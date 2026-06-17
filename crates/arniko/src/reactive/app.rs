@@ -178,9 +178,11 @@ pub fn launch_reactive_configured(
         inner.set_event_sink(Arc::new(sink));
         inner.set_events_enabled(true);
 
+        // D-2c-followup: root_element widened to Option<&Node>; degrade to a
+        // sentinel id (0) instead of unwrap-panicking.
         let root_id = inner
             .get_element_by_id("arniko-root")
-            .unwrap_or_else(|| inner.root_element().id);
+            .unwrap_or_else(|| inner.root_element().map(|r| r.id).unwrap_or(0));
 
         let mut reactor = Reactor::new();
         let mut mutator = inner.mutate();

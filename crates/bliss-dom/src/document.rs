@@ -750,16 +750,17 @@ impl BaseDocument {
         &mut self.nodes[0]
     }
 
-    pub fn try_root_element(&self) -> Option<&Node> {
+    pub fn root_element(&self) -> Option<&Node> {
         TDocument::as_node(&self.root_node()).first_element_child()
     }
 
-    pub fn root_element(&self) -> &Node {
-        TDocument::as_node(&self.root_node())
-            .first_element_child()
-            .unwrap()
-            .as_element()
-            .unwrap()
+    /// Deprecated alias for [`BaseDocument::root_element`].
+    /// Both return `Option<&Node>` after D-2c-followup widened the signature
+    /// to eliminate the chained-unwrap panic when the document has no
+    /// element child (e.g. before any HTML is parsed into it). Retained for
+    /// callers that want explicit Option-style naming.
+    pub fn try_root_element(&self) -> Option<&Node> {
+        self.root_element()
     }
 
     pub fn create_node(&mut self, node_data: NodeData) -> usize {
@@ -1331,8 +1332,9 @@ impl BaseDocument {
 
     // Takes (x, y) co-ordinates (relative to the viewport)
     pub fn hit(&self, x: f32, y: f32) -> Option<HitResult> {
-        TDocument::as_node(&&self.nodes[0]).first_element_child()?;
-        self.root_element().hit(x, y)
+        // D-2c-followup: root_element widened to Option<&Node>; use `?` so a
+        // missing root element returns `None` instead of unwrap-panicking.
+        self.root_element()?.hit(x, y)
     }
 
     pub fn focus_next_node(&mut self) -> Option<usize> {
@@ -1723,7 +1725,9 @@ impl BaseDocument {
 
     /// Scroll the viewport by the given values
     pub fn scroll_viewport_by_has_changed(&mut self, x: f64, y: f64) -> bool {
-        let content_size = self.root_element().final_layout.size;
+        // D-2c-followup: root_element widened to Option<&Node>; degrade to a
+        // default (zero) content size when no root element is mounted.
+        let content_size = self.root_element().map(|r| r.final_layout.size).unwrap_or_default();
         let new_scroll = (self.viewport_scroll.x - x, self.viewport_scroll.y - y);
         let window_width = self.viewport.window_size.0 as f64 / self.viewport.scale() as f64;
         let window_height = self.viewport.window_size.1 as f64 / self.viewport.scale() as f64;

@@ -52,7 +52,10 @@ impl BaseDocument {
 
         self.resolve_scroll_animation();
 
-        let root_node_id = self.root_element().id;
+        // D-2c-followup: root_element widened to Option<&Node>. The early
+        // `is_none()` guard above ensures this branch is only taken when a root
+        // element exists, so `unwrap_or(0)` is never actually exercised.
+        let root_node_id = self.root_element().map(|r| r.id).unwrap_or(0);
         debug_timer!(timer, feature = "log_phase_times");
 
         // we need to resolve stylist first since it will need to drive our layout bits
@@ -304,7 +307,11 @@ impl BaseDocument {
             height: AvailableSpace::Definite(size.height.to_f32_px()),
         };
 
-        let root_element_id = taffy::NodeId::from(self.root_element().id);
+        // D-2c-followup: propagate the `Option<&Node>` widening; the early
+        // guard above guarantees this `unwrap_or(0)` is unreachable, but the
+        // compiler won't let us call `.id` on `Option<&Node>` anymore.
+        let root_element_id =
+            taffy::NodeId::from(self.root_element().map(|r| r.id).unwrap_or(0));
 
         // println!("\n\nRESOLVE LAYOUT\n===========\n");
 

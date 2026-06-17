@@ -186,14 +186,17 @@ impl crate::document::BaseDocument {
             };
 
             // components/layout_2020/lib.rs:983
-            let root = self.root_element();
-            // dbg!(root);
-            let token = RecalcStyle::pre_traverse(root, &context);
+            // D-2c-followup: root_element widened to Option<&Node>. Skip the
+            // entire style traversal when there is no root element to root
+            // from — pre_traverse requires a ConcreteElement.
+            if let Some(root) = self.root_element() {
+                let token = RecalcStyle::pre_traverse(root, &context);
 
-            if token.should_traverse() {
-                // Style the elements, resolving their data
-                let traverser = RecalcStyle::new(context);
-                style::driver::traverse_dom(&traverser, token, None);
+                if token.should_traverse() {
+                    // Style the elements, resolving their data
+                    let traverser = RecalcStyle::new(context);
+                    style::driver::traverse_dom(&traverser, token, None);
+                }
             }
         }
 
