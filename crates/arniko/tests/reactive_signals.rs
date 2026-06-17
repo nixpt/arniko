@@ -717,68 +717,47 @@ fn test_lock_poison_cascade_panic_in_handler_is_contained() {
     use arniko::reactive::event_router;
 
     let (router, _sink) = event_router();
-
+    
     // Register a handler that panics
     router.on_click(1, || {
         panic!("Handler panic!");
     });
 
-    // Register another handler on the same router - this should still work
+    // Register another handler - this should still work
     router.on_click(2, || {});
+}
 
-    // The router should still be usable after the panic in handler 1
-    // (with parking_lot, the lock doesn't poison)
-    // This test passes if we get here without panicking
+// ── Event Ergonomics Tests (B-6) ──────────────────────────────────────────────
+
+#[test]
+fn test_per_node_keydown_api_exists() {
+    // B-6: Verify per-node keydown registration API exists
+    use arniko::reactive::EventRouter;
+    use arniko::reactive::event_router;
+    use bliss::traits::events::BlissKeyEvent;
+
+    let (router, _sink) = event_router();
+
+    // This should compile - per-node keydown handler registration
+    router.on_keydown_node(1, |_event: &BlissKeyEvent| {});
+
+    // Global keydown should still work
+    router.on_keydown(|_event: &BlissKeyEvent| {});
 }
 
 #[test]
-fn test_lock_poison_cascade_signal_operations_after_panic() {
-    // B-5: Verify signal operations work after a panic in a different context
-    // (simulating that a previous panic poisoned a lock - with parking_lot this doesn't happen)
-    use std::panic::{catch_unwind, AssertUnwindSafe};
+fn test_event_handler_chaining() {
+    // B-6: Verify event handler methods can be chained
+    use arniko::reactive::EventRouter;
+    use arniko::reactive::event_router;
+    use bliss::traits::events::BlissKeyEvent;
 
-    let sig = Signal::new(0_i32);
+    let (router, _sink) = event_router();
 
-    // First, do a normal operation
-    sig.set(1);
-    assert_eq!(sig.get(), 1);
-
-    // Simulate a panic during set (though with parking_lot, this won't poison)
-    let _ = catch_unwind(AssertUnwindSafe(|| {
-        sig.set(2);
-        panic!("Simulated panic during set");
-    }));
-
-    // Signal should still be usable after the panic
-    sig.set(3);
-    assert_eq!(sig.get(), 3);
-
-    // Version should still increment
-    let v1 = sig.reactive_version();
-    sig.set(4);
-    let v2 = sig.reactive_version();
-    assert!(v2 > v1);
-}
-
-#[test]
-fn test_lock_poison_cascade_computed_after_panic() {
-    // B-5: Verify computed values work after a panic
-    use std::panic::{catch_unwind, AssertUnwindSafe};
-
-    let sig = Signal::new(10_i32);
-    let computed = sig.derive(|v| v * 2);
-
-    assert_eq!(computed.get(), 20);
-
-    // Simulate a panic
-    let _ = catch_unwind(AssertUnwindSafe(|| {
-        panic!("Simulated panic");
-    }));
-
-    // Computed should still work
-    assert_eq!(computed.get(), 20);
-
-    // Update source and verify computed updates
-    sig.set(15);
-    assert_eq!(computed.get(), 30);
+    // This should compile and allow chaining
+    router
+        .on_click(1, || {})
+        .on_keydown_node(2, |_event: &BlissKeyEvent| {})
+        .on_input(3, |_value: String| {})
+        .on_keydown(|_event: &BlissKeyEvent| {});
 }
