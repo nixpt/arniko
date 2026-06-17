@@ -7,8 +7,69 @@
 //! - Frosted (clean white/gray glass)
 //! - Cyberpunk (neon cyberpunk glass)
 //! - Aurora (light pastel glass)
+//!
+//! Each theme also includes MacTahoe-inspired blur presets for the
+//! Mustang GPU compositor.
 
 use serde::{Deserialize, Serialize};
+
+use arniko_mustang::{MacTahoeBlurPreset, BlurPresetBuilder, MACTAHOE_DEFAULT_BLUR_PARAMS};
+
+/// Blur configuration for a theme
+///
+/// Provides a way to configure MacTahoe-style blur effects
+/// for the Mustang GPU compositor per theme.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ThemeBlurConfig {
+    /// Default blur preset for this theme
+    pub default_preset: MacTahoeBlurPreset,
+    /// Alternative blur presets for different components
+    pub presets: Vec<(MacTahoeBlurPreset, String)>,
+}
+
+impl Default for ThemeBlurConfig {
+    fn default() -> Self {
+        Self {
+            default_preset: MacTahoeBlurPreset::Medium,
+            presets: vec![],
+        }
+    }
+}
+
+impl ThemeBlurConfig {
+    /// Create a new blur configuration
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Create a configuration with the default preset
+    pub fn with_default(mut self, preset: MacTahoeBlurPreset) -> Self {
+        self.default_preset = preset;
+        self
+    }
+
+    /// Add an alternative preset
+    pub fn add_preset(mut self, preset: MacTahoeBlurPreset, name: String) -> Self {
+        self.presets.push((preset, name));
+        self
+    }
+
+    /// Get a preset by name
+    pub fn get_preset(&self, name: &str) -> Option<&MacTahoeBlurPreset> {
+        self.presets.iter().find(|(preset, _)| preset.name() == name).map(|(p, _)| *p)
+    }
+
+    /// Create a blur effect for a selector using the default preset
+    pub fn effect(&self, selector: &str, viewport_width: u32, viewport_height: u32) -> crate::effect::Effect {
+        let preset = self.default_preset();
+        preset.effect(selector, viewport_width, viewport_height)
+    }
+
+    /// Get the default preset
+    pub fn default_preset(&self) -> MacTahoeBlurPreset {
+        self.default_preset
+    }
+}
 
 /// Available theme modes
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
@@ -73,6 +134,69 @@ impl ThemeMode {
             ThemeMode::Cyberpunk,
             ThemeMode::Aurora,
         ]
+    }
+
+    /// Get MacTahoe-inspired blur presets for this theme
+    ///
+    /// Different themes have different blur characteristics:
+    /// - Dark/Light: minimal blur for contrast
+    /// - Frosted/Cyberpunk/Aurora: glass effects with blur
+    pub fn blur_presets(&self) -> Vec<(MacTahoeBlurPreset, &'static str)> {
+        match self {
+            ThemeMode::Dark => vec![
+                (MacTahoeBlurPreset::None, "Dark"),
+                (MacTahoeBlurPreset::Subtle, "Subtle"),
+                (MacTahoeBlurPreset::Medium, "Medium"),
+            ],
+            ThemeMode::Light => vec![
+                (MacTahoeBlurPreset::None, "Light"),
+                (MacTahoeBlurPreset::Subtle, "Subtle"),
+                (MacTahoeBlurPreset::Medium, "Medium"),
+            ],
+            ThemeMode::System => vec![
+                (MacTahoeBlurPreset::None, "System"),
+                (MacTahoeBlurPreset::Medium, "Medium"),
+                (MacTahoeBlurPreset::Frosted, "Frosted"),
+            ],
+            ThemeMode::Frosted => vec![
+                (MacTahoeBlurPreset::None, "Frosted"),
+                (MacTahoeBlurPreset::Subtle, "Subtle"),
+                (MacTahoeBlurPreset::Medium, "Medium"),
+                (MacTahoeBlurPreset::Strong, "Strong"),
+                (MacTahoeBlurPreset::Aurora, "Aurora"),
+                (MacTahoeBlurPreset::Cyberpunk, "Cyberpunk"),
+            ],
+            ThemeMode::Cyberpunk => vec![
+                (MacTahoeBlurPreset::None, "Cyberpunk"),
+                (MacTahoeBlurPreset::Subtle, "Subtle"),
+                (MacTahoeBlurPreset::Strong, "Strong"),
+                (MacTahoeBlurPreset::Cyberpunk, "Cyberpunk"),
+                (MacTahoeBlurPreset::Ultra, "Ultra"),
+            ],
+            ThemeMode::Aurora => vec![
+                (MacTahoeBlurPreset::None, "Aurora"),
+                (MacTahoeBlurPreset::Subtle, "Subtle"),
+                (MacTahoeBlurPreset::Medium, "Medium"),
+                (MacTahoeBlurPreset::Aurora, "Aurora"),
+            ],
+        }
+    }
+
+    /// Get the default blur preset for this theme
+    pub fn default_blur_preset(&self) -> MacTahoeBlurPreset {
+        match self {
+            ThemeMode::Dark => MacTahoeBlurPreset::Subtle,
+            ThemeMode::Light => MacTahoeBlurPreset::Subtle,
+            ThemeMode::System => MacTahoeBlurPreset::Medium,
+            ThemeMode::Frosted => MacTahoeBlurPreset::Frosted,
+            ThemeMode::Cyberpunk => MacTahoeBlurPreset::Cyberpunk,
+            ThemeMode::Aurora => MacTahoeBlurPreset::Aurora,
+        }
+    }
+
+    /// Create a blur effect for this theme using the default preset
+    pub fn default_blur_effect(&self, selector: &str, viewport_width: u32, viewport_height: u32) -> crate::effect::Effect {
+        self.default_blur_preset().effect(selector, viewport_width, viewport_height)
     }
 }
 

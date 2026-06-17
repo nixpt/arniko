@@ -20,6 +20,7 @@
 //! transforms, and color adjustments.
 
 pub mod animation;
+pub mod blur_presets;
 pub mod compositor;
 pub mod config;
 pub mod effect;
@@ -30,6 +31,8 @@ pub mod scheduler;
 pub use effect::{
     ApplyEffect, BlurParams, BlurQuality, ColorAdjustParams, Effect, EffectType, TransformParams,
 };
+// Re-export blur presets
+pub use blur_presets::{MacTahoeBlurPreset, BlurPresetBuilder, MACTAHOE_DEFAULT_BLUR_PARAMS};
 // Re-export Region from compositor
 pub use animation::{
     AnimatedProperty, Animation, AnimationConfig, AnimationEngine, EasingFunction,
