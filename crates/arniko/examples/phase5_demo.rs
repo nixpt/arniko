@@ -76,7 +76,7 @@ fn main() {
             );
 
             // Mount the view, capturing the button IDs.
-            let mounted = ui.mount(dm.raw(), reactor, root);
+            let (mounted, _scope) = ui.mount(dm.raw(), reactor, root);
             let _btn_minus = dm.raw().child_ids(mounted).get(2).copied();
             let _btn_plus = dm.raw().child_ids(mounted).get(3).copied();
 

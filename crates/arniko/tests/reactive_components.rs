@@ -395,7 +395,7 @@ fn test_shortcut_help_reactive_hidden() {
     let view = shortcut_help_reactive(&visible, shortcuts);
     let view_id = {
         let mut mutator = doc.mutate();
-        let id = view.mount(&mut mutator, &mut reactor, root_id);
+        let (id, _scope) = view.mount(&mut mutator, &mut reactor, root_id);
         drop(mutator);
         id
     };
@@ -760,7 +760,7 @@ fn test_for_surviving_items_preserve_dom_nodes() {
     });
     let container_id = {
         let mut mutator = doc.mutate();
-        let id = view.mount(&mut mutator, &mut reactor, root_id);
+        let (id, _scope) = view.mount(&mut mutator, &mut reactor, root_id);
         drop(mutator);
         id
     };
@@ -809,7 +809,7 @@ fn test_for_new_items_get_fresh_dom_nodes() {
     });
     let container_id = {
         let mut mutator = doc.mutate();
-        let id = view.mount(&mut mutator, &mut reactor, root_id);
+        let (id, _scope) = view.mount(&mut mutator, &mut reactor, root_id);
         drop(mutator);
         id
     };
@@ -917,7 +917,7 @@ fn test_for_multiple_reconciliations_no_arena_leak() {
     });
     let container_id = {
         let mut mutator = doc.mutate();
-        let id = view.mount(&mut mutator, &mut reactor, root_id);
+        let (id, _scope) = view.mount(&mut mutator, &mut reactor, root_id);
         drop(mutator);
         id
     };

@@ -185,10 +185,14 @@ fn test_reactor_flush_dirty_detection() {
     let mut reactor = Reactor::new();
     let sig = Signal::new("initial".to_string());
 
+    // _scope: dropped at end of test; bindings deregister via Scope::Drop.
+    // This MUST outlive the flush+assert below, so we keep it in test-stack scope.
+    let _scope;
     {
         let mut mutator = doc.mutate();
         let text = ReactiveText::new(sig.clone());
-        text.mount(&mut mutator, &mut reactor, root_id);
+        let (_, s) = text.mount(&mut mutator, &mut reactor, root_id);
+        _scope = s;
         drop(mutator);
     }
 
@@ -223,10 +227,16 @@ fn test_multiple_bindings_on_one_reactor() {
     let sig1 = Signal::new("first".to_string());
     let sig2 = Signal::new("second".to_string());
 
+    // _scope1 / _scope2: kept alive across the flush + assert below so the
+    // reactive-text bindings aren't deregistered by Scope::Drop before they fire.
+    let _scope1;
+    let _scope2;
     {
         let mut mutator = doc.mutate();
-        ReactiveText::new(sig1.clone()).mount(&mut mutator, &mut reactor, root_id);
-        ReactiveText::new(sig2.clone()).mount(&mut mutator, &mut reactor, root_id);
+        let (_, s1) = ReactiveText::new(sig1.clone()).mount(&mut mutator, &mut reactor, root_id);
+        let (_, s2) = ReactiveText::new(sig2.clone()).mount(&mut mutator, &mut reactor, root_id);
+        _scope1 = s1;
+        _scope2 = s2;
         drop(mutator);
     }
 
@@ -250,10 +260,16 @@ fn test_reactor_partial_dirty() {
     let sig1 = Signal::new("one".to_string());
     let sig2 = Signal::new("two".to_string());
 
+    // _scope1 / _scope2: kept alive across flush + assert so partial-dirty
+    // detection still has its bindings registered when sig1.set fires.
+    let _scope1;
+    let _scope2;
     {
         let mut mutator = doc.mutate();
-        ReactiveText::new(sig1.clone()).mount(&mut mutator, &mut reactor, root_id);
-        ReactiveText::new(sig2.clone()).mount(&mut mutator, &mut reactor, root_id);
+        let (_, s1) = ReactiveText::new(sig1.clone()).mount(&mut mutator, &mut reactor, root_id);
+        let (_, s2) = ReactiveText::new(sig2.clone()).mount(&mut mutator, &mut reactor, root_id);
+        _scope1 = s1;
+        _scope2 = s2;
         drop(mutator);
     }
     flush_reactive(&mut doc, &mut reactor);
@@ -274,9 +290,13 @@ fn test_rapid_signal_updates() {
     let mut reactor = Reactor::new();
     let sig = Signal::new("start".to_string());
 
+    // _scope: kept alive across the 50 set + flush below so the binding
+    // survives past the closing `drop(mutator)` of the inner block.
+    let _scope;
     {
         let mut mutator = doc.mutate();
-        ReactiveText::new(sig.clone()).mount(&mut mutator, &mut reactor, root_id);
+        let (_, s) = ReactiveText::new(sig.clone()).mount(&mut mutator, &mut reactor, root_id);
+        _scope = s;
         drop(mutator);
     }
 
@@ -300,10 +320,14 @@ fn test_reactive_text_with_computed() {
     let count = Signal::new(1_i32);
     let label = count.derive(|v| format!("Count: {}", v));
 
+    // _scope: kept alive across flush + assert so the Computed→ReactiveText
+    // binding is registered when `count.set(5)` triggers the chain flush.
+    let _scope;
     {
         let mut mutator = doc.mutate();
         let text = ReactiveText::new(label.clone());
-        text.mount(&mut mutator, &mut reactor, root_id);
+        let (_, s) = text.mount(&mut mutator, &mut reactor, root_id);
+        _scope = s;
         drop(mutator);
     }
     flush_reactive(&mut doc, &mut reactor);
@@ -323,9 +347,13 @@ fn test_computed_chain_with_reactive_text() {
     let area = Computed::from2(width.clone(), height.clone(), |w, h| w * h);
     let label = area.map(|a| format!("Area: {}px²", a));
 
+    // _scope: kept alive across flush+set+assert cycles so the
+    // computed-chain → ReactiveText binding survives.
+    let _scope;
     {
         let mut mutator = doc.mutate();
-        ReactiveText::new(label.clone()).mount(&mut mutator, &mut reactor, root_id);
+        let (_, s) = ReactiveText::new(label.clone()).mount(&mut mutator, &mut reactor, root_id);
+        _scope = s;
         drop(mutator);
     }
     flush_reactive(&mut doc, &mut reactor);
