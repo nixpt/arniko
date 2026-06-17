@@ -76,8 +76,16 @@ impl PanState {
             dy: dy as f32,
         });
 
-        // Remove samples older than 100ms
-        if self.samples.len() > 50 && time_ms - self.samples.front().unwrap().time > 100 {
+        // Remove samples older than 100ms.
+        // Use `map(...).unwrap_or(time_ms)` so an empty front (after the inner
+        // partition drain) yields `time_ms - time_ms = 0 <= 100`, short-circuiting
+        // the partition/pop dance instead of panicking on an empty deque.
+        let front_time = self
+            .samples
+            .front()
+            .map(|s| s.time)
+            .unwrap_or(time_ms);
+        if self.samples.len() > 50 && time_ms - front_time > 100 {
             let idx = self
                 .samples
                 .partition_point(|sample| time_ms - sample.time > 100);
@@ -172,10 +180,9 @@ pub(crate) fn handle_pointermove<F: FnMut(DomEvent)>(
     }
 
     if let DragMode::Panning(state) = &mut doc.drag_mode {
-        let time_ms = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_millis() as u64;
+        let now_since_epoch = SystemTime::now().duration_since(UNIX_EPOCH);
+        debug_assert!(now_since_epoch.is_ok(), "SystemTime before UNIX_EPOCH");
+        let time_ms = now_since_epoch.unwrap_or_default().as_millis() as u64;
 
         let target = state.target;
         let (dx, dy) = state.update(time_ms, event.screen_x(), event.screen_y());
@@ -344,29 +351,43 @@ pub(crate) fn handle_pointerdown(
             let tx = (hit.x - content_box_offset.x) as f64 * doc.viewport.scale_f64();
             let ty = (hit.y - content_box_offset.y) as f64 * doc.viewport.scale_f64();
 
-            // Now get mutable access to the text input
+            // Now get mutable access to the text input.
+            // If the node is no longer an element (e.g. it was mutated into a
+            // text or comment node between the hit-test and the action), bail
+            // out — this is the genuine D-3 panic surface on attacker
+            // HTML/CSS.
             let click_count = doc.click_count;
-            let node = &mut doc.nodes[actual_target];
-            let el = node.data.downcast_element_mut().unwrap();
+            let Some(el) = doc
+                .nodes
+                .get_mut(actual_target)
+                .and_then(|node| node.data.downcast_element_mut())
+            else {
+                return;
+            };
             if let SpecialElementData::TextInput(ref mut text_input_data) = el.special_data {
-                let mut font_ctx = doc.font_ctx.lock().unwrap_or_else(|e| e.into_inner());
-                let mut driver = text_input_data
-                    .editor
-                    .driver(&mut font_ctx, &mut doc.layout_ctx);
+                // Scope-block so the parking_lot `MutexGuard` for `font_ctx`
+                // is released before `generate_focus_events` is invoked below.
+                // Avoids `drop(guard)` (which trips the `dropping_references`
+                // lint when the guard wraps a reference-typed `FontContext`).
+                {
+                    let mut font_ctx =
+                        doc.font_ctx.lock().unwrap_or_else(|e| e.into_inner());
+                    let mut driver = text_input_data
+                        .editor
+                        .driver(&mut font_ctx, &mut doc.layout_ctx);
 
-                match click_count {
-                    1 => {
-                        if mods.shift() {
-                            driver.shift_click_extension(tx as f32, ty as f32);
-                        } else {
-                            driver.move_to_point(tx as f32, ty as f32);
+                    match click_count {
+                        1 => {
+                            if mods.shift() {
+                                driver.shift_click_extension(tx as f32, ty as f32);
+                            } else {
+                                driver.move_to_point(tx as f32, ty as f32);
+                            }
                         }
+                        2 => driver.select_word_at_point(tx as f32, ty as f32),
+                        _ => driver.select_hard_line_at_point(tx as f32, ty as f32),
                     }
-                    2 => driver.select_word_at_point(tx as f32, ty as f32),
-                    _ => driver.select_hard_line_at_point(tx as f32, ty as f32),
                 }
-
-                drop(font_ctx);
             }
 
             generate_focus_events(
@@ -408,10 +429,9 @@ pub(crate) fn handle_pointerup<F: FnMut(DomEvent)>(
     // the document with a touch
     let do_click = drag_mode == DragMode::None;
 
-    let time_ms = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .as_millis() as u64;
+    let now_since_epoch = SystemTime::now().duration_since(UNIX_EPOCH);
+    debug_assert!(now_since_epoch.is_ok(), "SystemTime before UNIX_EPOCH");
+    let time_ms = now_since_epoch.unwrap_or_default().as_millis() as u64;
 
     if let DragMode::Panning(state) = &drag_mode {
         if let Some(fling) = state.generate_fling(time_ms) {
@@ -512,7 +532,10 @@ pub(crate) fn handle_click(
                         // Apply default click event action for target node
                         if let Some(target_node) = doc.get_node_mut(target_node_id) {
                             let syn_event = target_node.synthetic_click_event_data(event.mods);
-                            drop(target_node);
+                            // No explicit `drop(target_node)` — the `&mut Node`
+                            // borrow ends at the end of this `if let` arm, which
+                            // is exactly where we want it released (before the
+                            // recursive `handle_click` borrow of `doc`).
                             handle_click(doc, target_node_id, &syn_event, dispatch_event);
                             break 'matched true;
                         }
@@ -564,8 +587,7 @@ pub(crate) fn handle_click(
                         0 => "No Files Selected".to_string(),
                         1 => files
                             .first()
-                            .unwrap()
-                            .file_name()
+                            .and_then(|f| f.file_name())
                             .unwrap_or_default()
                             .to_string_lossy()
                             .to_string(),

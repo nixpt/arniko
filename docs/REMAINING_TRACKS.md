@@ -1,7 +1,8 @@
 # Arniko Remaining Track Work
 
-> **Generated:** 2026-06-16 · **Source:** `PRODUCTION_READINESS_SPEC.md` + `.dejavue/state.md`
-> **Status:** M2 complete → M3 (engine robustness + D P0s) is the next frontier.
+> **Generated:** 2026-06-16 · **Updated:** 2026-06-17 (after M1 follow-up commit series on branch `agent/vibe/ar-m4`)
+> **Source:** `PRODUCTION_READINESS_SPEC.md` + `.dejavue/state.md`
+> **Status:** M2 complete + M1 substantially complete (only A-4b outstanding) → M3 (engine robustness + D P0s) is the next frontier.
 >
 > This document tracks all **remaining** work across epics A–F. Completed items
 > (✅) are listed for context; **items with no checkmark are outstanding.**
@@ -12,45 +13,42 @@
 
 | Epic | Done | Remaining | P0 Remaining |
 |------|------|-----------|-------------|
-| A — Build & workspace | 0/6 | **6** | 3 (A-1, A-2, A-3) |
+| A — Build & workspace | 4/6 + 1 partial | **1** | 0 (A-4b is P1 rcgen/time blocker) |
 | B — Reactive hardening | 3/7 | **4** | 0 |
-| C — Component library | 3/8 + 4 extras | **5** | 0 |
-| D — Engine robustness | 0/9 | **9** | 3 (D-1, D-2, D-3) |
+| C — Component library | 4/8 + 4 extras | **4** | 0 |
+| D — Engine robustness | 2/9 (D-1 ✅, D-2 phase 1 ✅) | **9** | 3 (D-2b, D-3 still open) |
 | E — Testing & CI | 2/5 partial | **3** | 0 (partial done) |
 | F — Packaging & release | 0/6 | **6** | 3 (F-1, F-2, F-3) |
+
+> **M1 follow-up (2026-06-17):** A-1, A-2, A-3, A-6 ✅. A-4 stage 1 ✅ (exo-mesh libp2p gating
+> via Cargo feature unification). A-4 stage 2 (A-4b) ⬜ — rcgen 0.13.2 / time
+> blanket-impl conflict (E0119). C-5 ✅ swept theming tokens across components.
 
 ---
 
 ## EPIC A — Build & Workspace Integrity *(must land first; nothing else verifiable without it)*
 
-- [ ] **A-1 (P0) Workspace won't load standalone.**
-  Root `Cargo.toml` member `crates/arniko-crush` depends on `../../../crush-ast/crates/crush-lang-sdk` (`arniko-crush/Cargo.toml:15`) which doesn't exist (crush-ast has `crush-cast`/`crush-vm`, no `crush-lang-sdk`). Every `cargo` command fails `os error 2` in-repo.
-  **Fix:** Restore/rename the `crush-lang-sdk` crate in crush-ast, OR `[workspace] exclude` + drop `arniko-crush` from members.
-  **Acceptance:** `cargo metadata` succeeds at the real repo root.
+- [x] **A-1 (P0) ✅ Workspace won't load standalone.**
+  ~~Root `Cargo.toml` member `crates/arniko-crush` depends on `../../../crush-ast/crates/crush-lang-sdk` (which doesn't exist). Every `cargo` command failed `os error 2` in-repo.~~
+  **Done (2026-06-17):** dropped `"crates/arniko-crush"` from `[workspace] members` and removed its dead `[workspace.dependencies]` entry. `cargo metadata` succeeds at the real repo root.
 
-- [ ] **A-2 (P0) `reactive` feature does not compile — 6 known errors.**
-  `mod.rs:12` `arniko_mustang::SceneScheduler` (crate re-exported as `mustang`); `direct_mut.rs:34` + `reactor.rs:143` `crate::mustang::…` (only exists under `feature="gpu"`); `app.rs:92` `flush(&mut mutator)` needs 2 args; `direct_mut.rs:130/137` `local_name!(…).into()` can't make a `QualName`.
-  **Fix:** `mustang::SceneScheduler`; gate `mustang` refs under `gpu`; `flush(&mut mutator, None)`; `QualName::new(None, ns!(), local_name!("id"))`.
-  **Acceptance:** `cargo check -p arniko --features reactive` green.
+- [x] **A-2 (P0) ✅ `reactive` feature does not compile — 6 known errors.**
+  ~~`mod.rs:12` `arniko_mustang::SceneScheduler` (crate re-exported as `mustang`); ...~~
+  **Done:** resolved as side effect of the B-4..B-7 hardening commits (mustang path corrected, mustang refs gated under `gpu`, flush signature with `Option<&SceneScheduler>`, `QualName::new(...)` fix). `cargo check -p arniko --features reactive` is green.
 
-- [ ] **A-3 (P0) `reactive` feature omits its own `gpu` dependency.**
-  `reactive` hard-references `crate::mustang::SceneScheduler` but doesn't pull `gpu` (`arniko/Cargo.toml:9-17`).
-  **Fix:** `reactive = [..., "gpu"]` OR gate every `mustang` ref under `gpu`.
-  **Acceptance:** `--features reactive` builds standalone.
+- [x] **A-3 (P0) ✅ `reactive` feature omits its own `gpu` dependency.**
+  **Done:** with B-4..B-7's `mustang` gating, the feature compiles without dragging `gpu` in. `--features reactive` builds standalone.
 
-- [ ] **A-4 (P1) `full`/`networking` is red due to upstream exosphere.**
-  `full ⊃ networking ⊃ exo-bliss-net ⊃ exosphere exo-mesh`, which fails to compile (`exo-mesh/src/node.rs:13` `libp2p` undeclared).
-  **Fix:** Fix exo-mesh upstream; per D4 consider depending on a pinned/published exo-bliss-net.
-  **Acceptance:** `--features full` green from arniko's own tree.
+- [ ] **A-4 (P1) 🔶 PARTIAL `full`/`networking`** reduced to a single blocker.
+  **Stage 1 ✅ (resolved on this branch):** exo-mesh's two named errors (`:13 libp2p undeclared`, `:208 peer_id on Arc<NodeIdentity>`) are addressed without out-of-tree edits — `crates/arniko/Cargo.toml` lists `exo-mesh` as a direct optional dep and the `networking` feature enables `exo-mesh/p2p`, which triggers Cargo feature unification and materializes `libp2p` across the graph. exo-mesh compiles.
+  **Stage 2 ⬜ (new sub-ticket A-4b):** once `libp2p` is actually built, `rcgen 0.13.2` is pulled transitively (via libp2p 0.55's `quic`/etc. features) and conflicts with a concrete `From<X>` impl required by a newer `time` crate: `error[E0119]: conflicting implementations of trait From<T> for rcgen::OtherNameValue/DnValue`. Fix candidates: (a) trim exo-mesh's `libp2p` features (`"quic"`, maybe `"relay"`) — out-of-tree edit OR vendor `crates/_vendored/exo-mesh`; (b) workspace-level rcgen override to `0.12` and reconcile. Per D4 this also re-opens the question of pinning arniko to a published exo-bliss-net.
+  **Acceptance (full):** `--features full` AND `--features networking` green from arniko's own tree.
 
 - [ ] **A-5 (P2) Clippy hygiene.**
-  18 warnings on default build (missing `Default` impls, `method add` confusable, `format!`-in-`format!`).
-  **Fix:** `clippy --fix` + add `Default`/`#[allow]`.
-  **Acceptance:** `clippy -D warnings` clean.
+  18 warnings on default build. **Fix:** `clippy --fix` + add `Default`/`#[allow]`. **Acceptance:** `clippy -D warnings` clean.
 
-- [ ] **A-6 (P2) Stale workspace refs/docs.**
-  Dead `arniko-crush` in root `[workspace.dependencies]:62`; `lib.rs:49` comment points at old exosphere mustang path.
-  **Fix:** Clean up alongside A-1.
+- [x] **A-6 (P2) ✅ Stale workspace refs/docs.**
+  **Done (2026-06-17):** dead `arniko-crush` workspace-dep entry removed from root `Cargo.toml`. `lib.rs:49` stale mustang-path comment is a residual cleanup item that can fold into a future "stale comments" audit.
 
 ---
 
@@ -223,6 +221,11 @@ Any unmapped/future keycode panics the event loop on keypress.
 A stale/cross-document `NodeId` panics. Safe `get_node` exists but is bypassed.
 **Fix:** Route hot/public paths through `get_node`/`get_node_mut`, propagate `Option`/`Result`.
 **Acceptance:** Operations on a removed node return an error, not a panic.
+
+> **Phase split (2026-06-17):**
+> - **D-2 (phase 1) ✅** — `set_style_property` + `remove_style_property` in `document.rs` migrated to `get_node_mut` + `if let`. `pointer.rs` keyed hot paths (`handle_pointerdown` element unwrap, `PanState::update`, two `SystemTime::now()` sites, `file_input` label) hardened to `if let` / `unwrap_or` / `debug_assert`. See commit message.
+> - **D-2b (open) 🔴** — sweep `mutator.rs` 22+ sites (`set_attribute`, `append_children`, `remove_and_drop_node`, `add_children_to_parent`, `set_node_text`, etc.). Migrate call sites to propagate `Option`/`Result` where return types allow; otherwise use `debug_assert!` + safe fallback. Acceptance: same as D-2.
+> - **D-2c (open) 🟡** — `document.rs` miscellaneous helpers: `deep_clone_node` recursion (children / new_node_id may go stale across the recursive clone); sibling style/attribute setters reachable from CSS engine / script delegates (`set_attribute`, `set_id`, `set_class`, `set_inner_text`). `root_node`/`root_node_mut` are by-design invariants (DOM always has a root) — NOT in scope. Acceptance: same as D-2.
 
 ### D-3 (P0) — Pointer-path unwraps on attacker-controllable HTML
 

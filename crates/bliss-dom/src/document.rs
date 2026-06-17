@@ -700,27 +700,32 @@ impl BaseDocument {
         let Some(node) = self.nodes.get_mut(node_id) else {
             return;
         };
-        node.element_data_mut()
-            .unwrap()
-            .set_style_property(name, value, &self.guard, self.url.url_extra_data());
+        // Non-element nodes have no element data to write style onto; silently
+        // ignore instead of panicking on attacker-controlled HTML.
+        let Some(el) = node.element_data_mut() else {
+            return;
+        };
+        el.set_style_property(name, value, &self.guard, self.url.url_extra_data());
     }
 
     pub fn remove_style_property(&mut self, node_id: usize, name: &str) {
         let Some(node) = self.nodes.get_mut(node_id) else {
             return;
         };
-        node.element_data_mut()
-            .unwrap()
-            .remove_style_property(name, &self.guard, self.url.url_extra_data());
+        let Some(el) = node.element_data_mut() else {
+            return;
+        };
+        el.remove_style_property(name, &self.guard, self.url.url_extra_data());
     }
 
     pub fn set_sub_document(&mut self, node_id: usize, sub_document: Box<dyn Document>) {
         let Some(node) = self.get_node_mut(node_id) else {
             return;
         };
-        node.element_data_mut()
-            .unwrap()
-            .set_sub_document(sub_document);
+        let Some(el) = node.element_data_mut() else {
+            return;
+        };
+        el.set_sub_document(sub_document);
         self.sub_document_nodes.insert(node_id);
     }
 
@@ -729,9 +734,11 @@ impl BaseDocument {
             self.sub_document_nodes.remove(&node_id);
             return;
         };
-        node.element_data_mut()
-            .unwrap()
-            .remove_sub_document();
+        let Some(el) = node.element_data_mut() else {
+            self.sub_document_nodes.remove(&node_id);
+            return;
+        };
+        el.remove_sub_document();
         self.sub_document_nodes.remove(&node_id);
     }
 
