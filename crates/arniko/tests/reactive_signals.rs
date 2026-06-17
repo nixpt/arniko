@@ -3,8 +3,10 @@
 //! These test the reactive core without requiring DOM — no bliss_dom dependency.
 //! Run with: `cargo test -p arniko --features reactive --test reactive_signals`
 
+use arniko::reactive::direct_mut::DirectDomMutator;
 use arniko::reactive::{Computed, Reactive, ReactiveText, Reactor, Signal, View};
-use bliss_dom::{BaseDocument, DocumentConfig, DocumentMutator, qual_name};
+use arniko::mustang::SceneScheduler;
+use bliss_dom::{BaseDocument, DocumentConfig, DocumentMutator, QualName, qual_name};
 use bliss_html::HtmlProvider;
 use std::sync::Arc;
 
@@ -360,4 +362,255 @@ fn test_reactor_flush_with_no_bindings() {
         reactor.flush(&mut mutator, None)
     };
     assert!(!dirty, "Empty reactor should report clean");
+}
+
+// ── DirectDomMutator Tests ────────────────────────────────────────────────────────
+
+#[test]
+fn test_direct_mutator_set_text() {
+    let (mut doc, root_id) = setup_doc();
+    let scheduler = SceneScheduler::new();
+    let dirty_count_before = scheduler.dirty_count();
+
+    {
+        let mut mutator = doc.mutate();
+        let text_node = mutator.create_text_node("initial");
+        mutator.append_children(root_id, &[text_node]);
+
+        let mut dmut = DirectDomMutator::new(&mut mutator, &scheduler);
+        dmut.set_text(text_node, "updated");
+    }
+
+    // Scheduler should have been notified
+    assert_eq!(scheduler.dirty_count(), dirty_count_before + 1);
+
+    // Verify text was updated
+    let text = node_text(&mut doc, root_id);
+    assert_eq!(text, "updated");
+}
+
+#[test]
+fn test_direct_mutator_set_attr() {
+    let (mut doc, root_id) = setup_doc();
+    let scheduler = SceneScheduler::new();
+    let dirty_count_before = scheduler.dirty_count();
+
+    {
+        let mut mutator = doc.mutate();
+        let elem = mutator.create_element(qual_name!("div"), vec![]);
+        mutator.append_children(root_id, &[elem]);
+
+        let mut dmut = DirectDomMutator::new(&mut mutator, &scheduler);
+        dmut.set_attr(elem, qual_name!("title"), "Test Title");
+    }
+
+    assert_eq!(scheduler.dirty_count(), dirty_count_before + 1);
+}
+
+#[test]
+fn test_direct_mutator_remove_node() {
+    let (mut doc, root_id) = setup_doc();
+    let scheduler = SceneScheduler::new();
+
+    let child_id;
+    {
+        let mut mutator = doc.mutate();
+        child_id = mutator.create_element(qual_name!("span"), vec![]);
+        mutator.append_children(root_id, &[child_id]);
+    }
+
+    let dirty_count_before = scheduler.dirty_count();
+    {
+        let mut mutator = doc.mutate();
+        let mut dmut = DirectDomMutator::new(&mut mutator, &scheduler);
+        dmut.remove_node(child_id);
+    }
+
+    assert_eq!(scheduler.dirty_count(), dirty_count_before + 1);
+}
+
+#[test]
+fn test_direct_mutator_remove_and_drop_node() {
+    let (mut doc, root_id) = setup_doc();
+    let scheduler = SceneScheduler::new();
+
+    let child_id;
+    {
+        let mut mutator = doc.mutate();
+        child_id = mutator.create_element(qual_name!("span"), vec![]);
+        mutator.append_children(root_id, &[child_id]);
+    }
+
+    let dirty_count_before = scheduler.dirty_count();
+    {
+        let mut mutator = doc.mutate();
+        let mut dmut = DirectDomMutator::new(&mut mutator, &scheduler);
+        dmut.remove_and_drop_node(child_id);
+    }
+
+    assert_eq!(scheduler.dirty_count(), dirty_count_before + 1);
+}
+
+#[test]
+fn test_direct_mutator_append_children() {
+    let (mut doc, root_id) = setup_doc();
+    let scheduler = SceneScheduler::new();
+
+    let child1;
+    let child2;
+    {
+        let mut mutator = doc.mutate();
+        child1 = mutator.create_element(qual_name!("div"), vec![]);
+        child2 = mutator.create_element(qual_name!("span"), vec![]);
+    }
+
+    let dirty_count_before = scheduler.dirty_count();
+    {
+        let mut mutator = doc.mutate();
+        let mut dmut = DirectDomMutator::new(&mut mutator, &scheduler);
+        dmut.append_children(root_id, &[child1, child2]);
+    }
+
+    assert_eq!(scheduler.dirty_count(), dirty_count_before + 1);
+}
+
+#[test]
+fn test_direct_mutator_multiple_operations() {
+    let (mut doc, root_id) = setup_doc();
+    let scheduler = SceneScheduler::new();
+
+    let text_node;
+    {
+        let mut mutator = doc.mutate();
+        text_node = mutator.create_text_node("initial");
+        mutator.append_children(root_id, &[text_node]);
+    }
+
+    let dirty_count_before = scheduler.dirty_count();
+    {
+        let mut mutator = doc.mutate();
+        let mut dmut = DirectDomMutator::new(&mut mutator, &scheduler);
+        dmut.set_text(text_node, "first");
+        dmut.set_text(text_node, "second");
+        dmut.set_text(text_node, "third");
+    }
+
+    // Each operation should notify the scheduler
+    assert_eq!(scheduler.dirty_count(), dirty_count_before + 3);
+}
+
+#[test]
+fn test_direct_mutator_set_id() {
+    let (mut doc, root_id) = setup_doc();
+    let scheduler = SceneScheduler::new();
+    let dirty_count_before = scheduler.dirty_count();
+
+    let elem;
+    {
+        let mut mutator = doc.mutate();
+        elem = mutator.create_element(qual_name!("div"), vec![]);
+        mutator.append_children(root_id, &[elem]);
+    }
+
+    {
+        let mut mutator = doc.mutate();
+        let mut dmut = DirectDomMutator::new(&mut mutator, &scheduler);
+        dmut.set_id(elem, "my-id");
+    }
+
+    assert_eq!(scheduler.dirty_count(), dirty_count_before + 1);
+}
+
+#[test]
+fn test_direct_mutator_set_class() {
+    let (mut doc, root_id) = setup_doc();
+    let scheduler = SceneScheduler::new();
+    let dirty_count_before = scheduler.dirty_count();
+
+    let elem;
+    {
+        let mut mutator = doc.mutate();
+        elem = mutator.create_element(qual_name!("div"), vec![]);
+        mutator.append_children(root_id, &[elem]);
+    }
+
+    {
+        let mut mutator = doc.mutate();
+        let mut dmut = DirectDomMutator::new(&mut mutator, &scheduler);
+        dmut.set_class(elem, "my-class");
+    }
+
+    assert_eq!(scheduler.dirty_count(), dirty_count_before + 1);
+}
+
+#[test]
+fn test_direct_mutator_insert_before() {
+    let (mut doc, root_id) = setup_doc();
+    let scheduler = SceneScheduler::new();
+
+    let anchor;
+    let new_node;
+    {
+        let mut mutator = doc.mutate();
+        anchor = mutator.create_element(qual_name!("div"), vec![]);
+        new_node = mutator.create_element(qual_name!("span"), vec![]);
+        mutator.append_children(root_id, &[anchor]);
+    }
+
+    let dirty_count_before = scheduler.dirty_count();
+    {
+        let mut mutator = doc.mutate();
+        let mut dmut = DirectDomMutator::new(&mut mutator, &scheduler);
+        dmut.insert_before(anchor, &[new_node]);
+    }
+
+    assert_eq!(scheduler.dirty_count(), dirty_count_before + 1);
+}
+
+#[test]
+fn test_direct_mutator_replace_with() {
+    let (mut doc, root_id) = setup_doc();
+    let scheduler = SceneScheduler::new();
+
+    let anchor;
+    let new_node;
+    {
+        let mut mutator = doc.mutate();
+        anchor = mutator.create_element(qual_name!("div"), vec![]);
+        new_node = mutator.create_element(qual_name!("span"), vec![]);
+        mutator.append_children(root_id, &[anchor]);
+    }
+
+    let dirty_count_before = scheduler.dirty_count();
+    {
+        let mut mutator = doc.mutate();
+        let mut dmut = DirectDomMutator::new(&mut mutator, &scheduler);
+        dmut.replace_with(anchor, &[new_node]);
+    }
+
+    assert_eq!(scheduler.dirty_count(), dirty_count_before + 1);
+}
+
+#[test]
+fn test_direct_mutator_remove_all_children() {
+    let (mut doc, root_id) = setup_doc();
+    let scheduler = SceneScheduler::new();
+
+    let child1;
+    let child2;
+    {
+        let mut mutator = doc.mutate();
+        child1 = mutator.create_element(qual_name!("div"), vec![]);
+        child2 = mutator.create_element(qual_name!("span"), vec![]);
+        mutator.append_children(root_id, &[child1, child2]);
+    }
+
+    let dirty_count_before = scheduler.dirty_count();
+    {
+        let mut mutator = doc.mutate();
+        let mut dmut = DirectDomMutator::new(&mut mutator, &scheduler);
+        dmut.remove_all_children(root_id);
+    }
+
+    assert_eq!(scheduler.dirty_count(), dirty_count_before + 1);
 }

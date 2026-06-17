@@ -1853,6 +1853,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "crush-index"
+version = "0.2.0"
+dependencies = [
+ "anyhow",
+ "crush-cast",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "crush-lang-sdk"
 version = "0.2.0"
 dependencies = [
@@ -1862,7 +1872,9 @@ dependencies = [
  "clap",
  "crush-cast",
  "crush-frontend",
+ "crush-index",
  "crush-vm",
+ "getrandom 0.2.17",
  "rand 0.8.6",
  "serde",
  "serde_json",
