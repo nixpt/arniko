@@ -713,7 +713,6 @@ fn test_binding_lifecycle_scope_cleanup() {
 fn test_lock_poison_cascade_panic_in_handler_is_contained() {
     // B-5: Verify that a panicking handler doesn't poison the lock and crash the app.
     // With parking_lot, locks don't poison, so subsequent operations should work.
-    use arniko::reactive::EventRouter;
     use arniko::reactive::event_router;
 
     let (router, _sink) = event_router();
@@ -732,7 +731,6 @@ fn test_lock_poison_cascade_panic_in_handler_is_contained() {
 #[test]
 fn test_per_node_keydown_api_exists() {
     // B-6: Verify per-node keydown registration API exists
-    use arniko::reactive::EventRouter;
     use arniko::reactive::event_router;
     use bliss::traits::events::BlissKeyEvent;
 
@@ -748,7 +746,6 @@ fn test_per_node_keydown_api_exists() {
 #[test]
 fn test_event_handler_chaining() {
     // B-6: Verify event handler methods can be chained
-    use arniko::reactive::EventRouter;
     use arniko::reactive::event_router;
     use bliss::traits::events::BlissKeyEvent;
 
@@ -761,3 +758,55 @@ fn test_event_handler_chaining() {
         .on_input(3, |_value: String| {})
         .on_keydown(|_event: &BlissKeyEvent| {});
 }
+
+// ── Conditional Rendering Tests (B-7) ──────────────────────────────────────────
+
+#[test]
+fn test_show_view_hides_and_shows_content() {
+    use arniko::reactive::{Show, Text};
+    let (mut doc, root_id) = setup_doc();
+    let mut reactor = Reactor::new();
+    let visible = Signal::new(true);
+    let view = Show::new(visible.clone(), move || Box::new(Text("visible content".to_string())));
+    let _scope;
+    { let mut mutator = doc.mutate(); _scope = view.mount(&mut mutator, &mut reactor, root_id).1; drop(mutator); }
+    flush_reactive(&mut doc, &mut reactor);
+    assert!(node_text(&mut doc, root_id).contains("visible content"));
+    visible.set(false);
+    flush_reactive(&mut doc, &mut reactor);
+    assert!(!node_text(&mut doc, root_id).contains("visible content"));
+    visible.set(true);
+    flush_reactive(&mut doc, &mut reactor);
+    assert!(node_text(&mut doc, root_id).contains("visible content"));
+}
+
+
+#[test]
+fn test_switch_view_changes_branches() {
+    use arniko::reactive::{Switch, Text};
+    #[derive(Clone, PartialEq)]
+    enum Page { Home, About, Contact }
+    let (mut doc, root_id) = setup_doc();
+    let mut reactor = Reactor::new();
+    let page = Signal::new(Page::Home);
+    let view = Switch::new(page.clone(), |p: &Page| {
+        match p {
+            Page::Home => Box::new(Text("Home Page".to_string())),
+            Page::About => Box::new(Text("About Page".to_string())),
+            Page::Contact => Box::new(Text("Contact Page".to_string())),
+        }
+    });
+    let _scope;
+    { let mut mutator = doc.mutate(); _scope = view.mount(&mut mutator, &mut reactor, root_id).1; drop(mutator); }
+    flush_reactive(&mut doc, &mut reactor);
+    assert!(node_text(&mut doc, root_id).contains("Home Page"));
+    page.set(Page::About);
+    flush_reactive(&mut doc, &mut reactor);
+    assert!(node_text(&mut doc, root_id).contains("About Page"));
+    assert!(!node_text(&mut doc, root_id).contains("Home Page"));
+    page.set(Page::Contact);
+    flush_reactive(&mut doc, &mut reactor);
+    assert!(node_text(&mut doc, root_id).contains("Contact Page"));
+    assert!(!node_text(&mut doc, root_id).contains("About Page"));
+}
+
