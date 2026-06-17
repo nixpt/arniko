@@ -135,10 +135,17 @@ impl DocumentMutator<'_> {
     }
 
     /// Create a shadow root attached to the given host element.
-    /// Returns the node ID of the new shadow root.
+    /// Returns the node ID of the new shadow root, or 0 if `host_id` is stale
+    /// (0 is a documented failure sentinel — the document root is always at id 0
+    /// only after construction; callers should treat 0 as "no shadow attached").
     pub fn attach_shadow(&mut self, host_id: usize) -> usize {
+        if self.doc.get_node(host_id).is_none() {
+            debug_assert!(false, "attach_shadow called with stale host_id={host_id}");
+            return 0;
+        }
         let shadow_root_id = self.doc.create_node(NodeData::ShadowRoot { host: host_id });
         let shadow_root = &mut self.doc.nodes[shadow_root_id];
+        debug_assert_eq!(shadow_root.id, shadow_root_id);
         shadow_root.parent = Some(host_id);
         shadow_root.flags.insert(NodeFlags::IS_IN_DOCUMENT);
         self.doc.nodes[host_id].children.push(shadow_root_id);
@@ -150,7 +157,14 @@ impl DocumentMutator<'_> {
         data.flush_style_attribute(self.doc.guard(), &self.doc.url.url_extra_data());
 
         let id = self.doc.create_node(NodeData::Element(data));
-        let node = self.doc.get_node(id).unwrap();
+        // `id` was just returned by `create_node`, so the slab entry exists by
+        // structural invariant. `.expect` documents the violation rather than
+        // a bare `.unwrap()` and matches the rest of the file's expectations
+        // (`element_data_mut().expect("Not an element")` style was used pre-D-2b).
+        let node = self
+            .doc
+            .get_node(id)
+            .expect("create_node returned stale id");
 
         // Initialise style data
         *node.stylo_element_data.borrow_mut() = Some(style::data::ElementData {
@@ -191,8 +205,11 @@ impl DocumentMutator<'_> {
             // Also insert damage on the parent element, since text content changes
             // affect the parent's layout (text may wrap differently, change size, etc.)
             if let Some(parent_id) = parent_id {
-                let parent = &mut self.doc.nodes[parent_id];
-                parent.insert_damage(ALL_DAMAGE);
+                if let Some(parent) = self.doc.get_node_mut(parent_id) {
+                    parent.insert_damage(ALL_DAMAGE);
+                } else {
+                    debug_assert!(false, "set_node_text parent_id={parent_id} stale after get_node_mut on child");
+                }
             }
 
             self.maybe_record_node(parent_id);
@@ -219,7 +236,10 @@ impl DocumentMutator<'_> {
             return;
         };
         node.insert_damage(ALL_DAMAGE);
-        let element_data = node.element_data_mut().expect("Not an element");
+        let Some(element_data) = node.element_data_mut() else {
+            debug_assert!(false, "add_attrs_if_missing called on non-element node_id={node_id}");
+            return;
+        };
 
         let existing_names = element_data
             .attrs
@@ -405,12 +425,15 @@ impl DocumentMutator<'_> {
 
         // Update child_idx values
         if let Some(parent_id) = node.parent.take() {
-            let parent = &mut self.doc.nodes[parent_id];
-            parent.insert_damage(ALL_DAMAGE);
-            // Mark ancestors dirty so the style traversal visits this subtree.
-            parent.mark_ancestors_dirty();
-            parent.children.retain(|id| *id != node_id);
-            self.maybe_record_node(parent_id);
+            if let Some(parent) = self.doc.get_node_mut(parent_id) {
+                parent.insert_damage(ALL_DAMAGE);
+                // Mark ancestors dirty so the style traversal visits this subtree.
+                parent.mark_ancestors_dirty();
+                parent.children.retain(|id| *id != node_id);
+                self.maybe_record_node(parent_id);
+            } else {
+                debug_assert!(false, "remove_node: node {node_id} reports stale parent {parent_id}");
+            }
         }
 
         self.process_removed_subtree(node_id);
@@ -426,7 +449,10 @@ impl DocumentMutator<'_> {
 
         // Update child_idx values
         if let Some(parent_id) = node.as_ref().and_then(|node| node.parent) {
-            let parent = &mut self.doc.nodes[parent_id];
+            let Some(parent) = self.doc.get_node_mut(parent_id) else {
+                debug_assert!(false, "remove_and_drop_node: node {node_id} reports stale parent {parent_id}");
+                return node;
+            };
             parent.insert_damage(ALL_DAMAGE);
             let parent_is_in_doc = parent.flags.is_in_document();
 
@@ -493,7 +519,13 @@ impl DocumentMutator<'_> {
             return;
         };
         self.add_children_to_parent(parent_id, new_node_ids, &|parent, child_ids| {
-            let node_child_idx = parent.index_of_child(anchor_node_id).unwrap();
+            // If the anchor was removed from the parent between the get_node
+            // check above and the closure, fall back to appending rather than
+            // unwrapping on an empty index.
+            let Some(node_child_idx) = parent.index_of_child(anchor_node_id) else {
+                parent.children.extend_from_slice(child_ids);
+                return;
+            };
             parent
                 .children
                 .splice(node_child_idx..node_child_idx, child_ids.iter().copied());
@@ -506,6 +538,26 @@ impl DocumentMutator<'_> {
         child_ids: &[usize],
         insert_children_fn: &dyn Fn(&mut Node, &[usize]),
     ) {
+        // Validate every id we will touch before mutating any of them, so the
+        // function is all-or-nothing: if any id is stale we leave the document
+        // untouched rather than half-applying parent damage and reparent hints.
+        if self.doc.get_node(parent_id).is_none() {
+            debug_assert!(
+                false,
+                "add_children_to_parent called with stale parent_id={parent_id}"
+            );
+            return;
+        }
+        if !child_ids
+            .iter()
+            .all(|&id| self.doc.get_node(id).is_some())
+        {
+            debug_assert!(
+                false,
+                "add_children_to_parent: at least one child_id is stale; aborting"
+            );
+            return;
+        }
         let new_parent = &mut self.doc.nodes[parent_id];
         new_parent.insert_damage(ALL_DAMAGE);
         let new_parent_is_in_doc = new_parent.flags.is_in_document();
@@ -522,7 +574,10 @@ impl DocumentMutator<'_> {
         insert_children_fn(new_parent, child_ids);
 
         for child_id in child_ids.iter().copied() {
-            let child = &mut self.doc.nodes[child_id];
+            let Some(child) = self.doc.get_node_mut(child_id) else {
+                debug_assert!(false, "add_children_to_parent: stale child_id={child_id}");
+                continue;
+            };
             let old_parent_id = child.parent.replace(parent_id);
 
             let child_was_in_doc = child.flags.is_in_document();
@@ -531,7 +586,10 @@ impl DocumentMutator<'_> {
             }
 
             if let Some(old_parent_id) = old_parent_id {
-                let old_parent = &mut self.doc.nodes[old_parent_id];
+                let Some(old_parent) = self.doc.get_node_mut(old_parent_id) else {
+                    debug_assert!(false, "add_children_to_parent: stale old_parent_id={old_parent_id}");
+                    continue;
+                };
                 old_parent.insert_damage(ALL_DAMAGE);
 
                 // When reparenting a child, the old parent's own styles don't
@@ -556,10 +614,12 @@ impl DocumentMutator<'_> {
     pub fn insert_nodes_after(&mut self, anchor_node_id: usize, new_node_ids: &[usize]) {
         match self.next_sibling_id(anchor_node_id) {
             Some(id) => self.insert_nodes_before(id, new_node_ids),
-            None => {
-                let parent_id = self.parent_id(anchor_node_id).unwrap();
-                self.append_children(parent_id, new_node_ids)
-            }
+            None => match self.parent_id(anchor_node_id) {
+                Some(parent_id) => self.append_children(parent_id, new_node_ids),
+                None => {
+                    debug_assert!(false, "insert_nodes_after called with orphan anchor_node_id={anchor_node_id}");
+                }
+            },
         }
     }
 
@@ -728,11 +788,11 @@ impl<'doc> DocumentMutator<'doc> {
             return;
         };
 
-        let Some(tag_name) = self.doc.nodes[node_id]
-            .data
-            .downcast_element()
-            .map(|elem| &elem.name.local)
-        else {
+        let Some(node) = self.doc.get_node(node_id) else {
+            debug_assert!(false, "maybe_record_node called with stale node_id={node_id}");
+            return;
+        };
+        let Some(tag_name) = node.data.downcast_element().map(|elem| &elem.name.local) else {
             return;
         };
 
@@ -746,7 +806,10 @@ impl<'doc> DocumentMutator<'doc> {
     }
 
     fn load_linked_stylesheet(&mut self, target_id: usize) {
-        let node = &self.doc.nodes[target_id];
+        let Some(node) = self.doc.get_node(target_id) else {
+            debug_assert!(false, "load_linked_stylesheet: stale target_id={target_id}");
+            return;
+        };
 
         let rel_attr = node.attr(local_name!("rel"));
         let href_attr = node.attr(local_name!("href"));
@@ -779,12 +842,17 @@ impl<'doc> DocumentMutator<'doc> {
     }
 
     fn unload_stylesheet(&mut self, node_id: usize) {
-        let node = &mut self.doc.nodes[node_id];
+        let Some(node) = self.doc.get_node_mut(node_id) else {
+            debug_assert!(false, "unload_stylesheet: stale node_id={node_id}");
+            return;
+        };
         let Some(element) = node.element_data_mut() else {
-            unreachable!();
+            debug_assert!(false, "unload_stylesheet: node {node_id} is not an element");
+            return;
         };
         let SpecialElementData::Stylesheet(stylesheet) = element.special_data.take() else {
-            unreachable!();
+            debug_assert!(false, "unload_stylesheet: node {node_id} carries non-Stylesheet special_data");
+            return;
         };
 
         let guard = self.doc.guard.read();
@@ -797,7 +865,10 @@ impl<'doc> DocumentMutator<'doc> {
     }
 
     fn load_image(&mut self, target_id: usize) {
-        let node = &self.doc.nodes[target_id];
+        let Some(node) = self.doc.get_node(target_id) else {
+            debug_assert!(false, "load_image: stale target_id={target_id}");
+            return;
+        };
         if let Some(raw_src) = node.attr(local_name!("src")) {
             if !raw_src.is_empty() {
                 let Some(src) = self.doc.resolve_url(raw_src) else {
@@ -805,15 +876,22 @@ impl<'doc> DocumentMutator<'doc> {
                 };
                 let src_string = src.as_str();
 
-                // Check cache first
-                if let Some(cached_image) = self.doc.image_cache.get(src_string) {
+                // Check cache first (clone out so the image_cache borrow is released
+                // before the subsequent get_node_mut borrow takes effect).
+                if let Some(cached_image) = self.doc.image_cache.get(src_string).cloned() {
                     #[cfg(feature = "tracing")]
                     tracing::info!("Loading image {src_string} from cache");
-                    let node = &mut self.doc.nodes[target_id];
-                    node.element_data_mut().unwrap().special_data =
-                        SpecialElementData::Image(Box::new(cached_image.clone()));
-                    node.cache.clear();
-                    node.insert_damage(ALL_DAMAGE);
+                    if let Some(node) = self.doc.get_node_mut(target_id) {
+                        if let Some(element_data) = node.element_data_mut() {
+                            element_data.special_data =
+                                SpecialElementData::Image(Box::new(cached_image));
+                        } else {
+                            debug_assert!(false, "load_image (cache): node {target_id} not element");
+                            return;
+                        }
+                        node.cache.clear();
+                        node.insert_damage(ALL_DAMAGE);
+                    }
                     return;
                 }
 
@@ -848,20 +926,30 @@ impl<'doc> DocumentMutator<'doc> {
     }
 
     fn load_custom_paint_src(&mut self, target_id: usize) {
-        let node = &mut self.doc.nodes[target_id];
+        let Some(node) = self.doc.get_node_mut(target_id) else {
+            debug_assert!(false, "load_custom_paint_src: stale target_id={target_id}");
+            return;
+        };
         if let Some(raw_src) = node.attr(local_name!("src")) {
             if let Ok(custom_paint_source_id) = raw_src.parse::<u64>() {
                 self.recompute_is_animating = true;
                 let canvas_data = SpecialElementData::Canvas(CanvasData {
                     custom_paint_source_id,
                 });
-                node.element_data_mut().unwrap().special_data = canvas_data;
+                if let Some(element_data) = node.element_data_mut() {
+                    element_data.special_data = canvas_data;
+                } else {
+                    debug_assert!(false, "load_custom_paint_src: node {target_id} not element");
+                }
             }
         }
     }
 
     fn process_button_input(&mut self, target_id: usize) {
-        let node = &self.doc.nodes[target_id];
+        let Some(node) = self.doc.get_node(target_id) else {
+            debug_assert!(false, "process_button_input: stale target_id={target_id}");
+            return;
+        };
         let Some(data) = node.element_data() else {
             return;
         };

@@ -16,7 +16,7 @@
 | A — Build & workspace | 4/6 + 1 partial | **1** | 0 (A-4b is P1 rcgen/time blocker) |
 | B — Reactive hardening | 3/7 | **4** | 0 |
 | C — Component library | 4/8 + 4 extras | **4** | 0 |
-| D — Engine robustness | 2/9 (D-1 ✅, D-2 phase 1 ✅) | **9** | 3 (D-2b, D-3 still open) |
+| D — Engine robustness | 3/9 (D-1 ✅, D-2 phase 1 ✅, D-2b ✅) | **9** | 2 (D-2c, D-3 still open) |
 | E — Testing & CI | 2/5 partial | **3** | 0 (partial done) |
 | F — Packaging & release | 0/6 | **6** | 3 (F-1, F-2, F-3) |
 
@@ -224,7 +224,8 @@ A stale/cross-document `NodeId` panics. Safe `get_node` exists but is bypassed.
 
 > **Phase split (2026-06-17):**
 > - **D-2 (phase 1) ✅** — `set_style_property` + `remove_style_property` in `document.rs` migrated to `get_node_mut` + `if let`. `pointer.rs` keyed hot paths (`handle_pointerdown` element unwrap, `PanState::update`, two `SystemTime::now()` sites, `file_input` label) hardened to `if let` / `unwrap_or` / `debug_assert`. See commit message.
-> - **D-2b (open) 🔴** — sweep `mutator.rs` 22+ sites (`set_attribute`, `append_children`, `remove_and_drop_node`, `add_children_to_parent`, `set_node_text`, etc.). Migrate call sites to propagate `Option`/`Result` where return types allow; otherwise use `debug_assert!` + safe fallback. Acceptance: same as D-2.
+> - **D-2b ✅ (2026-06-17)** — sweep `mutator.rs` 32+ panic surfaces. Public APIs (`attach_shadow`, `set_node_text`, `remove_node`, `remove_and_drop_node`, `add_children_to_parent`, `insert_nodes_before`, `insert_nodes_after`, `add_attrs_if_missing`, `create_element`) and private helpers (`unload_stylesheet` x3 incl. 2 `unreachable!`, `load_linked_stylesheet`, `load_image`, `load_custom_paint_src`, `process_button_input`, `maybe_record_node`) migrated off `self.doc.nodes[id]` direct index / `.unwrap()` / `.expect()` to safe patterns: `if let Some(...) else { debug_assert!(false, "..."); return; }` and `.cloned()` borrow-ordering fixes. **`add_children_to_parent` is all-or-nothing**: if `parent_id` OR any `child_id` is stale, the function bails early without mutating anything (parent damage/restyling is NOT applied if any descendant of the mutation is invalid). `attach_shadow(stale_host_id)` returns 0 as documented failure sentinel. Acceptance: same as D-2.
+> - **D-2c (open) 🟡** — `document.rs` miscellaneous helpers: `deep_clone_node` recursion (children / new_node_id may go stale across the recursive clone); sibling style/attribute setters reachable from CSS engine / script delegates (`set_attribute`, `set_id`, `set_class`, `set_inner_text`). `root_node`/`root_node_mut` are by-design invariants (DOM always has a root) — NOT in scope. Acceptance: same as D-2.
 > - **D-2c (open) 🟡** — `document.rs` miscellaneous helpers: `deep_clone_node` recursion (children / new_node_id may go stale across the recursive clone); sibling style/attribute setters reachable from CSS engine / script delegates (`set_attribute`, `set_id`, `set_class`, `set_inner_text`). `root_node`/`root_node_mut` are by-design invariants (DOM always has a root) — NOT in scope. Acceptance: same as D-2.
 
 ### D-3 (P0) — Pointer-path unwraps on attacker-controllable HTML
