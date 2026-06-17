@@ -1,4 +1,5 @@
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
+use parking_lot::Mutex;
 
 use anyrender_vello::VelloWindowRenderer;
 use bliss::dom::{Document, DocumentConfig};
@@ -64,9 +65,7 @@ impl ApplicationHandler for ReactiveApplication {
         for view in self.inner.windows.values_mut() {
             let mut inner = view.doc.inner_mut();
             let mut mutator = inner.mutate();
-            if let Ok(mut reactor) = self.reactor.lock() {
-                reactor.flush(&mut mutator, None);
-            }
+            self.reactor.lock().flush(&mut mutator, None);
             drop(mutator);
             drop(inner);
             view.request_redraw();
@@ -99,7 +98,7 @@ impl ApplicationHandler for ReactiveApplication {
             let mut mutator = inner.mutate();
             // No SceneScheduler in the non-GPU reactive launch path → no GPU
             // re-application coordination needed.
-            self.reactor.lock().unwrap().flush(&mut mutator, None);
+            self.reactor.lock().flush(&mut mutator, None);
             drop(mutator);
             drop(inner);
             view.request_redraw();

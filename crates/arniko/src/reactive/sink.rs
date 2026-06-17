@@ -1,5 +1,6 @@
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
+use parking_lot::Mutex;
 
 use bliss::traits::events::{BlissKeyEvent, DomEvent, DomEventData, EventPhase, EventSink};
 
@@ -20,13 +21,12 @@ impl EventRouter {
     pub fn on_click(&self, node_id: usize, handler: impl Fn() + Send + Sync + 'static) {
         self.handlers
             .lock()
-            .unwrap()
             .insert(node_id, Box::new(handler));
     }
 
     /// Remove a click handler.
     pub fn off_click(&self, node_id: usize) {
-        self.handlers.lock().unwrap().remove(&node_id);
+        self.handlers.lock().remove(&node_id);
     }
 
     /// Register a global key-down handler.
@@ -34,7 +34,7 @@ impl EventRouter {
     /// The handler receives the [`BlissKeyEvent`] for every `keydown` event in the
     /// document. Use `event.key` / `event.modifiers` / `event.code` to filter.
     pub fn on_keydown(&self, handler: impl Fn(&BlissKeyEvent) + Send + Sync + 'static) {
-        self.key_handlers.lock().unwrap().push(Box::new(handler));
+        self.key_handlers.lock().push(Box::new(handler));
     }
 
     /// Register an input handler for a text input element.
@@ -42,13 +42,12 @@ impl EventRouter {
     pub fn on_input(&self, node_id: usize, handler: impl Fn(String) + Send + Sync + 'static) {
         self.input_handlers
             .lock()
-            .unwrap()
             .insert(node_id, Box::new(handler));
     }
 
     /// Remove an input handler.
     pub fn off_input(&self, node_id: usize) {
-        self.input_handlers.lock().unwrap().remove(&node_id);
+        self.input_handlers.lock().remove(&node_id);
     }
 }
 
@@ -89,13 +88,13 @@ impl EventSink for ArnikoEventSink {
     ) {
         match &event.data {
             DomEventData::Click(_) => {
-                let handlers = self.handlers.lock().unwrap();
+                let handlers = self.handlers.lock();
                 if let Some(handler) = handlers.get(&current_target) {
                     handler();
                 }
             }
             DomEventData::KeyDown(key_event) => {
-                let handlers = self.key_handlers.lock().unwrap();
+                let handlers = self.key_handlers.lock();
                 if !handlers.is_empty() {
                     for handler in handlers.iter() {
                         handler(key_event);
@@ -103,7 +102,7 @@ impl EventSink for ArnikoEventSink {
                 }
             }
             DomEventData::Input(input_event) => {
-                let handlers = self.input_handlers.lock().unwrap();
+                let handlers = self.input_handlers.lock();
                 if let Some(handler) = handlers.get(&current_target) {
                     handler(input_event.value.clone());
                 }

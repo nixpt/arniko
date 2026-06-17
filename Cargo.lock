@@ -478,6 +478,7 @@ dependencies = [
  "exo-bliss-net",
  "keyboard-types 0.7.0",
  "mustang",
+ "parking_lot",
  "serde",
  "serde_json",
  "tokio-test",

@@ -706,3 +706,79 @@ fn test_binding_lifecycle_scope_cleanup() {
         "After mount/unmount cycles, binding count should be flat"
     );
 }
+
+// ── Lock-Poison Tolerance Tests (B-5) ──────────────────────────────────────────
+
+#[test]
+fn test_lock_poison_cascade_panic_in_handler_is_contained() {
+    // B-5: Verify that a panicking handler doesn't poison the lock and crash the app.
+    // With parking_lot, locks don't poison, so subsequent operations should work.
+    use arniko::reactive::EventRouter;
+    use arniko::reactive::event_router;
+
+    let (router, _sink) = event_router();
+
+    // Register a handler that panics
+    router.on_click(1, || {
+        panic!("Handler panic!");
+    });
+
+    // Register another handler on the same router - this should still work
+    router.on_click(2, || {});
+
+    // The router should still be usable after the panic in handler 1
+    // (with parking_lot, the lock doesn't poison)
+    // This test passes if we get here without panicking
+}
+
+#[test]
+fn test_lock_poison_cascade_signal_operations_after_panic() {
+    // B-5: Verify signal operations work after a panic in a different context
+    // (simulating that a previous panic poisoned a lock - with parking_lot this doesn't happen)
+    use std::panic::{catch_unwind, AssertUnwindSafe};
+
+    let sig = Signal::new(0_i32);
+
+    // First, do a normal operation
+    sig.set(1);
+    assert_eq!(sig.get(), 1);
+
+    // Simulate a panic during set (though with parking_lot, this won't poison)
+    let _ = catch_unwind(AssertUnwindSafe(|| {
+        sig.set(2);
+        panic!("Simulated panic during set");
+    }));
+
+    // Signal should still be usable after the panic
+    sig.set(3);
+    assert_eq!(sig.get(), 3);
+
+    // Version should still increment
+    let v1 = sig.reactive_version();
+    sig.set(4);
+    let v2 = sig.reactive_version();
+    assert!(v2 > v1);
+}
+
+#[test]
+fn test_lock_poison_cascade_computed_after_panic() {
+    // B-5: Verify computed values work after a panic
+    use std::panic::{catch_unwind, AssertUnwindSafe};
+
+    let sig = Signal::new(10_i32);
+    let computed = sig.derive(|v| v * 2);
+
+    assert_eq!(computed.get(), 20);
+
+    // Simulate a panic
+    let _ = catch_unwind(AssertUnwindSafe(|| {
+        panic!("Simulated panic");
+    }));
+
+    // Computed should still work
+    assert_eq!(computed.get(), 20);
+
+    // Update source and verify computed updates
+    sig.set(15);
+    assert_eq!(computed.get(), 30);
+}

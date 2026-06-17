@@ -1,4 +1,5 @@
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
+use parking_lot::RwLock;
 
 use super::computed::Computed;
 
@@ -30,7 +31,7 @@ impl<T: Clone + 'static> Clone for Signal<T> {
     fn clone(&self) -> Self {
         Signal {
             inner: Arc::clone(&self.inner),
-            waker: RwLock::new(self.waker.read().unwrap().clone()),
+            waker: RwLock::new(self.waker.read().clone()),
         }
     }
 }
@@ -55,38 +56,38 @@ impl<T: Clone + 'static> Signal<T> {
     /// Attach a waker that fires on every `set()` so the event loop flushes.
     /// Call from `launch_reactive` setup via `ReactiveRuntime::wire(signal)`.
     pub fn set_waker(&self, waker: WakeFn) {
-        *self.waker.write().unwrap() = Some(waker);
+        *self.waker.write() = Some(waker);
     }
 
     pub fn get(&self) -> T {
-        self.inner.read().unwrap().value.clone()
+        self.inner.read().value.clone()
     }
 
     pub fn set(&self, value: T) {
-        let mut inner = self.inner.write().unwrap();
+        let mut inner = self.inner.write();
         inner.value = value;
         inner.version += 1;
         // Wake the event loop so the reactor can flush — this is the
         // "self-driven flush" for timer / async / thread-driven updates.
-        if let Some(waker) = self.waker.read().unwrap().as_ref() {
+        if let Some(waker) = self.waker.read().as_ref() {
             waker();
         }
     }
 
     pub fn update(&self, f: impl FnOnce(&T) -> T) {
-        let mut inner = self.inner.write().unwrap();
+        let mut inner = self.inner.write();
         let new_val = f(&inner.value);
         inner.value = new_val;
         inner.version += 1;
         // Wake the event loop so the reactor can flush — this is the
         // "self-driven flush" for timer / async / thread-driven updates.
-        if let Some(waker) = self.waker.read().unwrap().as_ref() {
+        if let Some(waker) = self.waker.read().as_ref() {
             waker();
         }
     }
 
     pub(super) fn version(&self) -> u64 {
-        self.inner.read().unwrap().version
+        self.inner.read().version
     }
 }
 
