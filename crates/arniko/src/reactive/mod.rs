@@ -15,7 +15,7 @@ pub use app::{ReactiveRuntime, launch_reactive, launch_reactive_configured};
 pub use computed::Computed;
 pub use keyboard_types;
 pub use reactive_html::ReactiveHtml;
-pub use reactor::Reactor;
+pub use reactor::{BindingHandle, Reactor, Scope};
 pub use signal::{Reactive, Signal};
 pub use sink::{ArnikoEventSink, EventRouter, event_router};
 pub use view::{Div, For, ReactiveText, Span, StaticHtml, Text, View};

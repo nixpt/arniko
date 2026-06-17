@@ -9,7 +9,7 @@ use crate::{Component, ComponentMetadata};
 use crate::components::escape_html;
 
 #[cfg(feature = "reactive")]
-use crate::reactive::{Div, Reactor, Signal, Text, View};
+use crate::reactive::{Div, Reactor, Scope, Signal, Text, View};
 #[cfg(feature = "reactive")]
 use bliss_dom::DocumentMutator;
 
@@ -108,13 +108,14 @@ impl Component for Toast {
 ///
 /// The toast is visible when `toast_message` is `Some` and hidden (opacity 0)
 /// when `None`. Text content updates reactively via the reactor.
+/// Returns the container node ID and a Scope for lifecycle management.
 #[cfg(feature = "reactive")]
 pub fn mount_toast(
     mutator: &mut DocumentMutator,
     reactor: &mut Reactor,
     parent_id: usize,
     toast_message: &Signal<Option<String>>,
-) -> usize {
+) -> (usize, Scope) {
     mount_toast_with_variant(
         mutator,
         reactor,
@@ -125,6 +126,7 @@ pub fn mount_toast(
 }
 
 /// Mount a reactive toast notification with a specific variant styling.
+/// Returns the container node ID and a Scope for lifecycle management.
 #[cfg(feature = "reactive")]
 pub fn mount_toast_with_variant(
     mutator: &mut DocumentMutator,
@@ -132,7 +134,7 @@ pub fn mount_toast_with_variant(
     parent_id: usize,
     toast_message: &Signal<Option<String>>,
     variant: ToastVariant,
-) -> usize {
+) -> (usize, Scope) {
     let bg_color = match variant {
         ToastVariant::Info => "rgba(59,130,246,0.9)",
         ToastVariant::Success => "rgba(34,197,94,0.9)",
@@ -150,7 +152,7 @@ pub fn mount_toast_with_variant(
             vec![Box::new(Text("".to_string()))],
         ))],
     );
-    let container_id = toast_container.mount(mutator, reactor, parent_id);
+    let (container_id, scope) = toast_container.mount(mutator, reactor, parent_id);
 
     let inner_id = mutator.child_ids(container_id)[0];
     let text_id = mutator.child_ids(inner_id)[0];
@@ -183,7 +185,7 @@ pub fn mount_toast_with_variant(
         }
     });
 
-    container_id
+    (container_id, scope)
 }
 
 #[cfg(test)]

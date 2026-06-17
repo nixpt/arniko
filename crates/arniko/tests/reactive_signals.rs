@@ -6,7 +6,7 @@
 use arniko::reactive::direct_mut::DirectDomMutator;
 use arniko::reactive::{Computed, Reactive, ReactiveText, Reactor, Signal, View};
 use arniko::mustang::SceneScheduler;
-use bliss_dom::{BaseDocument, DocumentConfig, DocumentMutator, QualName, qual_name};
+use bliss_dom::{BaseDocument, DocumentConfig, DocumentMutator, qual_name};
 use bliss_html::HtmlProvider;
 use std::sync::Arc;
 
@@ -193,7 +193,7 @@ fn test_reactor_flush_dirty_detection() {
     }
 
     // First flush — should be dirty (initial bind)
-    let dirty = {
+    let _dirty = {
         let mut mutator = doc.mutate();
         reactor.flush(&mut mutator, None)
     };
@@ -613,4 +613,96 @@ fn test_direct_mutator_remove_all_children() {
     }
 
     assert_eq!(scheduler.dirty_count(), dirty_count_before + 1);
+}
+
+// ── Binding Lifecycle Tests ─────────────────────────────────────────────────────
+
+#[test]
+fn test_binding_lifecycle_scope_cleanup() {
+    // B-4: Verify that binding lifecycle management works correctly.
+    // Mounting and unmounting N views should leave the binding count flat.
+
+    let (mut doc, root_id) = setup_doc();
+    let mut reactor = Reactor::new();
+
+    // Track initial binding count
+    let initial_binding_count = reactor.binding_count();
+
+    // Mount 3 views, each with a reactive text binding
+    let sig1 = Signal::new("text1".to_string());
+    let sig2 = Signal::new("text2".to_string());
+    let sig3 = Signal::new("text3".to_string());
+
+    let view1 = ReactiveText::new(sig1.clone());
+    let view2 = ReactiveText::new(sig2.clone());
+    let view3 = ReactiveText::new(sig3.clone());
+
+    let scope1;
+    let scope2;
+    let scope3;
+    {
+        let mut mutator = doc.mutate();
+        let (_, s1) = view1.mount(&mut mutator, &mut reactor, root_id);
+        let (_, s2) = view2.mount(&mut mutator, &mut reactor, root_id);
+        let (_, s3) = view3.mount(&mut mutator, &mut reactor, root_id);
+        scope1 = s1;
+        scope2 = s2;
+        scope3 = s3;
+        drop(mutator);
+    }
+
+    // After mounting 3 views, we should have 3 more bindings
+    assert_eq!(
+        reactor.binding_count(),
+        initial_binding_count + 3,
+        "Should have 3 bindings after mounting 3 views"
+    );
+
+    // Now drop the scopes - this should remove the bindings
+    drop(scope1);
+    drop(scope2);
+    drop(scope3);
+
+    // After dropping all scopes, binding count should be back to initial
+    assert_eq!(
+        reactor.binding_count(),
+        initial_binding_count,
+        "Binding count should return to initial after dropping all scopes"
+    );
+
+    // Mount and unmount in a cycle to verify no leaks
+    for _ in 0..5 {
+        let sig = Signal::new("temp".to_string());
+        let view = ReactiveText::new(sig.clone());
+        let binding_count_before = reactor.binding_count();
+
+        let scope;
+        {
+            let mut mutator = doc.mutate();
+            let (_, s) = view.mount(&mut mutator, &mut reactor, root_id);
+            scope = s;
+            drop(mutator);
+        }
+
+        assert_eq!(
+            reactor.binding_count(),
+            binding_count_before + 1,
+            "Should have 1 more binding after mounting"
+        );
+
+        drop(scope);
+
+        assert_eq!(
+            reactor.binding_count(),
+            binding_count_before,
+            "Binding count should return to previous after dropping scope"
+        );
+    }
+
+    // Final binding count should still be initial
+    assert_eq!(
+        reactor.binding_count(),
+        initial_binding_count,
+        "After mount/unmount cycles, binding count should be flat"
+    );
 }
