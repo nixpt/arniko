@@ -175,6 +175,10 @@ impl DocumentMutator<'_> {
         id
     }
 
+    /// Forwards `BaseDocument::deep_clone_node` (D-2c).
+    /// Returns `None` if `node_id` is stale or any descendant goes stale
+    /// during the recursive clone. The slab is left pristine on the stale-root
+    /// path because `BaseDocument::deep_clone_node` validates before allocating.
     pub fn deep_clone_node(&mut self, node_id: usize) -> usize {
         self.doc.deep_clone_node(node_id)
     }
@@ -648,7 +652,13 @@ impl<'doc> DocumentMutator<'doc> {
         }
 
         if let Some(id) = self.title_node {
-            if let Some(node) = self.doc.get_node(id) {
+            if self.doc.get_node(id).is_none() {
+                debug_assert!(
+                    false,
+                    "flush: stale title_node={id} (removed before flush); clearing"
+                );
+                self.title_node = None;
+            } else if let Some(node) = self.doc.get_node(id) {
                 let title = node.text_content();
                 self.doc.shell_provider.set_window_title(title);
             }
@@ -656,10 +666,24 @@ impl<'doc> DocumentMutator<'doc> {
 
         // Add/Update inline stylesheets (<style> elements)
         for id in self.style_nodes.drain() {
+            if self.doc.get_node(id).is_none() {
+                debug_assert!(
+                    false,
+                    "flush: stale style_node={id} (removed before flush); skipped"
+                );
+                continue;
+            }
             self.doc.process_style_element(id);
         }
 
         for id in self.form_nodes.drain() {
+            if self.doc.get_node(id).is_none() {
+                debug_assert!(
+                    false,
+                    "flush: stale form_node={id} (removed before flush); skipped"
+                );
+                continue;
+            }
             self.doc.reset_form_owner(id);
         }
 

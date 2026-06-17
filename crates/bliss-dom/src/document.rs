@@ -805,24 +805,70 @@ impl BaseDocument {
         self.create_node(data)
     }
 
+    /// Hardened for D-2c: atomic recursive clone. If `node_id` is stale OR any
+    /// descendant goes stale mid-recursion, the clone rolls back: the parent
+    /// slot and every already-cloned child slot are dropped from the slab via
+    /// `drop_node_ignoring_parent`, returning cleanly without panicking.
+    ///
+    /// On any failure path, returns `usize::MAX` as a documented sentinel —
+    /// unreachable in practice (slabs don't reach that size), so it eliminates
+    /// the collision with the document root slot id (`0`) that a naïve `0`
+    /// sentinel would have. Callers — e.g. html5ever's `TreeSink::clone_subtree`
+    /// trait method — can safely pass the result on without disambiguating,
+    /// trusting that a real clone produces a slot id strictly in `[1, MAX-1]`.
     pub fn deep_clone_node(&mut self, node_id: usize) -> usize {
-        // Load existing node
-        let node = &self.nodes[node_id];
+        let Some(node) = self.get_node(node_id) else {
+            debug_assert!(
+                false,
+                "deep_clone_node: stale root node_id={node_id}"
+            );
+            return usize::MAX;
+        };
         let data = node.data.clone();
         let children = node.children.clone();
 
-        // Create new node
         let new_node_id = self.create_node(data);
 
-        // Recursively clone children
-        let new_children: Vec<usize> = children
-            .into_iter()
-            .map(|child_id| self.deep_clone_node(child_id))
-            .collect();
-        for &child_id in &new_children {
-            self.nodes[child_id].parent = Some(new_node_id);
+        // Atomic clone: a stale descendant aborts the whole operation and
+        // rolls back any already-cloned children + the parent slot.
+        let mut new_children = Vec::with_capacity(children.len());
+        for child_id in children {
+            let cloned = self.deep_clone_node(child_id);
+            if cloned == usize::MAX {
+                // Rollback window: drop already-cloned children + the orphan parent.
+                for &drop_id in &new_children {
+                    self.drop_node_ignoring_parent(drop_id);
+                }
+                self.drop_node_ignoring_parent(new_node_id);
+                return usize::MAX;
+            }
+            new_children.push(child_id);
         }
-        self.nodes[new_node_id].children = new_children;
+
+        // Wire parent + children. By construction every id here was just
+        // produced by `create_node` or a successful recursive call.
+        for &child_id in &new_children {
+            match self.get_node_mut(child_id) {
+                Some(child) => child.parent = Some(new_node_id),
+                None => {
+                    debug_assert!(
+                        false,
+                        "deep_clone_node: vanished child_id={child_id}"
+                    );
+                    return usize::MAX;
+                }
+            }
+        }
+        match self.get_node_mut(new_node_id) {
+            Some(new_node) => new_node.children = new_children,
+            None => {
+                debug_assert!(
+                    false,
+                    "deep_clone_node: vanished new_node_id={new_node_id}"
+                );
+                return usize::MAX;
+            }
+        }
 
         new_node_id
     }
@@ -868,7 +914,13 @@ impl BaseDocument {
 
     pub fn reload_resource_by_href(&mut self, href_to_reload: &str) {
         for &node_id in self.nodes_to_stylesheet.keys() {
-            let node = &self.nodes[node_id];
+            let Some(node) = self.get_node(node_id) else {
+                debug_assert!(
+                    false,
+                    "reload_resource_by_href: stale node_id={node_id} (still in nodes_to_stylesheet)"
+                );
+                continue;
+            };
             let Some(element) = node.element_data() else {
                 continue;
             };
@@ -902,7 +954,14 @@ impl BaseDocument {
     }
 
     pub fn process_style_element(&mut self, target_id: usize) {
-        let css = self.nodes[target_id].text_content();
+        let Some(node) = self.get_node(target_id) else {
+            debug_assert!(
+                false,
+                "process_style_element called with stale target_id={target_id}"
+            );
+            return;
+        };
+        let css = node.text_content();
         let css = html_escape::decode_html_entities(&css);
         let sheet = self.make_stylesheet(&css, Origin::Author);
 
@@ -925,13 +984,29 @@ impl BaseDocument {
 
     /// Walk up the parent chain from `node_id` to find the nearest shadow root ancestor.
     /// Returns `Some(shadow_root_node_id)` if one is found, `None` otherwise.
+    /// Hardened for D-2c: bails with `debug_assert!` on a stale id rather than
+    /// panicking on a raw slab index.
     fn find_containing_shadow_root(&self, node_id: usize) -> Option<usize> {
-        let mut current = self.nodes[node_id].parent;
+        let Some(start) = self.get_node(node_id) else {
+            debug_assert!(
+                false,
+                "find_containing_shadow_root: stale node_id={node_id}"
+            );
+            return None;
+        };
+        let mut current = start.parent;
         while let Some(parent_id) = current {
-            if matches!(self.nodes[parent_id].data, NodeData::ShadowRoot { .. }) {
+            let Some(parent) = self.get_node(parent_id) else {
+                debug_assert!(
+                    false,
+                    "find_containing_shadow_root: stale parent_id={parent_id}"
+                );
+                return None;
+            };
+            if matches!(parent.data, NodeData::ShadowRoot { .. }) {
                 return Some(parent_id);
             }
-            current = self.nodes[parent_id].parent;
+            current = parent.parent;
         }
         None
     }
@@ -1000,7 +1075,13 @@ impl BaseDocument {
         let Some(node) = self.get_node_mut(node_id) else {
             return;
         };
-        let element = node.element_data_mut().unwrap();
+        let Some(element) = node.element_data_mut() else {
+            debug_assert!(
+                false,
+                "add_stylesheet_for_node: node_id={node_id} is not an element"
+            );
+            return;
+        };
         element.special_data = SpecialElementData::Stylesheet(stylesheet.clone());
 
         // TODO: Nodes could potentially get reused so ordering by node_id might be wrong.
