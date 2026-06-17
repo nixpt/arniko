@@ -7,6 +7,7 @@
 //!  - `accessibility`: Enables [`accesskit`] accessibility support.
 //!  - `hot-reload`: Enables hot-reloading of Dioxus RSX.
 //!  - `tracing`: Enables tracing support.
+//!  - `bliss_html`: Enables bliss-html integration.
 //!
 //! Platform support: Linux + Android. macOS / iOS / Windows / *BSD `cfg`
 //! branches inside source remain as future-port anchors (see workspace-meta
@@ -22,6 +23,7 @@ compile_error!(
 mod application;
 mod convert_events;
 mod event;
+mod icon_theme;
 mod net;
 mod window;
 
@@ -30,6 +32,9 @@ pub mod exoshell;
 
 #[cfg(feature = "accessibility")]
 mod accessibility;
+
+#[cfg(feature = "bliss_html")]
+pub mod icon_theme;
 
 pub use crate::application::BlissApplication;
 pub use crate::event::{BlissShellEvent, BlissShellProxy};
@@ -63,6 +68,10 @@ use winit::window::{ImeCapabilities, ImeEnableRequest, ImeRequest, ImeRequestDat
 pub struct Config {
     pub stylesheets: Vec<String>,
     pub base_url: Option<String>,
+    /// Optional icon theme path for MacTahoe support
+    pub icon_theme_path: Option<String>,
+    /// Icon theme variant: Default or MacTahoe
+    pub icon_theme_variant: bliss_html::IconThemeVariant,
 }
 
 /// Build an event loop for the application

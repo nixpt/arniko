@@ -2,6 +2,14 @@
 //!
 //! This module provides a comprehensive set of UI components
 //! that can render to HTML strings or native UI elements.
+//!
+//! ## Icon Theme Support
+//!
+//! Arniko supports configurable icon themes including:
+//! - Default (emoji or built-in system icons)
+//! - MacTahoe (macOS Tahoe-style icons with 8 color variants)
+//!
+//! Set the icon theme via the [`IconThemeVariant`] configuration option.
 
 pub mod alert;
 pub mod alert_panel;
@@ -12,6 +20,7 @@ pub mod card;
 pub mod empty_state;
 pub mod feed;
 pub mod file_tree;
+pub mod icon_theme;
 pub mod input;
 pub mod kbd;
 pub mod keyboard_shortcuts;

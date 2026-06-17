@@ -1,9 +1,11 @@
 //! Alert component for Arniko
 //!
 //! Provides alert components for notifications and messages.
+//! Supports configurable icon themes including MacTahoe SVG icons.
 
 use crate::{Component, ComponentMetadata};
 use crate::components::escape_html;
+use crate::components::icon_theme::IconThemeVariant;
 
 #[derive(Clone, PartialEq, Default)]
 pub enum AlertVariant {
@@ -18,6 +20,7 @@ pub struct Alert {
     message: String,
     variant: AlertVariant,
     class: String,
+    icon_theme: IconThemeVariant,
 }
 
 impl Alert {
@@ -26,6 +29,7 @@ impl Alert {
             message: message.to_string(),
             variant: AlertVariant::Info,
             class: String::new(),
+            icon_theme: IconThemeVariant::default(),
         }
     }
 
@@ -39,6 +43,11 @@ impl Alert {
         self
     }
 
+    pub fn icon_theme(mut self, theme: IconThemeVariant) -> Self {
+        self.icon_theme = theme;
+        self
+    }
+
     pub fn render(&self) -> String {
         let variant_class = match self.variant {
             AlertVariant::Info => "arniko-alert-info",
@@ -47,19 +56,24 @@ impl Alert {
             AlertVariant::Error => "arniko-alert-error",
         };
 
+        let icon = self.icon();
+        let icon_html = if !icon.is_empty() {
+            format!(r#" <div class="arniko-alert-icon">{}</div>"#, escape_html(&icon))
+        } else {
+            String::new()
+        };
+
         format!(
-            r#"<div class="arniko-alert {} {}" role="alert" aria-live="polite">
-                <div class="arniko-alert-icon">{}</div>
+            r#"<div class="arniko-alert {}{}" role="alert" aria-live="polite">
                 <div class="arniko-alert-message">{}</div>
             </div>"#,
             variant_class,
             escape_html(&self.class),
-            self.icon(),
             escape_html(&self.message)
-        )
+        ) + &icon_html
     }
 
-    fn icon(&self) -> &'static str {
+    fn icon(&self) -> String {
         match self.variant {
             AlertVariant::Info => "ℹ️",
             AlertVariant::Success => "✅",

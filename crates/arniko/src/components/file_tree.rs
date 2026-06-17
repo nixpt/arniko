@@ -2,11 +2,15 @@
 //!
 //! Generalized from the Khukuri FileTree. Renders a scrollable list of
 //! file and directory entries with indentation, icons, and selection state.
+//!
+//! Supports configurable icon themes including MacTahoe SVG icons.
 
 #[cfg(feature = "components")]
 use crate::{Component, ComponentMetadata};
 #[cfg(feature = "components")]
 use crate::components::escape_html;
+#[cfg(feature = "components")]
+use crate::components::icon_theme::IconThemeVariant;
 
 // ── Data Types ───────────────────────────────────────────────────────────────
 
@@ -57,6 +61,8 @@ pub struct FileTreeState {
 // ── HTML Component ───────────────────────────────────────────────────────────
 
 /// A file tree browser panel.
+///
+/// Supports MacTahoe SVG icons when the icon theme is set to MacTahoe.
 #[cfg(feature = "components")]
 pub struct FileTree {
     state: FileTreeState,
@@ -64,6 +70,7 @@ pub struct FileTree {
     title_icon: String,
     empty_message: String,
     class: String,
+    icon_theme: IconThemeVariant,
 }
 
 #[cfg(feature = "components")]
@@ -75,6 +82,7 @@ impl FileTree {
             title_icon: "📁".to_string(),
             empty_message: "No files to display.".to_string(),
             class: String::new(),
+            icon_theme: IconThemeVariant::default(),
         }
     }
 
@@ -103,6 +111,11 @@ impl FileTree {
         self
     }
 
+    pub fn icon_theme(mut self, theme: IconThemeVariant) -> Self {
+        self.icon_theme = theme;
+        self
+    }
+
     pub fn render(&self) -> String {
         if self.state.entries.is_empty() {
             return self.render_empty();
@@ -115,12 +128,9 @@ impl FileTree {
             .map(|e| {
                 let indent = "&nbsp;&nbsp;".repeat(e.depth);
                 let icon = if e.is_directory {
-                    "📁"
+                    self.directory_icon()
                 } else {
-                    match e.metadata_class.as_deref() {
-                        Some("test") => "🧪",
-                        _ => "📄",
-                    }
+                    self.file_icon(e.metadata_class.as_deref())
                 };
                 let name = e.path.split('/').last().unwrap_or(&e.path);
                 let escaped_name = escape_html(name);
@@ -160,6 +170,7 @@ impl FileTree {
         let content_preview = match &self.state.file_content {
             Some(content) => {
                 let preview = content.lines().take(20).collect::<Vec<_>>().join("\n");
+                let preview = content.lines().take(20).collect::<Vec<_>>().join("\n");
                 let escaped = escape_html(&preview);
                 format!(
                     r##"<div class="arniko-filetree-preview">
@@ -172,6 +183,7 @@ impl FileTree {
             None => String::new(),
         };
 
+        let icon_html = self.icon(&icon);
         format!(
             r##"<div class="arniko-filetree {}" role="tree" aria-label="{}">
                 <div class="arniko-filetree-header">
@@ -184,11 +196,12 @@ impl FileTree {
                     {}
                 </div>
             </div>"##,
-            escape_html(&self.class), escape_html(&self.title), escape_html(&self.title_icon), escape_html(&self.title), escape_html(&self.state.root), rows, content_preview
+            escape_html(&self.class), escape_html(&self.title), icon_html, escape_html(&self.title), escape_html(&self.state.root), rows, content_preview
         )
     }
 
     fn render_empty(&self) -> String {
+        let icon_html = self.icon(&"📁");
         format!(
             r##"<div class="arniko-filetree {}" role="tree" aria-label="{}">
                 <div class="arniko-filetree-header">
@@ -197,8 +210,58 @@ impl FileTree {
                 </div>
                 <div class="arniko-filetree-empty">{}</div>
             </div>"##,
-            escape_html(&self.class), escape_html(&self.title), escape_html(&self.title_icon), escape_html(&self.title), escape_html(&self.empty_message)
+            escape_html(&self.class), escape_html(&self.title), icon_html, escape_html(&self.title), escape_html(&self.empty_message)
         )
+    }
+
+    fn directory_icon(&self) -> String {
+        if self.icon_theme == IconThemeVariant::MacTahoe {
+            // Use SVG icon for MacTahoe theme
+            let svg_content = self.load_svg_for_icon("system-file-manager-symbolic.svg");
+            svg_content.unwrap_or_default()
+        } else {
+            // Default: use emoji
+            "📁".to_string()
+        }
+    }
+
+    fn file_icon(&self, metadata_class: Option<&str>) -> String {
+        if self.icon_theme == IconThemeVariant::MacTahoe {
+            // Use SVG icon for MacTahoe theme
+            let svg_content = self.load_svg_for_icon("utilities-terminal-symbolic.svg");
+            if metadata_class == Some("test") {
+                // Test file icon
+                let test_svg = self.load_svg_for_icon("org.gnome.Boxes-symbolic.svg");
+                test_svg.unwrap_or_else(|| "🧪".to_string())
+            } else {
+                svg_content.unwrap_or_else(|| "📄".to_string())
+            }
+        } else {
+            // Default: use emoji
+            if metadata_class == Some("test") {
+                "🧪".to_string()
+            } else {
+                "📄".to_string()
+            }
+        }
+    }
+
+    fn load_svg_for_icon(&self, icon_name: &str) -> Option<String> {
+        // Map Arniko icon names to MacTahoe SVG file names
+        let mac_tahoe_name = match icon_name {
+            "system-file-manager-symbolic.svg" | "file-manager" | "explorer" => "system-file-manager-symbolic.svg",
+            "utilities-terminal-symbolic.svg" | "terminal" | "tux" | "shell" => "utilities-terminal-symbolic.svg",
+            "accessories-calculator-symbolic.svg" | "calculator" | "calc" => "accessories-calculator-symbolic.svg",
+            "org.gnome.Boxes-symbolic.svg" | "box" | "archive" | "package" | "zipped" | "test" => "org.gnome.Boxes-symbolic.svg",
+            "file-roller-symbolic.svg" | "document" | "doc" | "text" | "page" | "file" | "code" | "editor" => "file-roller-symbolic.svg",
+            "inkscape-symbolic.svg" | "code-editor" | "rust" => "inkscape-symbolic.svg",
+            "multimedia-volume-control-symbolic.svg" | "music" | "audio" | "speaker" | "volume" => "multimedia-volume-control-symbolic.svg",
+            _ => icon_name,
+        };
+
+        self.icon_theme
+            .load_svg(mac_tahoe_name)
+            .unwrap_or_else(|| Some("📁".to_string()))
     }
 }
 

@@ -8,7 +8,7 @@ edition = "2024"
 rust-version = "1.85.0"
 
 [features]
-default = ["clipboard", "file_dialog"]
+default = ["clipboard", "file_dialog", "bliss_html"]
 clipboard = ["dep:arboard"]
 tracing = ["dep:tracing", "bliss-dom/tracing"]
 file_dialog = ["dep:rfd"]
@@ -17,12 +17,16 @@ accessibility = ["dep:accesskit", "dep:accesskit_xplat", "bliss-dom/accessibilit
 data-uri = ["dep:data-url"]
 # Enable ExoShell integration (optional registration with the Exosphere root shell)
 exoshell = ["dep:exo-shell-client", "dep:tokio", "tracing"]
+# Enables bliss-html integration for icon theme support
+bliss_html = ["dep:bliss-html"]
 
 [dependencies]
 # Bliss dependencies
 bliss-traits = { path = "../bliss-traits" }
 bliss-dom = { path = "../bliss-dom" }
 bliss-paint = { path = "../bliss-paint" }
+# Icon theme support
+bliss-html = { path = "../bliss-html", optional = true }
 anyrender = "0.7"
 anyrender_vello = "0.7"
 

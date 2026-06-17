@@ -7,9 +7,10 @@ description = "Arniko: Unified UI framework for Exosphere capsules"
 license = "MIT OR Apache-2.0"
 
 [features]
-default = ["html", "components"]
+default = ["html", "components", "icon_theme"]
 html = []                    # HTML string generation
 components = ["html"]        # UI components
+icon_theme = ["bliss-html"]  # Icon theme support (MacTahoe icons)
 gpu = ["mustang/gpu"]        # GPU acceleration via Mustang
 networking = ["exo-bliss-net"]        # Exosphere networking
 launch = ["bliss"]           # Native window launch via bliss
@@ -30,6 +31,11 @@ optional = true
 
 # Component dependencies (minimal for HTML-only mode)
 # Components are defined in src/components/
+
+# Icon theme support (MacTahoe icons)
+[dependencies.bliss-html]
+path = "../bliss-html"
+optional = true
 
 # GPU dependencies (optional) - now provided by mustang
 # [dependencies.anyrender]
@@ -82,7 +88,6 @@ optional = true
 [dev-dependencies]
 tokio-test = "0.4"
 vello = { workspace = true }
-bliss-html = { path = "../bliss-html" }
 
 [[test]]
 name = "reactive_components"

@@ -41,6 +41,9 @@
 #[cfg(feature = "components")]
 pub mod components;
 
+#[cfg(any(feature = "components", feature = "bliss_html"))]
+pub mod icon_theme;
+
 #[cfg(feature = "reactive")]
 pub mod reactive;
 
@@ -58,6 +61,9 @@ pub mod theme;
 // Re-export main types for convenience
 #[cfg(feature = "components")]
 pub use components::*;
+
+#[cfg(any(feature = "components", feature = "bliss_html"))]
+pub use components::icon_theme::*;
 
 pub use css::*;
 
