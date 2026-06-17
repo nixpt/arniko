@@ -304,3 +304,45 @@ fn test_complex_document_round_trip() {
     assert!(mutator.doc.nodes.get(text2).is_some());
     drop(mutator);
 }
+
+// ── D-2c-followup safety backstop: empty-doc root_element() NoPanic regression ─
+
+#[test]
+fn test_root_element_none_safety() {
+    // D-2c-followup safety backstop: an empty BaseDocument (no HTML parsed,
+    // no element child of the document root) must not panic in any migrated
+    // root_element() call site. The cascade previously chained unwrap-panics
+    // from `first_element_child().unwrap().as_element().unwrap()`; this
+    // verifies the new `Option<&Node>` shape propagates None to each migrated
+    // caller with sensible empty / null result behavior.
+    let mut doc = setup_doc();
+
+    // try_root_element() / root_element() both return None on empty doc.
+    assert!(doc.try_root_element().is_none());
+    assert!(doc.root_element().is_none());
+
+    // hit() returns None on no root (?-propagation in migrated site).
+    assert!(doc.hit(10.0, 10.0).is_none());
+
+    // scroll_viewport_by_has_changed() returns false (content_size degrades
+    // to taffy::Size::default() — zero dimensions).
+    assert!(!doc.scroll_viewport_by_has_changed(0.0, 0.0));
+
+    // resolve() short-circuits via the upstream `is_none` guard + early return;
+    // the debug_assert! inside resolve() must hold — this is also a load-bearing
+    // test confirming the upstream guard still functions.
+    doc.resolve(0.0);
+
+    // scroll_node_by_has_changed() with a stale / non-Element node id is a
+    // no-op return false (root_element: Some(root) guard no-ops scroll_node).
+    let mut scroll_event_seen = false;
+    assert!(!doc.scroll_node_by_has_changed(0, 1.0, 1.0, |_| {
+        scroll_event_seen = true;
+    }));
+    assert!(!scroll_event_seen);
+
+    // set_layout / scroll_event are no-ops on the (non-Element) document root.
+    // clear_focus / clear_hover are no-ops on empty doc.
+    assert!(!doc.clear_focus());
+    assert!(!doc.clear_hover());
+}

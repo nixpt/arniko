@@ -54,7 +54,18 @@ impl BaseDocument {
 
         // D-2c-followup: root_element widened to Option<&Node>. The early
         // `is_none()` guard above ensures this branch is only taken when a root
-        // element exists, so `unwrap_or(0)` is never actually exercised.
+        // element exists, so `unwrap_or(0)` is dead — but it's still the
+        // compiler requirement. The guard above is now LOAD-BEARING for the
+        // unwrap_or(0) safety: deleting it would silently propagate `0` to
+        // `propagate_damage_flags` / `flush_styles_to_layout`, which would
+        // compute layout against the document root node (id 0, an empty
+        // layout block) producing garbage layout with no panic. The
+        // debug_assert below catches a future refactor that breaks this
+        // invariant on day 1.
+        debug_assert!(
+            self.root_element().is_some(),
+            "resolve: 'no DOM' guard above lost its effect — root_element became None when an element child was expected"
+        );
         let root_node_id = self.root_element().map(|r| r.id).unwrap_or(0);
         debug_timer!(timer, feature = "log_phase_times");
 
@@ -310,6 +321,10 @@ impl BaseDocument {
         // D-2c-followup: propagate the `Option<&Node>` widening; the early
         // guard above guarantees this `unwrap_or(0)` is unreachable, but the
         // compiler won't let us call `.id` on `Option<&Node>` anymore.
+        debug_assert!(
+            self.root_element().is_some(),
+            "resolve_layout: 'no DOM' guard above lost its effect — root_element became None when an element child was expected"
+        );
         let root_element_id =
             taffy::NodeId::from(self.root_element().map(|r| r.id).unwrap_or(0));
 
