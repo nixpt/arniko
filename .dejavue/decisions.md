@@ -140,3 +140,33 @@ Reason: three in-ariko pivots rejected (see the prior `A-4b: 3-pivot diagnostic 
 D4 (publishing `exo-bliss-net` to crates.io) is ORTHOGONAL: exo-bliss-net uses `default-features = false, features = ["local"]` and does not pull libp2p, so D4 itself does not unblock A-4b. However, publishing exo-bliss-net would let downstream consumers pin arniko's exo-bliss-net semver and apply their own rcgen/libp2p-tls patches at the consumer layer — useful parallel work but a separate piece from A-4b.
 
 Outcome: A-4b remains open. M1 unblock is incomplete on `--features networking` and `--features full`. The remaining feature gates (`reactive`, `launch`, `gpu`, default) compile green from arniko's own tree at HEAD `655efdc` (re-verifiable via `cargo check -p arniko`, `cargo check -p arniko --features reactive`, etc.). **Acceptance criterion for A-4b resolution:** `cargo check -p arniko --features networking` AND `cargo check -p arniko --features full` BOTH exit 0. Re-test after either unblock event lands (exosphere cfg-gate PR merged, or rust-libp2p ≥ 0.56 published).
+## 2026-06-18T01:41:37-05:00 — Phase-5 / M3 closure (mirrored from crush-ast/.dejavue/decisions.md)
+
+Reason:
+Phase-5 advisor + M3 closure complete on both branches. Earlier sessions landed:
+
+crush-ast `agent/buffy/network`:
+- `52f01e5` M3 + Phase-5 advisor: TLS SNI cache + ComponentView RAII + .gitignore hygiene
+- `2da6b28` dejavue: refresh timeline after Phase-5 cargo test gate
+- `b5a84c8` dejavue: capture Phase-5 closure boot packet
+- `cbb1309` phase-5 followup: cached_sni pre-validate before Box::leak
+
+arniko `agent/vibe/ar-m4`:
+- `8d23976` M3 + Phase-5 advisor: TLS SNI cache + ComponentView RAII + .gitignore hygiene
+- `2b95c4c` dejavue: refresh timeline after Phase-5 cargo test gate
+- `7d8cee6` dejavue: capture Phase-5 closure boot packet
+
+Verified test counts:
+- crush-net: 18/18 unit/integration tests passing
+- arniko: 35/35 unit/integration tests + 2 doctests
+
+PR bodies refreshed from /tmp/pr_body.md (2783 bytes):
+- https://github.com/nixpt/crush-ast/pull/2
+- https://github.com/nixpt/arniko/pull/1
+
+Closed Phase-6 NIT (deferred from Phase-5 closure): cached_sni pre-validate via `.expect("invalid SNI before cache leak")` in cbb1309; rustls 0.23 ServerName::try_from returns Result (silent-drop with `let _`), so `.expect(msg)` is the canonical fail-fast form.
+
+EPIC A-4 M1 still incomplete on --features networking/full; A-4b blocked on exosphere cfg-gate PR or upstream rust-libp2p >= 0.56. D-2 / D-2b / D-2c / D-2c-followup all in: empty-doc safety regression test in place; root_element widened to Option<&Node>.
+
+Phase-5/M3 arc mechanically closed. Next arc green-lit by user signal.
+
