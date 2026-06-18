@@ -106,7 +106,12 @@ impl<'dom> BlissDomPainter<'dom> {
         // scene.reset();
         let viewport_scroll = self.dom.as_ref().viewport_scroll();
 
-        let root_element = self.dom.as_ref().root_element();
+        // D-2c-followup: root_element widened to Option<&Node>. If no root
+        // element exists (e.g. freshly-created document with no body parsed
+        // yet), paint an empty scene — there's nothing to render.
+        let Some(root_element) = self.dom.as_ref().root_element() else {
+            return;
+        };
         let root_id = root_element.id;
         let bg_width = (self.width as f32).max(root_element.final_layout.size.width);
         let bg_height = (self.height as f32).max(root_element.final_layout.size.height);

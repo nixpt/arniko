@@ -4,7 +4,7 @@
   font-size: 13px; font-weight: 600;
   box-shadow: 0 4px 12px rgba(0,0,0,0.3); white-space: nowrap;
 }
-.arniko-toast-info { background: rgba(59,130,246,0.9); color: var(--arniko-white); }
-.arniko-toast-success { background: rgba(34,197,94,0.9); color: var(--arniko-white); }
-.arniko-toast-warning { background: rgba(245,158,11,0.9); color: var(--arniko-white); }
-.arniko-toast-error { background: rgba(239,68,68,0.9); color: var(--arniko-white); }
+.arniko-toast-info { background: var(--arniko-info); color: var(--arniko-white); }
+.arniko-toast-success { background: var(--arniko-success); color: var(--arniko-white); }
+.arniko-toast-warning { background: var(--arniko-warning); color: var(--arniko-white); }
+.arniko-toast-error { background: var(--arniko-error); color: var(--arniko-white); }

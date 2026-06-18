@@ -15,6 +15,29 @@ use {
 ///
 /// Renders a single polyline with area fill, scaled to fit the configured
 /// dimensions. Suitable for embedding inside metric cards or dashboards.
+/// # Examples
+///
+/// ```rust,no_run
+/// use arniko::Sparkline;
+///
+/// let sparkline = Sparkline::new(vec![10.0, 20.0, 15.0, 30.0, 25.0])
+///     .color("var(--arniko-cyan)")
+///     .width(240.0)
+///     .height(40.0);
+///
+/// let html = sparkline.render();
+/// ```
+///
+/// With the `reactive` feature:
+///
+/// ```rust,no_run
+/// # #[cfg(feature = "reactive")] {
+/// use arniko::{sparkline_reactive, reactive::Signal};
+///
+/// let values_signal = Signal::new(vec![10.0, 20.0, 15.0]);
+/// let view = sparkline_reactive(values_signal);
+/// # }
+/// ```
 #[cfg(feature = "components")]
 pub struct Sparkline {
     values: Vec<f64>,
@@ -30,7 +53,7 @@ impl Sparkline {
     pub fn new(values: Vec<f64>) -> Self {
         Self {
             values,
-            color: "#00f2ff".to_string(),
+            color: "var(--arniko-cyan)".to_string(),
             width: 240.0,
             height: 40.0,
             padding: 4.0,

@@ -4,11 +4,34 @@
 //! names and emits the next one on each click.
 
 #[cfg(feature = "components")]
-use crate::{Component, ComponentMetadata};
-#[cfg(feature = "components")]
 use crate::components::escape_html;
+#[cfg(feature = "components")]
+use crate::{Component, ComponentMetadata};
 
 /// A theme toggle button that displays the current theme and cycles to the next.
+/// # Examples
+///
+/// ```rust,no_run
+/// use arniko::ThemeToggle;
+///
+/// let toggle = ThemeToggle::new("🌙 Dark", "☀️ Light");
+///
+/// let html = toggle.render();
+/// ```
+///
+/// With the `reactive` feature:
+///
+/// ```rust,no_run
+/// # #[cfg(feature = "reactive")] {
+/// use arniko::{ThemeState, theme_toggle_reactive, reactive::Signal};
+///
+/// let theme_signal = Signal::new(ThemeState {
+///     current: "Dark".to_string(),
+///     next: "Light".to_string(),
+/// });
+/// let view = theme_toggle_reactive(&theme_signal);
+/// # }
+/// ```
 #[cfg(feature = "components")]
 pub struct ThemeToggle {
     current: String,
@@ -39,7 +62,11 @@ impl ThemeToggle {
             escape_html(&self.current),
             escape_html(&self.current),
             escape_html(&self.next),
-            format!("{} → {}", escape_html(&self.current), escape_html(&self.next))
+            format!(
+                "{} → {}",
+                escape_html(&self.current),
+                escape_html(&self.next)
+            )
         )
     }
 }

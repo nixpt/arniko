@@ -3,9 +3,21 @@
 //! A placeholder displayed when no content is available.
 //! Maps to capsule-ui's EmptyState component.
 
-use crate::{Component, ComponentMetadata};
 use crate::components::escape_html;
+use crate::{Component, ComponentMetadata};
 
+/// # Examples
+///
+/// ```rust,no_run
+/// use arniko::EmptyState;
+///
+/// let empty = EmptyState::new("No items found")
+///     .icon("📦")
+///     .description("Add your first item.")
+///     .action("<button>Add Item</button>");
+///
+/// let html = empty.render();
+/// ```
 pub struct EmptyState {
     icon: Option<String>,
     title: String,
@@ -66,7 +78,11 @@ impl EmptyState {
 
         format!(
             r#"<div class="arniko-empty-state {}" role="status">{}<h3 class="arniko-empty-title">{}</h3>{}{}</div>"#,
-            escape_html(&self.class), icon_html, escape_html(&self.title), desc_html, action_html
+            escape_html(&self.class),
+            icon_html,
+            escape_html(&self.title),
+            desc_html,
+            action_html
         )
     }
 }
@@ -104,5 +120,66 @@ mod tests {
         assert!(html.contains("📦"));
         assert!(html.contains("Nothing here yet"));
         assert!(html.contains("<button>Create</button>"));
+    }
+
+    /// Golden-fixture table: every combination of optional builder fields
+    /// emits the right subset of CSS class fragments. Guards against silent
+    /// collapse of any Option<String> field into always-on rendering.
+    #[test]
+    fn test_empty_state_field_combos_golden() {
+        struct Case {
+            label: &'static str,
+            html: String,
+            fragments: &'static [&'static str],
+        }
+        let cases = [
+            Case {
+                label: "title-only",
+                html: EmptyState::new("No items found").render(),
+                fragments: &["arniko-empty-state", "arniko-empty-title", "No items found"],
+            },
+            Case {
+                label: "with-icon",
+                html: EmptyState::new("Empty").icon("📦").render(),
+                fragments: &["arniko-empty-icon", "📦", "arniko-empty-title"],
+            },
+            Case {
+                label: "with-description",
+                html: EmptyState::new("Empty").description("Try adding items").render(),
+                fragments: &["arniko-empty-desc", "Try adding items"],
+            },
+            Case {
+                label: "with-action",
+                html: EmptyState::new("Empty").action("<button>Add</button>").render(),
+                fragments: &["arniko-empty-action", "<button>Add</button>"],
+            },
+            Case {
+                label: "full",
+                html: EmptyState::new("Empty")
+                    .icon("📦")
+                    .description("Nothing here yet")
+                    .action("<button>Create</button>")
+                    .render(),
+                fragments: &[
+                    "arniko-empty-icon",
+                    "arniko-empty-desc",
+                    "arniko-empty-action",
+                    "📦",
+                    "Nothing here yet",
+                    "<button>Create</button>",
+                ],
+            },
+        ];
+        for case in &cases {
+            for fragment in case.fragments {
+                assert!(
+                    case.html.contains(fragment),
+                    "EmptyState[{}]: missing fragment {:?}\nhtml={}",
+                    case.label,
+                    fragment,
+                    case.html,
+                );
+            }
+        }
     }
 }

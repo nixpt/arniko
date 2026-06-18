@@ -2,8 +2,8 @@
 //!
 //! Provides badge components for status indicators and labels.
 
-use crate::{Component, ComponentMetadata};
 use crate::components::escape_html;
+use crate::{Component, ComponentMetadata};
 
 #[derive(Clone, PartialEq, Default)]
 pub enum BadgeVariant {
@@ -16,6 +16,14 @@ pub enum BadgeVariant {
     Purple,
 }
 
+/// # Examples
+///
+/// ```rust,no_run
+/// use arniko::{Badge, BadgeVariant};
+///
+/// let badge = Badge::new("Live")
+///     .variant(BadgeVariant::Success);
+/// ```
 pub struct Badge {
     text: String,
     variant: BadgeVariant,
@@ -53,7 +61,9 @@ impl Badge {
 
         format!(
             r#"<span class="arniko-badge {} {}" role="status">{}</span>"#,
-            variant_class, escape_html(&self.class), escape_html(&self.text)
+            variant_class,
+            escape_html(&self.class),
+            escape_html(&self.text)
         )
     }
 }
@@ -111,6 +121,29 @@ mod tests {
             let badge = Badge::new("Test").variant(variant);
             let html = badge.render();
             assert!(html.contains(expected_class));
+        }
+    }
+
+    /// Golden-fixture table: every BadgeVariant maps to its unique CSS class.
+    /// Guards against silent rename of variant → class mappings; intentionally
+    /// covers the 6 variants (Default, Success, Warning, Error, Info, Purple)
+    /// so the broader surface is regression-locked, not just the 4 covered upstream.
+    #[test]
+    fn test_badge_variants_golden() {
+        let cases: &[(BadgeVariant, &str)] = &[
+            (BadgeVariant::Default, "arniko-badge-default"),
+            (BadgeVariant::Success, "arniko-badge-success"),
+            (BadgeVariant::Warning, "arniko-badge-warning"),
+            (BadgeVariant::Error, "arniko-badge-error"),
+            (BadgeVariant::Info, "arniko-badge-info"),
+            (BadgeVariant::Purple, "arniko-badge-purple"),
+        ];
+        for (i, (variant, expected)) in cases.iter().enumerate() {
+            let html = Badge::new("m").variant(variant.clone()).render();
+            assert!(
+                html.contains(expected),
+                "Badge case #{i}: missing '{expected}'",
+            );
         }
     }
 }

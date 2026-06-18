@@ -147,6 +147,10 @@ mod stylo_to_parley;
 /// document-order comparison, inline-root collection across anonymous blocks,
 /// and subtree mutation iteration.
 mod traversal;
+
+/// Engine tests
+#[cfg(test)]
+mod tests;
 /// Document URL resolution and Servo `UrlExtraData` integration.
 ///
 /// Wraps `url::Url` in a thread-safe `ServoArc` for use by Servo's style system.

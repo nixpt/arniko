@@ -11,7 +11,7 @@ default = ["html", "components"]
 html = []                    # HTML string generation
 components = ["html"]        # UI components
 gpu = ["mustang/gpu"]        # GPU acceleration via Mustang
-networking = ["exo-bliss-net"]        # Exosphere networking
+networking = ["exo-bliss-net", "exo-mesh/p2p"]    # Exosphere networking (forces libp2p on via feature unification — see A-4)
 launch = ["bliss"]           # Native window launch via bliss
 reactive = ["bliss", "bliss-dom", "anyrender_vello", "winit", "keyboard-types", "mustang"]  # Reactive Signal + View + EventSink + launch (mustang: SceneScheduler hook)
 full = ["html", "components", "gpu", "networking", "launch", "reactive"]
@@ -22,6 +22,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 anyhow = "1.0"
 url = "2"
+parking_lot = "0.12"
 
 # Mustang GPU compositor (optional)
 [dependencies.mustang]
@@ -75,6 +76,17 @@ optional = true
 path = "../../../exosphere/crates/platform/sdk/exo-bliss-net"
 optional = true
 
+# EPIC A-4 / D-4: exo-bliss-net pulls exo-mesh with only the `local` feature,
+# but exo-mesh/src/node.rs has unconditional `use libp2p::Multiaddr;` and an
+# unconditional `MeshNode::peer_id` that calls `NodeIdentity::peer_id()` only
+# defined under `cfg(feature = "p2p")`. Without forcing `p2p` here, the build
+# fails when `networking`/`full` is on. Listing exo-mesh as a direct optional
+# dep and enabling `p2p` via the `exo-mesh/p2p` feature syntax below triggers
+# Cargo feature unification so `libp2p` is materialized across the graph.
+[dependencies.exo-mesh]
+path = "../../../exosphere/crates/exo/net/mesh"
+optional = true
+
 [dependencies.keyboard-types]
 version = "0.7"
 optional = true
@@ -86,6 +98,15 @@ bliss-html = { path = "../bliss-html" }
 
 [[test]]
 name = "reactive_components"
+required-features = ["reactive"]
+
+# `tests/reactive_signals.rs` imports `arniko::reactive`, `arniko::mustang`, and
+# `bliss_dom` — all gated behind the `reactive` feature / workspace path. Without
+# `required-features = ["reactive"]`, `cargo clippy --all-targets` compiles this
+# test binary without the reactive feature and E0432/E0433-fails at the imports.
+# PR-#1-CI fix: gate it parallel to `reactive_components`.
+[[test]]
+name = "reactive_signals"
 required-features = ["reactive"]
 
 # Examples gated to the features they need so `cargo check -p arniko` (default
@@ -112,8 +133,21 @@ required-features = ["launch"]
 
 [[example]]
 name = "advanced"
-required-features = ["gpu"]
+required-features = ["gpu"]  
 
 [[example]]
 name = "phase5_demo"
-required-features = ["reactive", "gpu"]
+required-features = ["reactive", "gpu"]  
+
+[[example]]
+name = "dogfood_m4"
+required-features = ["reactive"]
+
+# `tests/dogfood_m4.rs` exercises the full reactive surface to validate the
+# dogfood demo end-to-end (Signal → Computed → For → Switch → ComponentView via
+# Show/Switch mounting, plus the D-2c-followup empty-doc hit/paint/scroll/clear
+# backstop on a stripped DOM). Compile-gated on `reactive` so cargo check
+# / clippy --all-targets under default features stays green.
+[[test]]
+name = "dogfood_m4"
+required-features = ["reactive"]

@@ -41,10 +41,7 @@ pub struct DirectDomMutator<'doc, 'data, 'sched> {
 }
 
 impl<'doc, 'data, 'sched> DirectDomMutator<'doc, 'data, 'sched> {
-    pub fn new(
-        inner: &'doc mut DocumentMutator<'data>,
-        scheduler: &'sched SceneScheduler,
-    ) -> Self {
+    pub fn new(inner: &'doc mut DocumentMutator<'data>, scheduler: &'sched SceneScheduler) -> Self {
         Self { inner, scheduler }
     }
 
@@ -129,8 +126,7 @@ impl<'doc, 'data, 'sched> DirectDomMutator<'doc, 'data, 'sched> {
 
     /// Convenience: set the `id` attribute. Notifies the scheduler.
     pub fn set_id(&mut self, node_id: usize, id: &str) {
-        self.inner
-            .set_attribute(node_id, qual_name!("id"), id);
+        self.inner.set_attribute(node_id, qual_name!("id"), id);
         self.scheduler.on_dom_changed();
     }
 

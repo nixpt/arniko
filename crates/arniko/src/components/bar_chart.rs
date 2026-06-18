@@ -4,9 +4,9 @@
 //! Renders a series of horizontal bars scaled proportionally to the largest value.
 
 #[cfg(feature = "components")]
-use crate::{Component, ComponentMetadata};
-#[cfg(feature = "components")]
 use crate::components::escape_html;
+#[cfg(feature = "components")]
+use crate::{Component, ComponentMetadata};
 
 /// A single bar entry in the chart.
 #[derive(Clone, Debug)]
@@ -39,6 +39,28 @@ impl BarEntry {
 ///
 /// Each bar is scaled relative to the largest value. Bars are rendered left
 /// to right with a label, colored fill, and numeric value display.
+/// # Examples
+///
+/// ```rust,no_run
+/// use arniko::{BarChart, BarEntry};
+///
+/// let chart = BarChart::new()
+///     .add(BarEntry::new("A", 50.0, "var(--arniko-error)"))
+///     .bar_height(8);
+///
+/// let html = chart.render();
+/// ```
+///
+/// With the `reactive` feature:
+///
+/// ```rust,no_run
+/// # #[cfg(feature = "reactive")] {
+/// use arniko::{BarEntry, bar_chart_reactive, reactive::Signal};
+///
+/// let entries_signal = Signal::new(Vec::<BarEntry>::new());
+/// let view = bar_chart_reactive(entries_signal);
+/// # }
+/// ```
 #[cfg(feature = "components")]
 pub struct BarChart {
     entries: Vec<BarEntry>,
@@ -198,8 +220,8 @@ mod tests {
     #[test]
     fn test_bar_chart_with_entries() {
         let chart = BarChart::new()
-            .add(BarEntry::new("A", 50.0, "#ef4444"))
-            .add(BarEntry::new("B", 30.0, "#f59e0b"));
+            .add(BarEntry::new("A", 50.0, "var(--arniko-error)"))
+            .add(BarEntry::new("B", 30.0, "var(--arniko-warning)"));
         let html = chart.render();
         assert!(html.contains("A"));
         assert!(html.contains("B"));
@@ -210,7 +232,7 @@ mod tests {
     #[test]
     fn test_bar_chart_no_values() {
         let chart = BarChart::new()
-            .add(BarEntry::new("X", 10.0, "#00f2ff"))
+            .add(BarEntry::new("X", 10.0, "var(--arniko-cyan)"))
             .show_values(false);
         let html = chart.render();
         assert!(html.contains("X"));

@@ -199,7 +199,10 @@ impl<'doc, Handler: EventHandler> EventDriver<'doc, Handler> {
             UiEvent::KeyDown(_) => focussed_node_id,
             UiEvent::Ime(_) => focussed_node_id,
         };
-        let target = target.unwrap_or_else(|| self.doc.inner().root_element().id);
+        // D-2c-followup: root_element widened to Option<&Node>; degrade to a
+        // sentinel target id (0) instead of unwrap-panicking.
+        let target =
+            target.unwrap_or_else(|| self.doc.inner().root_element().map(|r| r.id).unwrap_or(0));
 
         match event {
             UiEvent::PointerMove(data) => {

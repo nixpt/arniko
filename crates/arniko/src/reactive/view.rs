@@ -4,19 +4,29 @@ use std::sync::Arc;
 
 use bliss_dom::{Attribute, DocumentMutator, QualName, local_name, ns};
 
-use super::reactor::ItemState;
+use super::reactor::{ItemState, Scope};
 use super::signal::Reactive;
 use super::{Reactor, Signal};
 
 /// A component that mounts itself into the bliss-dom tree and registers reactive bindings.
-/// Returns the root node ID created under `parent`.
+/// Returns the root node ID created under `parent` and a Scope for lifecycle management.
 pub trait View {
-    fn mount(&self, mutator: &mut DocumentMutator, reactor: &mut Reactor, parent: usize) -> usize;
+    fn mount(
+        &self,
+        mutator: &mut DocumentMutator,
+        reactor: &mut Reactor,
+        parent: usize,
+    ) -> (usize, Scope);
 }
 
 // Box<dyn View> is itself a View
 impl View for Box<dyn View> {
-    fn mount(&self, mutator: &mut DocumentMutator, reactor: &mut Reactor, parent: usize) -> usize {
+    fn mount(
+        &self,
+        mutator: &mut DocumentMutator,
+        reactor: &mut Reactor,
+        parent: usize,
+    ) -> (usize, Scope) {
         (**self).mount(mutator, reactor, parent)
     }
 }
@@ -34,11 +44,23 @@ fn span_name() -> QualName {
 pub struct StaticHtml(pub String);
 
 impl View for StaticHtml {
-    fn mount(&self, mutator: &mut DocumentMutator, _reactor: &mut Reactor, parent: usize) -> usize {
+    fn mount(
+        &self,
+        mutator: &mut DocumentMutator,
+        _reactor: &mut Reactor,
+        parent: usize,
+    ) -> (usize, Scope) {
         let node_id = mutator.create_element(div_name(), vec![]);
         mutator.append_children(parent, &[node_id]);
         mutator.set_inner_html(node_id, &self.0);
-        node_id
+        // StaticHtml has no reactive bindings, so return an empty scope
+        (
+            node_id,
+            Scope {
+                reactor: _reactor as *mut _,
+                handles: vec![],
+            },
+        )
     }
 }
 
@@ -46,10 +68,22 @@ impl View for StaticHtml {
 pub struct Text(pub String);
 
 impl View for Text {
-    fn mount(&self, mutator: &mut DocumentMutator, _reactor: &mut Reactor, parent: usize) -> usize {
+    fn mount(
+        &self,
+        mutator: &mut DocumentMutator,
+        _reactor: &mut Reactor,
+        parent: usize,
+    ) -> (usize, Scope) {
         let node_id = mutator.create_text_node(&self.0);
         mutator.append_children(parent, &[node_id]);
-        node_id
+        // Static text has no reactive bindings, so return an empty scope
+        (
+            node_id,
+            Scope {
+                reactor: _reactor as *mut _,
+                handles: vec![],
+            },
+        )
     }
 }
 
@@ -70,14 +104,19 @@ impl<T: Clone + Display + 'static, R: Reactive<T>> ReactiveText<T, R> {
 }
 
 impl<T: Clone + Display + 'static, R: Reactive<T>> View for ReactiveText<T, R> {
-    fn mount(&self, mutator: &mut DocumentMutator, reactor: &mut Reactor, parent: usize) -> usize {
+    fn mount(
+        &self,
+        mutator: &mut DocumentMutator,
+        reactor: &mut Reactor,
+        parent: usize,
+    ) -> (usize, Scope) {
         let initial = self.source.get_value().to_string();
         let node_id = mutator.create_text_node(&initial);
         mutator.append_children(parent, &[node_id]);
-        reactor.bind(self.source.clone(), move |m, v| {
+        let scope = reactor.bind_scoped(self.source.clone(), move |m, v| {
             m.set_node_text(node_id, &v.to_string());
         });
-        node_id
+        (node_id, scope)
     }
 }
 
@@ -108,13 +147,24 @@ impl Div {
 }
 
 impl View for Div {
-    fn mount(&self, mutator: &mut DocumentMutator, reactor: &mut Reactor, parent: usize) -> usize {
+    fn mount(
+        &self,
+        mutator: &mut DocumentMutator,
+        reactor: &mut Reactor,
+        parent: usize,
+    ) -> (usize, Scope) {
         let node_id = mutator.create_element(div_name(), self.attrs.clone());
         mutator.append_children(parent, &[node_id]);
+        let mut combined_scope = Scope {
+            reactor: reactor as *mut _,
+            handles: vec![],
+        };
         for child in &self.children {
-            child.mount(mutator, reactor, node_id);
+            let (_, child_scope) = child.mount(mutator, reactor, node_id);
+            // Combine all child scopes into one
+            combined_scope.merge(child_scope);
         }
-        node_id
+        (node_id, combined_scope)
     }
 }
 
@@ -134,13 +184,24 @@ impl Span {
 }
 
 impl View for Span {
-    fn mount(&self, mutator: &mut DocumentMutator, reactor: &mut Reactor, parent: usize) -> usize {
+    fn mount(
+        &self,
+        mutator: &mut DocumentMutator,
+        reactor: &mut Reactor,
+        parent: usize,
+    ) -> (usize, Scope) {
         let node_id = mutator.create_element(span_name(), self.attrs.clone());
         mutator.append_children(parent, &[node_id]);
+        let mut combined_scope = Scope {
+            reactor: reactor as *mut _,
+            handles: vec![],
+        };
         for child in &self.children {
-            child.mount(mutator, reactor, node_id);
+            let (_, child_scope) = child.mount(mutator, reactor, node_id);
+            // Combine all child scopes into one
+            combined_scope.merge(child_scope);
         }
-        node_id
+        (node_id, combined_scope)
     }
 }
 
@@ -150,7 +211,12 @@ pub struct ComponentView<C: crate::Component>(pub C);
 
 #[cfg(feature = "components")]
 impl<C: crate::Component> View for ComponentView<C> {
-    fn mount(&self, mutator: &mut DocumentMutator, reactor: &mut Reactor, parent: usize) -> usize {
+    fn mount(
+        &self,
+        mutator: &mut DocumentMutator,
+        reactor: &mut Reactor,
+        parent: usize,
+    ) -> (usize, Scope) {
         StaticHtml(self.0.render()).mount(mutator, reactor, parent)
     }
 }
@@ -216,19 +282,33 @@ where
     T: Clone + Send + Sync + 'static,
     R: Reactive<Vec<T>>,
 {
-    fn mount(&self, mutator: &mut DocumentMutator, reactor: &mut Reactor, parent: usize) -> usize {
+    fn mount(
+        &self,
+        mutator: &mut DocumentMutator,
+        reactor: &mut Reactor,
+        parent: usize,
+    ) -> (usize, Scope) {
         let container_id = mutator.create_element(div_name(), self.attrs.clone());
         mutator.append_children(parent, &[container_id]);
 
         // Mount initial items, each with a dedicated child reactor so nested
         // reactive views (ReactiveText, Computed) keep updating across list
         // reconciliations.
+        //
+        // Each child_reactor is heap-allocated (Box) so its address is stable
+        // across the `children.push(...)` move below — parked scopes hold raw
+        // pointers to the reactor's memory.
         let initial_list = self.source.get_value();
         let mut children = Vec::with_capacity(initial_list.len());
         for item in &initial_list {
-            let mut child_reactor = Reactor::new();
+            let mut child_reactor = Box::new(Reactor::new());
             let view = (self.template)(item);
-            let node_id = view.mount(mutator, &mut child_reactor, container_id);
+            let (node_id, child_scope) = view.mount(mutator, &mut *child_reactor, container_id);
+            // Park the child's scope on its own reactor so nested reactive views
+            // (ReactiveText, Computed) keep updating across list reconciliations.
+            // The child_reactor is dropped (disposal cascade) when its item is
+            // removed during a future reconciliation.
+            child_reactor.park_scope(child_scope);
             children.push(ItemState {
                 node_id,
                 reactor: child_reactor,
@@ -236,13 +316,14 @@ where
         }
 
         // Register the reconciliation binding for future list changes.
-        reactor.bind_for(
+        // This returns a Scope that will clean up the ForBinding when dropped.
+        let scope = reactor.bind_for(
             self.source.clone(),
             Arc::clone(&self.template),
             container_id,
             children,
         );
 
-        container_id
+        (container_id, scope)
     }
 }

@@ -13,3 +13,10 @@
 
 # khukuri secrets/persistence (fleet-gitignored)
 .khukuri/
+
+# --- scratch / temp files added by tooling ---
+# Ignored across both crush-ast and arniko to keep `git status` quiet
+# when build / iteration loops emit ad-hoc scratch artifacts.
+tcp_loopback.rs.bak
+.newnmv
+command.sh

@@ -70,7 +70,7 @@ fn main() {
                 ],
             );
 
-            let panel_id = ui.mount(mutator, reactor, root);
+            let (panel_id, _scope) = ui.mount(mutator, reactor, root);
             // panel_id → child[1] (the glass panel) → child[2] (buttons row) → [0,2]
             let glass = mutator.child_ids(panel_id)[0];
             let buttons_row = mutator.child_ids(glass)[1];

@@ -10,7 +10,10 @@ use arniko::components::{
     mount_toast, mount_toast_with_variant, progress_ring_reactive, shortcut_help_reactive,
     splash_screen_reactive, theme_toggle_reactive,
 };
-use arniko::reactive::{For, Reactor, Signal, Text, View};
+use arniko::{
+    Component,
+    reactive::{For, Reactor, Signal, Text, View},
+};
 use bliss_dom::{BaseDocument, DocumentConfig, DocumentMutator, qual_name};
 use bliss_html::HtmlProvider;
 use std::sync::Arc;
@@ -74,7 +77,7 @@ fn find_by_class(doc: &mut BaseDocument, root_id: usize, class: &str) -> Option<
         }
     }
     let children = {
-        let mut mutator = doc.mutate();
+        let mutator = doc.mutate();
         mutator.child_ids(root_id)
     };
     for child_id in children {
@@ -83,6 +86,30 @@ fn find_by_class(doc: &mut BaseDocument, root_id: usize, class: &str) -> Option<
         }
     }
     None
+}
+
+/// Mount a view and park the returned `Scope` on the reactor so its
+/// reactive bindings survive past the call site.
+///
+/// This handles the very common test idiom of `view.mount(...)` invoked
+/// as a statement, where the returned `Scope` would otherwise be silently
+/// dropped at the semicolon and (via `Scope::drop`) deregister every
+/// binding it carries. With the parking step the bindings stay live so
+/// later `signal.set(...)` + `flush_reactive(...)` can fire patches.
+///
+/// Production code should generally capture the returned `Scope` and
+/// drop it explicitly (or call `scope.unmount()`) — see
+/// `test_binding_lifecycle_scope_cleanup` for the explicit-cleanup
+/// pattern this helper side-steps.
+fn mount_parked<V: View + ?Sized>(
+    view: &V,
+    mutator: &mut DocumentMutator,
+    reactor: &mut Reactor,
+    parent: usize,
+) -> usize {
+    let (id, scope) = view.mount(mutator, reactor, parent);
+    reactor.park_scope(scope);
+    id
 }
 
 // ── Toast Tests ──────────────────────────────────────────────────────────────
@@ -201,7 +228,7 @@ fn test_progress_ring_reactive_mounts() {
     );
     {
         let mut mutator = doc.mutate();
-        view.mount(&mut mutator, &mut reactor, root_id);
+        mount_parked(&view, &mut mutator, &mut reactor, root_id);
         drop(mutator);
     }
     flush_reactive(&mut doc, &mut reactor);
@@ -227,7 +254,7 @@ fn test_progress_ring_reactive_updates() {
     );
     {
         let mut mutator = doc.mutate();
-        view.mount(&mut mutator, &mut reactor, root_id);
+        mount_parked(&view, &mut mutator, &mut reactor, root_id);
         drop(mutator);
     }
     flush_reactive(&mut doc, &mut reactor);
@@ -264,7 +291,7 @@ fn test_bar_chart_reactive_mounts() {
     let view = bar_chart_reactive(entries);
     {
         let mut mutator = doc.mutate();
-        view.mount(&mut mutator, &mut reactor, root_id);
+        mount_parked(&view, &mut mutator, &mut reactor, root_id);
         drop(mutator);
     }
     flush_reactive(&mut doc, &mut reactor);
@@ -301,7 +328,7 @@ fn test_bar_chart_reactive_empty() {
     let view = bar_chart_reactive(entries);
     {
         let mut mutator = doc.mutate();
-        view.mount(&mut mutator, &mut reactor, root_id);
+        mount_parked(&view, &mut mutator, &mut reactor, root_id);
         drop(mutator);
     }
     flush_reactive(&mut doc, &mut reactor);
@@ -323,7 +350,7 @@ fn test_bar_chart_reactive_updates() {
     let view = bar_chart_reactive(entries.clone());
     {
         let mut mutator = doc.mutate();
-        view.mount(&mut mutator, &mut reactor, root_id);
+        mount_parked(&view, &mut mutator, &mut reactor, root_id);
         drop(mutator);
     }
     flush_reactive(&mut doc, &mut reactor);
@@ -365,7 +392,7 @@ fn test_shortcut_help_reactive_visible() {
     let view = shortcut_help_reactive(&visible, shortcuts);
     {
         let mut mutator = doc.mutate();
-        view.mount(&mut mutator, &mut reactor, root_id);
+        mount_parked(&view, &mut mutator, &mut reactor, root_id);
         drop(mutator);
     }
     flush_reactive(&mut doc, &mut reactor);
@@ -395,7 +422,7 @@ fn test_shortcut_help_reactive_hidden() {
     let view = shortcut_help_reactive(&visible, shortcuts);
     let view_id = {
         let mut mutator = doc.mutate();
-        let id = view.mount(&mut mutator, &mut reactor, root_id);
+        let (id, _scope) = view.mount(&mut mutator, &mut reactor, root_id);
         drop(mutator);
         id
     };
@@ -420,7 +447,7 @@ fn test_shortcut_help_reactive_toggle() {
     let view = shortcut_help_reactive(&visible, shortcuts);
     {
         let mut mutator = doc.mutate();
-        view.mount(&mut mutator, &mut reactor, root_id);
+        mount_parked(&view, &mut mutator, &mut reactor, root_id);
         drop(mutator);
     }
     flush_reactive(&mut doc, &mut reactor);
@@ -451,7 +478,7 @@ fn test_theme_toggle_reactive_mounts() {
     let view = theme_toggle_reactive(&theme);
     {
         let mut mutator = doc.mutate();
-        view.mount(&mut mutator, &mut reactor, root_id);
+        mount_parked(&view, &mut mutator, &mut reactor, root_id);
         drop(mutator);
     }
     flush_reactive(&mut doc, &mut reactor);
@@ -486,7 +513,7 @@ fn test_splash_screen_reactive_mounts() {
     let view = splash_screen_reactive(&config);
     {
         let mut mutator = doc.mutate();
-        view.mount(&mut mutator, &mut reactor, root_id);
+        mount_parked(&view, &mut mutator, &mut reactor, root_id);
         drop(mutator);
     }
     flush_reactive(&mut doc, &mut reactor);
@@ -529,7 +556,7 @@ fn test_splash_screen_reactive_updates() {
     let view = splash_screen_reactive(&config);
     {
         let mut mutator = doc.mutate();
-        view.mount(&mut mutator, &mut reactor, root_id);
+        mount_parked(&view, &mut mutator, &mut reactor, root_id);
         drop(mutator);
     }
     flush_reactive(&mut doc, &mut reactor);
@@ -570,12 +597,11 @@ fn test_for_initial_mount_renders_all_items() {
         "cherry".to_string(),
     ]);
 
-    let view: For<String, Signal<Vec<String>>> = For::new(items, |item| {
-        Box::new(Text(item.clone()))
-    });
+    let view: For<String, Signal<Vec<String>>> =
+        For::new(items, |item| Box::new(Text(item.clone())));
     {
         let mut mutator = doc.mutate();
-        view.mount(&mut mutator, &mut reactor, root_id);
+        mount_parked(&view, &mut mutator, &mut reactor, root_id);
         drop(mutator);
     }
     flush_reactive(&mut doc, &mut reactor);
@@ -590,17 +616,13 @@ fn test_for_initial_mount_renders_all_items() {
 fn test_for_add_item_preserves_existing() {
     let (mut doc, root_id) = setup_doc();
     let mut reactor = Reactor::new();
-    let items: Signal<Vec<String>> = Signal::new(vec![
-        "alpha".to_string(),
-        "beta".to_string(),
-    ]);
+    let items: Signal<Vec<String>> = Signal::new(vec!["alpha".to_string(), "beta".to_string()]);
 
-    let view: For<String, Signal<Vec<String>>> = For::new(items.clone(), |item| {
-        Box::new(Text(item.clone()))
-    });
+    let view: For<String, Signal<Vec<String>>> =
+        For::new(items.clone(), |item| Box::new(Text(item.clone())));
     {
         let mut mutator = doc.mutate();
-        view.mount(&mut mutator, &mut reactor, root_id);
+        mount_parked(&view, &mut mutator, &mut reactor, root_id);
         drop(mutator);
     }
     flush_reactive(&mut doc, &mut reactor);
@@ -614,9 +636,17 @@ fn test_for_add_item_preserves_existing() {
     flush_reactive(&mut doc, &mut reactor);
 
     let text = node_text(&mut doc, root_id);
-    assert!(text.contains("alpha"), "Should still contain alpha: {}", text);
+    assert!(
+        text.contains("alpha"),
+        "Should still contain alpha: {}",
+        text
+    );
     assert!(text.contains("beta"), "Should still contain beta: {}", text);
-    assert!(text.contains("gamma"), "Should contain new item gamma: {}", text);
+    assert!(
+        text.contains("gamma"),
+        "Should contain new item gamma: {}",
+        text
+    );
 }
 
 #[test]
@@ -629,12 +659,11 @@ fn test_for_remove_item_drops_trailing() {
         "three".to_string(),
     ]);
 
-    let view: For<String, Signal<Vec<String>>> = For::new(items.clone(), |item| {
-        Box::new(Text(item.clone()))
-    });
+    let view: For<String, Signal<Vec<String>>> =
+        For::new(items.clone(), |item| Box::new(Text(item.clone())));
     {
         let mut mutator = doc.mutate();
-        view.mount(&mut mutator, &mut reactor, root_id);
+        mount_parked(&view, &mut mutator, &mut reactor, root_id);
         drop(mutator);
     }
     flush_reactive(&mut doc, &mut reactor);
@@ -647,7 +676,11 @@ fn test_for_remove_item_drops_trailing() {
     let text = node_text(&mut doc, root_id);
     assert!(text.contains("one"), "Should still contain one: {}", text);
     assert!(text.contains("two"), "Should still contain two: {}", text);
-    assert!(!text.contains("three"), "Should NOT contain removed three: {}", text);
+    assert!(
+        !text.contains("three"),
+        "Should NOT contain removed three: {}",
+        text
+    );
 }
 
 #[test]
@@ -666,7 +699,7 @@ fn test_for_item_content_updates_via_child_reactors() {
     });
     {
         let mut mutator = doc.mutate();
-        view.mount(&mut mutator, &mut reactor, root_id);
+        mount_parked(&view, &mut mutator, &mut reactor, root_id);
         drop(mutator);
     }
     flush_reactive(&mut doc, &mut reactor);
@@ -691,12 +724,11 @@ fn test_for_empty_to_populated() {
     let mut reactor = Reactor::new();
     let items: Signal<Vec<String>> = Signal::new(vec![]);
 
-    let view: For<String, Signal<Vec<String>>> = For::new(items.clone(), |item| {
-        Box::new(Text(item.clone()))
-    });
+    let view: For<String, Signal<Vec<String>>> =
+        For::new(items.clone(), |item| Box::new(Text(item.clone())));
     {
         let mut mutator = doc.mutate();
-        view.mount(&mut mutator, &mut reactor, root_id);
+        mount_parked(&view, &mut mutator, &mut reactor, root_id);
         drop(mutator);
     }
     flush_reactive(&mut doc, &mut reactor);
@@ -717,17 +749,13 @@ fn test_for_empty_to_populated() {
 fn test_for_populated_to_empty() {
     let (mut doc, root_id) = setup_doc();
     let mut reactor = Reactor::new();
-    let items: Signal<Vec<String>> = Signal::new(vec![
-        "x".to_string(),
-        "y".to_string(),
-    ]);
+    let items: Signal<Vec<String>> = Signal::new(vec!["x".to_string(), "y".to_string()]);
 
-    let view: For<String, Signal<Vec<String>>> = For::new(items.clone(), |item| {
-        Box::new(Text(item.clone()))
-    });
+    let view: For<String, Signal<Vec<String>>> =
+        For::new(items.clone(), |item| Box::new(Text(item.clone())));
     {
         let mut mutator = doc.mutate();
-        view.mount(&mut mutator, &mut reactor, root_id);
+        mount_parked(&view, &mut mutator, &mut reactor, root_id);
         drop(mutator);
     }
     flush_reactive(&mut doc, &mut reactor);
@@ -738,8 +766,16 @@ fn test_for_populated_to_empty() {
     flush_reactive(&mut doc, &mut reactor);
 
     let text = node_text(&mut doc, root_id);
-    assert!(!text.contains("x"), "Should NOT contain removed x: {}", text);
-    assert!(!text.contains("y"), "Should NOT contain removed y: {}", text);
+    assert!(
+        !text.contains("x"),
+        "Should NOT contain removed x: {}",
+        text
+    );
+    assert!(
+        !text.contains("y"),
+        "Should NOT contain removed y: {}",
+        text
+    );
 }
 
 #[test]
@@ -755,12 +791,11 @@ fn test_for_surviving_items_preserve_dom_nodes() {
         "drop".to_string(),
     ]);
 
-    let view: For<String, Signal<Vec<String>>> = For::new(items.clone(), |item| {
-        Box::new(Text(item.clone()))
-    });
+    let view: For<String, Signal<Vec<String>>> =
+        For::new(items.clone(), |item| Box::new(Text(item.clone())));
     let container_id = {
         let mut mutator = doc.mutate();
-        let id = view.mount(&mut mutator, &mut reactor, root_id);
+        let id = mount_parked(&view, &mut mutator, &mut reactor, root_id);
         drop(mutator);
         id
     };
@@ -768,7 +803,7 @@ fn test_for_surviving_items_preserve_dom_nodes() {
 
     // Capture child node IDs before mutation
     let child_ids_before = {
-        let mut mutator = doc.mutate();
+        let mutator = doc.mutate();
         let ids = mutator.child_ids(container_id);
         drop(mutator);
         ids
@@ -781,12 +816,16 @@ fn test_for_surviving_items_preserve_dom_nodes() {
 
     // Check that survivors kept their DOM node IDs
     let child_ids_after = {
-        let mut mutator = doc.mutate();
+        let mutator = doc.mutate();
         let ids = mutator.child_ids(container_id);
         drop(mutator);
         ids
     };
-    assert_eq!(child_ids_after.len(), 2, "Should have 2 children after removal");
+    assert_eq!(
+        child_ids_after.len(),
+        2,
+        "Should have 2 children after removal"
+    );
     assert_eq!(
         child_ids_after[0], child_ids_before[0],
         "First surviving item should keep its DOM node ID"
@@ -804,19 +843,18 @@ fn test_for_new_items_get_fresh_dom_nodes() {
     let mut reactor = Reactor::new();
     let items: Signal<Vec<String>> = Signal::new(vec!["a".to_string()]);
 
-    let view: For<String, Signal<Vec<String>>> = For::new(items.clone(), |item| {
-        Box::new(Text(item.clone()))
-    });
+    let view: For<String, Signal<Vec<String>>> =
+        For::new(items.clone(), |item| Box::new(Text(item.clone())));
     let container_id = {
         let mut mutator = doc.mutate();
-        let id = view.mount(&mut mutator, &mut reactor, root_id);
+        let id = mount_parked(&view, &mut mutator, &mut reactor, root_id);
         drop(mutator);
         id
     };
     flush_reactive(&mut doc, &mut reactor);
 
     let child_ids_before = {
-        let mut mutator = doc.mutate();
+        let mutator = doc.mutate();
         let ids = mutator.child_ids(container_id);
         drop(mutator);
         ids
@@ -824,25 +862,30 @@ fn test_for_new_items_get_fresh_dom_nodes() {
     let original_id = child_ids_before[0];
 
     // Add new items (expand from 1 to 3)
-    items.set(vec![
-        "a".to_string(),
-        "b".to_string(),
-        "c".to_string(),
-    ]);
+    items.set(vec!["a".to_string(), "b".to_string(), "c".to_string()]);
     flush_reactive(&mut doc, &mut reactor);
 
     let child_ids_after = {
-        let mut mutator = doc.mutate();
+        let mutator = doc.mutate();
         let ids = mutator.child_ids(container_id);
         drop(mutator);
         ids
     };
     assert_eq!(child_ids_after.len(), 3, "Should have 3 children");
     // Original item at position 0 keeps its node
-    assert_eq!(child_ids_after[0], original_id, "First item keeps its DOM node");
+    assert_eq!(
+        child_ids_after[0], original_id,
+        "First item keeps its DOM node"
+    );
     // New items at positions 1 and 2 have different (fresh) IDs
-    assert_ne!(child_ids_after[1], original_id, "New item should have fresh DOM node");
-    assert_ne!(child_ids_after[2], original_id, "New item should have fresh DOM node");
+    assert_ne!(
+        child_ids_after[1], original_id,
+        "New item should have fresh DOM node"
+    );
+    assert_ne!(
+        child_ids_after[2], original_id,
+        "New item should have fresh DOM node"
+    );
 }
 
 #[test]
@@ -861,7 +904,7 @@ fn test_for_nested_reactivity_after_reconciliation() {
     });
     {
         let mut mutator = doc.mutate();
-        view.mount(&mut mutator, &mut reactor, root_id);
+        mount_parked(&view, &mut mutator, &mut reactor, root_id);
         drop(mutator);
     }
     flush_reactive(&mut doc, &mut reactor);
@@ -912,12 +955,11 @@ fn test_for_multiple_reconciliations_no_arena_leak() {
     let mut reactor = Reactor::new();
     let items: Signal<Vec<String>> = Signal::new(vec!["base".to_string()]);
 
-    let view: For<String, Signal<Vec<String>>> = For::new(items.clone(), |item| {
-        Box::new(Text(item.clone()))
-    });
+    let view: For<String, Signal<Vec<String>>> =
+        For::new(items.clone(), |item| Box::new(Text(item.clone())));
     let container_id = {
         let mut mutator = doc.mutate();
-        let id = view.mount(&mut mutator, &mut reactor, root_id);
+        let id = mount_parked(&view, &mut mutator, &mut reactor, root_id);
         drop(mutator);
         id
     };
@@ -941,14 +983,156 @@ fn test_for_multiple_reconciliations_no_arena_leak() {
 
     // After many cycles, should have exactly 1 child
     let child_count = {
-        let mut mutator = doc.mutate();
+        let mutator = doc.mutate();
         let ids = mutator.child_ids(container_id);
         drop(mutator);
         ids.len()
     };
-    assert_eq!(child_count, 1, "Should have exactly 1 child after many reconciliations");
+    assert_eq!(
+        child_count, 1,
+        "Should have exactly 1 child after many reconciliations"
+    );
 
     let text = node_text(&mut doc, root_id);
     assert!(text.contains("base"), "Should still contain base: {}", text);
-    assert!(!text.contains("extra_"), "Should NOT contain any extra items: {}", text);
+    assert!(
+        !text.contains("extra_"),
+        "Should NOT contain any extra items: {}",
+        text
+    );
+}
+
+// ── ComponentView Drop Semantics Tests ────────────────────────────────────
+//
+// `ComponentView<C>` is a wrapping newtype
+// (`crates/arniko/src/reactive/view.rs::ComponentView<C>(pub C)`) that owns
+// a `C`. `Component::to_view(self)` consumes the underlying `C` and yields
+// a `ComponentView<Self>`. Mounting the `ComponentView` through the
+// reactive system uses `&self` (see `ComponentView::mount`), so `C` is
+// borrowed — not consumed — by the mount. The owning lexical scope (or
+// whoever holds the `ComponentView<C>` value) is the unique owner of `C`,
+// and `C::drop` should fire exactly once when the `ComponentView` goes
+// out of scope.
+
+/// Component that bumps a shared counter on Drop. Lets the tests assert
+/// the exact drop count of the wrapped `C` after a sequence of mount,
+/// binding-park, and out-of-scope events.
+struct DropCounter(std::sync::Arc<std::sync::atomic::AtomicUsize>);
+
+impl DropCounter {
+    fn new() -> (Self, std::sync::Arc<std::sync::atomic::AtomicUsize>) {
+        let counter = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
+        (Self(counter.clone()), counter)
+    }
+}
+
+impl Drop for DropCounter {
+    fn drop(&mut self) {
+        self.0.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+    }
+}
+
+impl arniko::Component for DropCounter {
+    fn render(&self) -> String {
+        format!(
+            "<span class=\"arniko-drop-counter\">{}</span>",
+            self.0.load(std::sync::atomic::Ordering::SeqCst),
+        )
+    }
+}
+
+#[test]
+fn component_view_drops_inner_c_on_scope_end() {
+    // Phase-5 advisory verification: `ComponentView<C>` follows Rust's
+    // normal RAII semantics — `C` drops exactly once when the
+    // `ComponentView` goes out of scope, even after the wrapper has
+    // been mounted through the reactive system (which involves only
+    // `&self`, not consuming `C`).
+    let (dropper, counter) = DropCounter::new();
+    assert_eq!(counter.load(std::sync::atomic::Ordering::SeqCst), 0);
+
+    {
+        let (mut doc, root_id) = setup_doc();
+        let mut reactor = Reactor::new();
+        // `to_view()` consumes `dropper`; from here on, `view` is the
+        // unique owner of the underlying `DropCounter` (i.e. `C`).
+        let view = dropper.to_view();
+
+        {
+            let mut mutator = doc.mutate();
+            mount_parked(&view, &mut mutator, &mut reactor, root_id);
+            drop(mutator);
+        }
+        flush_reactive(&mut doc, &mut reactor);
+
+        // Mount borrows `view` (the resulting Scope is parked in
+        // `reactor.parked_scopes`), but the `ComponentView<C>` value
+        // itself is still owned by the outer scope of this block.
+        // `C::drop` has NOT fired yet.
+        assert_eq!(
+            counter.load(std::sync::atomic::Ordering::SeqCst),
+            0,
+            "ComponentView's C should still be alive while view is in scope",
+        );
+
+        // `view` drops at end of this block → `DropCounter::drop` fires
+        // exactly once. The previously-mounted DOM node is also eligible
+        // for cleanup once the reactor drops, but the *component*'s drop
+        // fires before that (driven by the `ComponentView` going out of
+        // scope, not by the DOM-tree lifecycle).
+    }
+
+    assert_eq!(
+        counter.load(std::sync::atomic::Ordering::SeqCst),
+        1,
+        "ComponentView's C should drop exactly once when the view goes out of scope",
+    );
+}
+
+#[test]
+fn component_view_inner_c_not_dropped_while_reactor_alive() {
+    // Companion test: while the reactor holds a parked scope AND the
+    // ComponentView value is still live, `C` stays alive. This catches
+    // an inverse regression where some future optimization might
+    // (incorrectly) drop C eagerly on mount or parking.
+    let (dropper, counter) = DropCounter::new();
+    assert_eq!(counter.load(std::sync::atomic::Ordering::SeqCst), 0);
+
+    let (mut doc, root_id) = setup_doc();
+    let mut reactor = Reactor::new();
+    let view = dropper.to_view();
+
+    {
+        let mut mutator = doc.mutate();
+        mount_parked(&view, &mut mutator, &mut reactor, root_id);
+        drop(mutator);
+    }
+    flush_reactive(&mut doc, &mut reactor);
+
+    // Both view and reactor are still alive in this test's scope; `C`
+    // must still be alive.
+    assert_eq!(
+        counter.load(std::sync::atomic::Ordering::SeqCst),
+        0,
+        "C should not drop while both ComponentView and Reactor are alive",
+    );
+
+    // Explicit drop orderings: drop the reactor first (its
+    // `parked_scopes` Scope::drop chain fires), then drop the
+    // ComponentView. Counter should still be 0 until view drops.
+    drop(reactor);
+    assert_eq!(
+        counter.load(std::sync::atomic::Ordering::SeqCst),
+        0,
+        "C should not drop on Reactor::drop alone",
+    );
+
+    drop(view);
+    assert_eq!(
+        counter.load(std::sync::atomic::Ordering::SeqCst),
+        1,
+        "C should drop exactly once on ComponentView::drop",
+    );
+
+    drop(doc); // keep doc alive until the end for hygiene
 }

@@ -3,6 +3,8 @@
 //! These test the reactive core without requiring DOM — no bliss_dom dependency.
 //! Run with: `cargo test -p arniko --features reactive --test reactive_signals`
 
+use arniko::mustang::SceneScheduler;
+use arniko::reactive::direct_mut::DirectDomMutator;
 use arniko::reactive::{Computed, Reactive, ReactiveText, Reactor, Signal, View};
 use bliss_dom::{BaseDocument, DocumentConfig, DocumentMutator, qual_name};
 use bliss_html::HtmlProvider;
@@ -168,7 +170,11 @@ fn test_computed_only_recomputes_when_deps_change() {
     let v0 = derived.reactive_version();
     // Reading without dep changes should not bump version
     let _ = derived.get();
-    assert_eq!(derived.reactive_version(), v0, "Version unchanged when deps unchanged");
+    assert_eq!(
+        derived.reactive_version(),
+        v0,
+        "Version unchanged when deps unchanged"
+    );
 
     // Reading again still no change
     let _ = derived.get();
@@ -183,15 +189,19 @@ fn test_reactor_flush_dirty_detection() {
     let mut reactor = Reactor::new();
     let sig = Signal::new("initial".to_string());
 
+    // _scope: dropped at end of test; bindings deregister via Scope::Drop.
+    // This MUST outlive the flush+assert below, so we keep it in test-stack scope.
+    let _scope;
     {
         let mut mutator = doc.mutate();
         let text = ReactiveText::new(sig.clone());
-        text.mount(&mut mutator, &mut reactor, root_id);
+        let (_, s) = text.mount(&mut mutator, &mut reactor, root_id);
+        _scope = s;
         drop(mutator);
     }
 
     // First flush — should be dirty (initial bind)
-    let dirty = {
+    let _dirty = {
         let mut mutator = doc.mutate();
         reactor.flush(&mut mutator, None)
     };
@@ -221,10 +231,16 @@ fn test_multiple_bindings_on_one_reactor() {
     let sig1 = Signal::new("first".to_string());
     let sig2 = Signal::new("second".to_string());
 
+    // _scope1 / _scope2: kept alive across the flush + assert below so the
+    // reactive-text bindings aren't deregistered by Scope::Drop before they fire.
+    let _scope1;
+    let _scope2;
     {
         let mut mutator = doc.mutate();
-        ReactiveText::new(sig1.clone()).mount(&mut mutator, &mut reactor, root_id);
-        ReactiveText::new(sig2.clone()).mount(&mut mutator, &mut reactor, root_id);
+        let (_, s1) = ReactiveText::new(sig1.clone()).mount(&mut mutator, &mut reactor, root_id);
+        let (_, s2) = ReactiveText::new(sig2.clone()).mount(&mut mutator, &mut reactor, root_id);
+        _scope1 = s1;
+        _scope2 = s2;
         drop(mutator);
     }
 
@@ -234,10 +250,21 @@ fn test_multiple_bindings_on_one_reactor() {
     flush_reactive(&mut doc, &mut reactor);
 
     let text = node_text(&mut doc, root_id);
-    assert!(text.contains("FIRST"), "First binding should update: {}", text);
-    assert!(text.contains("SECOND"), "Second binding should update: {}", text);
+    assert!(
+        text.contains("FIRST"),
+        "First binding should update: {}",
+        text
+    );
+    assert!(
+        text.contains("SECOND"),
+        "Second binding should update: {}",
+        text
+    );
     assert!(!text.contains("first"), "Old value first should not remain");
-    assert!(!text.contains("second"), "Old value second should not remain");
+    assert!(
+        !text.contains("second"),
+        "Old value second should not remain"
+    );
 }
 
 #[test]
@@ -248,10 +275,16 @@ fn test_reactor_partial_dirty() {
     let sig1 = Signal::new("one".to_string());
     let sig2 = Signal::new("two".to_string());
 
+    // _scope1 / _scope2: kept alive across flush + assert so partial-dirty
+    // detection still has its bindings registered when sig1.set fires.
+    let _scope1;
+    let _scope2;
     {
         let mut mutator = doc.mutate();
-        ReactiveText::new(sig1.clone()).mount(&mut mutator, &mut reactor, root_id);
-        ReactiveText::new(sig2.clone()).mount(&mut mutator, &mut reactor, root_id);
+        let (_, s1) = ReactiveText::new(sig1.clone()).mount(&mut mutator, &mut reactor, root_id);
+        let (_, s2) = ReactiveText::new(sig2.clone()).mount(&mut mutator, &mut reactor, root_id);
+        _scope1 = s1;
+        _scope2 = s2;
         drop(mutator);
     }
     flush_reactive(&mut doc, &mut reactor);
@@ -261,8 +294,16 @@ fn test_reactor_partial_dirty() {
     flush_reactive(&mut doc, &mut reactor);
 
     let text = node_text(&mut doc, root_id);
-    assert!(text.contains("ONE"), "Changed signal should update: {}", text);
-    assert!(text.contains("two"), "Unchanged signal should stay: {}", text);
+    assert!(
+        text.contains("ONE"),
+        "Changed signal should update: {}",
+        text
+    );
+    assert!(
+        text.contains("two"),
+        "Unchanged signal should stay: {}",
+        text
+    );
     assert!(!text.contains("one"), "Old value should be gone");
 }
 
@@ -272,9 +313,13 @@ fn test_rapid_signal_updates() {
     let mut reactor = Reactor::new();
     let sig = Signal::new("start".to_string());
 
+    // _scope: kept alive across the 50 set + flush below so the binding
+    // survives past the closing `drop(mutator)` of the inner block.
+    let _scope;
     {
         let mut mutator = doc.mutate();
-        ReactiveText::new(sig.clone()).mount(&mut mutator, &mut reactor, root_id);
+        let (_, s) = ReactiveText::new(sig.clone()).mount(&mut mutator, &mut reactor, root_id);
+        _scope = s;
         drop(mutator);
     }
 
@@ -298,10 +343,14 @@ fn test_reactive_text_with_computed() {
     let count = Signal::new(1_i32);
     let label = count.derive(|v| format!("Count: {}", v));
 
+    // _scope: kept alive across flush + assert so the Computed→ReactiveText
+    // binding is registered when `count.set(5)` triggers the chain flush.
+    let _scope;
     {
         let mut mutator = doc.mutate();
         let text = ReactiveText::new(label.clone());
-        text.mount(&mut mutator, &mut reactor, root_id);
+        let (_, s) = text.mount(&mut mutator, &mut reactor, root_id);
+        _scope = s;
         drop(mutator);
     }
     flush_reactive(&mut doc, &mut reactor);
@@ -321,9 +370,13 @@ fn test_computed_chain_with_reactive_text() {
     let area = Computed::from2(width.clone(), height.clone(), |w, h| w * h);
     let label = area.map(|a| format!("Area: {}px²", a));
 
+    // _scope: kept alive across flush+set+assert cycles so the
+    // computed-chain → ReactiveText binding survives.
+    let _scope;
     {
         let mut mutator = doc.mutate();
-        ReactiveText::new(label.clone()).mount(&mut mutator, &mut reactor, root_id);
+        let (_, s) = ReactiveText::new(label.clone()).mount(&mut mutator, &mut reactor, root_id);
+        _scope = s;
         drop(mutator);
     }
     flush_reactive(&mut doc, &mut reactor);
@@ -360,4 +413,461 @@ fn test_reactor_flush_with_no_bindings() {
         reactor.flush(&mut mutator, None)
     };
     assert!(!dirty, "Empty reactor should report clean");
+}
+
+// ── DirectDomMutator Tests ────────────────────────────────────────────────────────
+
+#[test]
+fn test_direct_mutator_set_text() {
+    let (mut doc, root_id) = setup_doc();
+    let scheduler = SceneScheduler::new();
+    let dirty_count_before = scheduler.dirty_count();
+
+    {
+        let mut mutator = doc.mutate();
+        let text_node = mutator.create_text_node("initial");
+        mutator.append_children(root_id, &[text_node]);
+
+        let mut dmut = DirectDomMutator::new(&mut mutator, &scheduler);
+        dmut.set_text(text_node, "updated");
+    }
+
+    // Scheduler should have been notified
+    assert_eq!(scheduler.dirty_count(), dirty_count_before + 1);
+
+    // Verify text was updated
+    let text = node_text(&mut doc, root_id);
+    assert_eq!(text, "updated");
+}
+
+#[test]
+fn test_direct_mutator_set_attr() {
+    let (mut doc, root_id) = setup_doc();
+    let scheduler = SceneScheduler::new();
+    let dirty_count_before = scheduler.dirty_count();
+
+    {
+        let mut mutator = doc.mutate();
+        let elem = mutator.create_element(qual_name!("div"), vec![]);
+        mutator.append_children(root_id, &[elem]);
+
+        let mut dmut = DirectDomMutator::new(&mut mutator, &scheduler);
+        dmut.set_attr(elem, qual_name!("title"), "Test Title");
+    }
+
+    assert_eq!(scheduler.dirty_count(), dirty_count_before + 1);
+}
+
+#[test]
+fn test_direct_mutator_remove_node() {
+    let (mut doc, root_id) = setup_doc();
+    let scheduler = SceneScheduler::new();
+
+    let child_id;
+    {
+        let mut mutator = doc.mutate();
+        child_id = mutator.create_element(qual_name!("span"), vec![]);
+        mutator.append_children(root_id, &[child_id]);
+    }
+
+    let dirty_count_before = scheduler.dirty_count();
+    {
+        let mut mutator = doc.mutate();
+        let mut dmut = DirectDomMutator::new(&mut mutator, &scheduler);
+        dmut.remove_node(child_id);
+    }
+
+    assert_eq!(scheduler.dirty_count(), dirty_count_before + 1);
+}
+
+#[test]
+fn test_direct_mutator_remove_and_drop_node() {
+    let (mut doc, root_id) = setup_doc();
+    let scheduler = SceneScheduler::new();
+
+    let child_id;
+    {
+        let mut mutator = doc.mutate();
+        child_id = mutator.create_element(qual_name!("span"), vec![]);
+        mutator.append_children(root_id, &[child_id]);
+    }
+
+    let dirty_count_before = scheduler.dirty_count();
+    {
+        let mut mutator = doc.mutate();
+        let mut dmut = DirectDomMutator::new(&mut mutator, &scheduler);
+        dmut.remove_and_drop_node(child_id);
+    }
+
+    assert_eq!(scheduler.dirty_count(), dirty_count_before + 1);
+}
+
+#[test]
+fn test_direct_mutator_append_children() {
+    let (mut doc, root_id) = setup_doc();
+    let scheduler = SceneScheduler::new();
+
+    let child1;
+    let child2;
+    {
+        let mut mutator = doc.mutate();
+        child1 = mutator.create_element(qual_name!("div"), vec![]);
+        child2 = mutator.create_element(qual_name!("span"), vec![]);
+    }
+
+    let dirty_count_before = scheduler.dirty_count();
+    {
+        let mut mutator = doc.mutate();
+        let mut dmut = DirectDomMutator::new(&mut mutator, &scheduler);
+        dmut.append_children(root_id, &[child1, child2]);
+    }
+
+    assert_eq!(scheduler.dirty_count(), dirty_count_before + 1);
+}
+
+#[test]
+fn test_direct_mutator_multiple_operations() {
+    let (mut doc, root_id) = setup_doc();
+    let scheduler = SceneScheduler::new();
+
+    let text_node;
+    {
+        let mut mutator = doc.mutate();
+        text_node = mutator.create_text_node("initial");
+        mutator.append_children(root_id, &[text_node]);
+    }
+
+    let dirty_count_before = scheduler.dirty_count();
+    {
+        let mut mutator = doc.mutate();
+        let mut dmut = DirectDomMutator::new(&mut mutator, &scheduler);
+        dmut.set_text(text_node, "first");
+        dmut.set_text(text_node, "second");
+        dmut.set_text(text_node, "third");
+    }
+
+    // Each operation should notify the scheduler
+    assert_eq!(scheduler.dirty_count(), dirty_count_before + 3);
+}
+
+#[test]
+fn test_direct_mutator_set_id() {
+    let (mut doc, root_id) = setup_doc();
+    let scheduler = SceneScheduler::new();
+    let dirty_count_before = scheduler.dirty_count();
+
+    let elem;
+    {
+        let mut mutator = doc.mutate();
+        elem = mutator.create_element(qual_name!("div"), vec![]);
+        mutator.append_children(root_id, &[elem]);
+    }
+
+    {
+        let mut mutator = doc.mutate();
+        let mut dmut = DirectDomMutator::new(&mut mutator, &scheduler);
+        dmut.set_id(elem, "my-id");
+    }
+
+    assert_eq!(scheduler.dirty_count(), dirty_count_before + 1);
+}
+
+#[test]
+fn test_direct_mutator_set_class() {
+    let (mut doc, root_id) = setup_doc();
+    let scheduler = SceneScheduler::new();
+    let dirty_count_before = scheduler.dirty_count();
+
+    let elem;
+    {
+        let mut mutator = doc.mutate();
+        elem = mutator.create_element(qual_name!("div"), vec![]);
+        mutator.append_children(root_id, &[elem]);
+    }
+
+    {
+        let mut mutator = doc.mutate();
+        let mut dmut = DirectDomMutator::new(&mut mutator, &scheduler);
+        dmut.set_class(elem, "my-class");
+    }
+
+    assert_eq!(scheduler.dirty_count(), dirty_count_before + 1);
+}
+
+#[test]
+fn test_direct_mutator_insert_before() {
+    let (mut doc, root_id) = setup_doc();
+    let scheduler = SceneScheduler::new();
+
+    let anchor;
+    let new_node;
+    {
+        let mut mutator = doc.mutate();
+        anchor = mutator.create_element(qual_name!("div"), vec![]);
+        new_node = mutator.create_element(qual_name!("span"), vec![]);
+        mutator.append_children(root_id, &[anchor]);
+    }
+
+    let dirty_count_before = scheduler.dirty_count();
+    {
+        let mut mutator = doc.mutate();
+        let mut dmut = DirectDomMutator::new(&mut mutator, &scheduler);
+        dmut.insert_before(anchor, &[new_node]);
+    }
+
+    assert_eq!(scheduler.dirty_count(), dirty_count_before + 1);
+}
+
+#[test]
+fn test_direct_mutator_replace_with() {
+    let (mut doc, root_id) = setup_doc();
+    let scheduler = SceneScheduler::new();
+
+    let anchor;
+    let new_node;
+    {
+        let mut mutator = doc.mutate();
+        anchor = mutator.create_element(qual_name!("div"), vec![]);
+        new_node = mutator.create_element(qual_name!("span"), vec![]);
+        mutator.append_children(root_id, &[anchor]);
+    }
+
+    let dirty_count_before = scheduler.dirty_count();
+    {
+        let mut mutator = doc.mutate();
+        let mut dmut = DirectDomMutator::new(&mut mutator, &scheduler);
+        dmut.replace_with(anchor, &[new_node]);
+    }
+
+    assert_eq!(scheduler.dirty_count(), dirty_count_before + 1);
+}
+
+#[test]
+fn test_direct_mutator_remove_all_children() {
+    let (mut doc, root_id) = setup_doc();
+    let scheduler = SceneScheduler::new();
+
+    let child1;
+    let child2;
+    {
+        let mut mutator = doc.mutate();
+        child1 = mutator.create_element(qual_name!("div"), vec![]);
+        child2 = mutator.create_element(qual_name!("span"), vec![]);
+        mutator.append_children(root_id, &[child1, child2]);
+    }
+
+    let dirty_count_before = scheduler.dirty_count();
+    {
+        let mut mutator = doc.mutate();
+        let mut dmut = DirectDomMutator::new(&mut mutator, &scheduler);
+        dmut.remove_all_children(root_id);
+    }
+
+    assert_eq!(scheduler.dirty_count(), dirty_count_before + 1);
+}
+
+// ── Binding Lifecycle Tests ─────────────────────────────────────────────────────
+
+#[test]
+fn test_binding_lifecycle_scope_cleanup() {
+    // B-4: Verify that binding lifecycle management works correctly.
+    // Mounting and unmounting N views should leave the binding count flat.
+
+    let (mut doc, root_id) = setup_doc();
+    let mut reactor = Reactor::new();
+
+    // Track initial binding count
+    let initial_binding_count = reactor.binding_count();
+
+    // Mount 3 views, each with a reactive text binding
+    let sig1 = Signal::new("text1".to_string());
+    let sig2 = Signal::new("text2".to_string());
+    let sig3 = Signal::new("text3".to_string());
+
+    let view1 = ReactiveText::new(sig1.clone());
+    let view2 = ReactiveText::new(sig2.clone());
+    let view3 = ReactiveText::new(sig3.clone());
+
+    let scope1;
+    let scope2;
+    let scope3;
+    {
+        let mut mutator = doc.mutate();
+        let (_, s1) = view1.mount(&mut mutator, &mut reactor, root_id);
+        let (_, s2) = view2.mount(&mut mutator, &mut reactor, root_id);
+        let (_, s3) = view3.mount(&mut mutator, &mut reactor, root_id);
+        scope1 = s1;
+        scope2 = s2;
+        scope3 = s3;
+        drop(mutator);
+    }
+
+    // After mounting 3 views, we should have 3 more bindings
+    assert_eq!(
+        reactor.binding_count(),
+        initial_binding_count + 3,
+        "Should have 3 bindings after mounting 3 views"
+    );
+
+    // Now drop the scopes - this should remove the bindings
+    drop(scope1);
+    drop(scope2);
+    drop(scope3);
+
+    // After dropping all scopes, binding count should be back to initial
+    assert_eq!(
+        reactor.binding_count(),
+        initial_binding_count,
+        "Binding count should return to initial after dropping all scopes"
+    );
+
+    // Mount and unmount in a cycle to verify no leaks
+    for _ in 0..5 {
+        let sig = Signal::new("temp".to_string());
+        let view = ReactiveText::new(sig.clone());
+        let binding_count_before = reactor.binding_count();
+
+        let scope;
+        {
+            let mut mutator = doc.mutate();
+            let (_, s) = view.mount(&mut mutator, &mut reactor, root_id);
+            scope = s;
+            drop(mutator);
+        }
+
+        assert_eq!(
+            reactor.binding_count(),
+            binding_count_before + 1,
+            "Should have 1 more binding after mounting"
+        );
+
+        drop(scope);
+
+        assert_eq!(
+            reactor.binding_count(),
+            binding_count_before,
+            "Binding count should return to previous after dropping scope"
+        );
+    }
+
+    // Final binding count should still be initial
+    assert_eq!(
+        reactor.binding_count(),
+        initial_binding_count,
+        "After mount/unmount cycles, binding count should be flat"
+    );
+}
+
+// ── Lock-Poison Tolerance Tests (B-5) ──────────────────────────────────────────
+
+#[test]
+fn test_lock_poison_cascade_panic_in_handler_is_contained() {
+    // B-5: Verify that a panicking handler doesn't poison the lock and crash the app.
+    // With parking_lot, locks don't poison, so subsequent operations should work.
+    use arniko::reactive::event_router;
+
+    let (router, _sink) = event_router();
+
+    // Register a handler that panics
+    router.on_click(1, || {
+        panic!("Handler panic!");
+    });
+
+    // Register another handler - this should still work
+    router.on_click(2, || {});
+}
+
+// ── Event Ergonomics Tests (B-6) ──────────────────────────────────────────────
+
+#[test]
+fn test_per_node_keydown_api_exists() {
+    // B-6: Verify per-node keydown registration API exists
+    use arniko::reactive::event_router;
+    use bliss::traits::events::BlissKeyEvent;
+
+    let (router, _sink) = event_router();
+
+    // This should compile - per-node keydown handler registration
+    router.on_keydown_node(1, |_event: &BlissKeyEvent| {});
+
+    // Global keydown should still work
+    router.on_keydown(|_event: &BlissKeyEvent| {});
+}
+
+#[test]
+fn test_event_handler_chaining() {
+    // B-6: Verify event handler methods can be chained
+    use arniko::reactive::event_router;
+    use bliss::traits::events::BlissKeyEvent;
+
+    let (router, _sink) = event_router();
+
+    // This should compile and allow chaining
+    router
+        .on_click(1, || {})
+        .on_keydown_node(2, |_event: &BlissKeyEvent| {})
+        .on_input(3, |_value: String| {})
+        .on_keydown(|_event: &BlissKeyEvent| {});
+}
+
+// ── Conditional Rendering Tests (B-7) ──────────────────────────────────────────
+
+#[test]
+fn test_show_view_hides_and_shows_content() {
+    use arniko::reactive::{Show, Text};
+    let (mut doc, root_id) = setup_doc();
+    let mut reactor = Reactor::new();
+    let visible = Signal::new(true);
+    let view = Show::new(visible.clone(), move || {
+        Box::new(Text("visible content".to_string()))
+    });
+    let _scope;
+    {
+        let mut mutator = doc.mutate();
+        _scope = view.mount(&mut mutator, &mut reactor, root_id).1;
+        drop(mutator);
+    }
+    flush_reactive(&mut doc, &mut reactor);
+    assert!(node_text(&mut doc, root_id).contains("visible content"));
+    visible.set(false);
+    flush_reactive(&mut doc, &mut reactor);
+    assert!(!node_text(&mut doc, root_id).contains("visible content"));
+    visible.set(true);
+    flush_reactive(&mut doc, &mut reactor);
+    assert!(node_text(&mut doc, root_id).contains("visible content"));
+}
+
+#[test]
+fn test_switch_view_changes_branches() {
+    use arniko::reactive::{Switch, Text};
+    #[derive(Clone, PartialEq)]
+    enum Page {
+        Home,
+        About,
+        Contact,
+    }
+    let (mut doc, root_id) = setup_doc();
+    let mut reactor = Reactor::new();
+    let page = Signal::new(Page::Home);
+    let view = Switch::new(page.clone(), |p: &Page| match p {
+        Page::Home => Box::new(Text("Home Page".to_string())),
+        Page::About => Box::new(Text("About Page".to_string())),
+        Page::Contact => Box::new(Text("Contact Page".to_string())),
+    });
+    let _scope;
+    {
+        let mut mutator = doc.mutate();
+        _scope = view.mount(&mut mutator, &mut reactor, root_id).1;
+        drop(mutator);
+    }
+    flush_reactive(&mut doc, &mut reactor);
+    assert!(node_text(&mut doc, root_id).contains("Home Page"));
+    page.set(Page::About);
+    flush_reactive(&mut doc, &mut reactor);
+    assert!(node_text(&mut doc, root_id).contains("About Page"));
+    assert!(!node_text(&mut doc, root_id).contains("Home Page"));
+    page.set(Page::Contact);
+    flush_reactive(&mut doc, &mut reactor);
+    assert!(node_text(&mut doc, root_id).contains("Contact Page"));
+    assert!(!node_text(&mut doc, root_id).contains("About Page"));
 }

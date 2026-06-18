@@ -66,7 +66,7 @@ fn main() {
             ],
         );
 
-        let shell_id = shell.mount(mutator, reactor, root);
+        let (shell_id, _scope) = shell.mount(mutator, reactor, root);
 
         // Wire buttons: shell→[title, buttons_row, list, count]
         let btns_row = mutator.child_ids(shell_id)[1];

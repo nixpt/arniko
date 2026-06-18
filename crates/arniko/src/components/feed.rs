@@ -4,9 +4,9 @@
 //! timestamped events with severity levels and styled classes.
 
 #[cfg(feature = "components")]
-use crate::{Component, ComponentMetadata};
-#[cfg(feature = "components")]
 use crate::components::escape_html;
+#[cfg(feature = "components")]
+use crate::{Component, ComponentMetadata};
 
 // ── Data Types ───────────────────────────────────────────────────────────────
 
@@ -33,6 +33,29 @@ impl FeedEntry {
 // ── HTML Component ───────────────────────────────────────────────────────────
 
 /// A scrollable activity feed panel.
+/// # Examples
+///
+/// ```rust,no_run
+/// use arniko::{Feed, FeedEntry};
+///
+/// let feed = Feed::new()
+///     .title("Audit")
+///     .title_icon("📝")
+///     .add(FeedEntry::new("14:23", "INFO", "Scan started", "info"));
+///
+/// let html = feed.render();
+/// ```
+///
+/// With the `reactive` feature:
+///
+/// ```rust,no_run
+/// # #[cfg(feature = "reactive")] {
+/// use arniko::{FeedEntry, feed_reactive, reactive::Signal};
+///
+/// let entries_signal = Signal::new(Vec::<FeedEntry>::new());
+/// let view = feed_reactive(entries_signal);
+/// # }
+/// ```
 #[cfg(feature = "components")]
 pub struct Feed {
     entries: Vec<FeedEntry>,
@@ -122,7 +145,11 @@ impl Feed {
                 </div>
             </div>
             "##,
-            escape_html(&self.class), escape_html(&self.title_icon), escape_html(&self.title), escape_html(&self.title), items_html
+            escape_html(&self.class),
+            escape_html(&self.title_icon),
+            escape_html(&self.title),
+            escape_html(&self.title),
+            items_html
         )
     }
 }

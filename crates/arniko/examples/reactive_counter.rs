@@ -63,7 +63,7 @@ fn main() {
             ],
         );
 
-        let shell_id = shell.mount(mutator, reactor, root);
+        let (shell_id, _scope) = shell.mount(mutator, reactor, root);
 
         // ── Wire click handlers ────────────────────────────────────────────────
         // Node IDs for the three buttons come from walking the mounted subtree.

@@ -4,9 +4,9 @@
 //! file and directory entries with indentation, icons, and selection state.
 
 #[cfg(feature = "components")]
-use crate::{Component, ComponentMetadata};
-#[cfg(feature = "components")]
 use crate::components::escape_html;
+#[cfg(feature = "components")]
+use crate::{Component, ComponentMetadata};
 
 // ── Data Types ───────────────────────────────────────────────────────────────
 
@@ -57,6 +57,32 @@ pub struct FileTreeState {
 // ── HTML Component ───────────────────────────────────────────────────────────
 
 /// A file tree browser panel.
+/// # Examples
+///
+/// ```rust,no_run
+/// use arniko::{FileTree, FileTreeState, FileTreeEntry};
+///
+/// let state = FileTreeState {
+///     root: "/src".to_string(),
+///     entries: vec![FileTreeEntry::new("src/main.rs", false, 1)],
+///     selected_file: None,
+///     file_content: None,
+/// };
+///
+/// let tree = FileTree::new().state(state);
+/// let html = tree.render();
+/// ```
+///
+/// With the `reactive` feature:
+///
+/// ```rust,no_run
+/// # #[cfg(feature = "reactive")] {
+/// use arniko::{FileTreeState, file_tree_reactive, reactive::Signal};
+///
+/// let state_signal = Signal::new(FileTreeState::default());
+/// let view = file_tree_reactive(state_signal);
+/// # }
+/// ```
 #[cfg(feature = "components")]
 pub struct FileTree {
     state: FileTreeState,
@@ -151,8 +177,7 @@ impl FileTree {
                     <span class="arniko-filetree-icon">{}</span>
                     <span class="arniko-filetree-name">{}</span>
                 </div>"#,
-                    row_class, selected_attr, escaped_path, tree_role,
-                    indent, icon, escaped_name
+                    row_class, selected_attr, escaped_path, tree_role, indent, icon, escaped_name
                 )
             })
             .collect();
@@ -184,7 +209,13 @@ impl FileTree {
                     {}
                 </div>
             </div>"##,
-            escape_html(&self.class), escape_html(&self.title), escape_html(&self.title_icon), escape_html(&self.title), escape_html(&self.state.root), rows, content_preview
+            escape_html(&self.class),
+            escape_html(&self.title),
+            escape_html(&self.title_icon),
+            escape_html(&self.title),
+            escape_html(&self.state.root),
+            rows,
+            content_preview
         )
     }
 
@@ -197,7 +228,11 @@ impl FileTree {
                 </div>
                 <div class="arniko-filetree-empty">{}</div>
             </div>"##,
-            escape_html(&self.class), escape_html(&self.title), escape_html(&self.title_icon), escape_html(&self.title), escape_html(&self.empty_message)
+            escape_html(&self.class),
+            escape_html(&self.title),
+            escape_html(&self.title_icon),
+            escape_html(&self.title),
+            escape_html(&self.empty_message)
         )
     }
 }

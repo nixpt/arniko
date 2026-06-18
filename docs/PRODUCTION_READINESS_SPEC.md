@@ -1,6 +1,6 @@
 # Arniko Production-Readiness Spec
 
-> **Status:** M2 in-progress · **Authored:** 2026-06-16 (foreman-z, [zorro] box, 6-agent analysis) ·
+> **Status:** M1 substantially complete · **Authored:** 2026-06-16 (foreman-z, [zorro] box, 6-agent analysis) ·
 > **Owner:** foreman-x (arniko) · **Audience:** anyone working on the arniko / Bliss stack.
 >
 > This is a north-star spec, not a sprint plan. It defines what "production-grade" means for
@@ -12,8 +12,55 @@
 > 🆕 extras delivered: keyboard nav, ARIA/keyboard unit tests (C-5🆕),
 > focus-visible outlines (C-6🆕), reduced motion (C-7🆕).
 > E-1/E-2 partial (18 reactive + 10 For integration tests).
-> **A-1/A-2/A-3** verified green on this box — workspace + reactive feature compile clean.
-> M2 is effectively done; M3 (engine robustness, EPIC D P0s) is the next frontier.
+>
+> **M1 follow-up (2026-06-17):** A-1 ✅ (workspace rebuild with `arniko-crush` excluded),
+> A-2/A-3 ✅ (the six predicted `reactive`-feature errors were already resolved by the
+> B-4..B-7 commits — `mustang::SceneScheduler` path corrected, mustang refs gated, flush
+> signature updated), A-6 ✅ (dead `arniko-crush` workspace-dep entry removed alongside A-1).
+> A-4 🔶 PARTIAL: stage 1 — exo-mesh's unconditional `libp2p::Multiaddr` import and
+> unbounded `MeshNode::peer_id` call into `Arc<NodeIdentity>` are now resolved via Cargo
+> feature unification (arniko lists exo-mesh as a direct optional dep and enables
+> `exo-mesh/p2p` through the `networking` feature); stage 2 — a separate
+> rcgen 0.13.2 / time blanket-impl conflict (E0119) surfaced once `libp2p` was actually
+> built. See A-4 below.
+>
+> **M3 status (2026-06-17):** ✅ DONE. D-1..D-8 swept across engine robustness &
+> tests: keyboard `todo!()`, slab `nodes[id]` direct indexing (D-2 phased as
+> D-2 phase 1, D-2b, D-2c, plus the open 🟡 D-2c-followup = widen
+> `BaseDocument::root_element` to `-> Option<&Node>` so empty-doc `hit`/`scroll`/
+> `clear_*` paths don't panic the painter), pointer-path unwraps on attacker HTML,
+> `cursor: none`, engine lock-poison (mirroring B-5), payload-decode,
+> resource-failure, error-type design. Reactive core tests (E-1, 18 unit tests
+> across `signal`/`computed`/`reactor`) and engine integration tests (E-2, 25
+> reactive_components tests) landed.
+>
+> **M4 status (2026-06-17):** ✅ DONE. Reactive hardening shipped end-to-end and
+> proved by a dogfood demo. **B-4 ✅** Scope-based binding lifecycle +
+> `park_scope` re-homing — `mount` returns a disposable `Scope`, node-id→binding
+> map, removed views shed bindings. **B-5 ✅** `parking_lot` migration kills the
+> lock-poison cascade in `signal`/`computed`/`reactor`/`sink`/`app`.
+> **B-6 ✅** Per-node keydown + inline `.on_*` handler chaining on view
+> builders. **B-7 🟡** Show/Switch conditional rendering 🆕 landed;
+> `create_effect`, `create_resource`, `provide`/`inject`, `batch()`,
+> error boundaries, programmatic flush, keyed lists remain ⬜ (gated by **D3**).
+> **For positional diff reconciliation** carries through B-2 — keyed identity,
+> per-item child reactors with disposal cascades, nested reactive children keep
+> updating across reconciliations. **ComponentView::to_view bridge** 🆕 — the
+> `Component::to_view(self) -> ComponentView<Self>` RAII adapter lets static
+> components (Badge, Card, …) mount into the reactive `View` tree without
+> manual `Box<dyn View>` wrapping.
+> **D-1..D-8** swept: D-1..D-3 in M3 (engine robustness, P0); D-4..D-8 in the M3→M4 handoff (engine panics, P1).
+> **Dogfood M4 demo** (`examples/dogfood_m4.rs` + `tests/dogfood_m4.rs`, gated by
+> `required-features = ["reactive"]`) exercises every primitive end-to-end
+> (Signal source → Computed heading list → For outline sidebar → Switch mode
+> picker + ComponentView Badge). Four integration tests run headlessly through
+> BaseDocument + Reactor (no winit): D-2c-followup empty-doc safety;
+> Signal→Computed→For round-trip; Switch branch reconciliation;
+> ComponentView<Badge> mount + render. See the M4 entry in §5 below for the
+> full close-out, and `docs/REMAINING_TRACKS.md` for what carries into M5+
+> (component completeness C-4..C-8, breath tests E-3..E-5, EPIC F packaging
+> gated by **D1**/**D4**, plus the open 🟡 **D-2c-followup** and **A-4b**
+> rcgen blocker).
 
 ## 1. What arniko is
 
@@ -60,12 +107,12 @@ Each ticket: problem → fix → acceptance. File refs are `crate/path:line`.
 
 ### EPIC A — Build & workspace integrity  *(must land first; nothing else is verifiable without it)*
 
-- **A-1 (P0) Workspace won't load standalone.** Root `Cargo.toml` member `crates/arniko-crush` depends on `../../../crush-ast/crates/crush-lang-sdk` (`arniko-crush/Cargo.toml:15`) which doesn't exist (crush-ast has `crush-cast`/`crush-vm`, no `crush-lang-sdk`). Cargo loads all member manifests first, so **every** `cargo` command fails `os error 2` in-repo. → Restore/rename the `crush-lang-sdk` crate in crush-ast, OR `[workspace] exclude` + drop `arniko-crush` from members until its dep is vendored. **Acceptance:** `cargo metadata` succeeds at the real repo root.
-- **A-2 (P0) `reactive` feature does not compile — the 6 known errors.** All in `crates/arniko/src/reactive/`: `mod.rs:12` `arniko_mustang::SceneScheduler` (crate is re-exported as `mustang`); `direct_mut.rs:34` + `reactor.rs:143` `crate::mustang::…` (only exists under `feature="gpu"`); `app.rs:92` `flush(&mut mutator)` needs 2 args; `direct_mut.rs:130/137` `local_name!(…).into()` can't make a `QualName`. → `mustang::SceneScheduler`; add `gpu` to the `reactive` feature OR `#[cfg(feature="gpu")]`-gate the refs; `flush(&mut mutator, None)`; `QualName::new(None, ns!(), local_name!("id"))`. **Acceptance:** `cargo check -p arniko --features reactive` green.
-- **A-3 (P0) `reactive` feature is incoherent — omits its own `gpu` dependency.** `reactive` hard-references `crate::mustang::SceneScheduler` but doesn't pull `gpu` (`arniko/Cargo.toml:9-17`), so it can never compile in isolation. → Either `reactive = [..., "gpu"]` or gate every `mustang` ref under `gpu`. **Acceptance:** the feature builds with *only* `--features reactive`.
-- **A-4 (P1) `full`/`networking` is red due to upstream exosphere.** `full ⊃ networking ⊃ exo-bliss-net ⊃ exosphere exo-mesh`, which fails to compile (`exo-mesh/src/node.rs:13` `libp2p` undeclared, `:208` `peer_id` on `Arc<NodeIdentity>`). arniko's networked build is hostage to exosphere's working tree. → Fix exo-mesh upstream; per **D4** consider depending on a pinned/published exo-bliss-net. **Acceptance:** `--features full` green from arniko's own tree.
+- **A-1 (P0) ✅ Workspace won't load standalone.** ~~Root `Cargo.toml` member `crates/arniko-crush` depends on `../../../crush-ast/crates/crush-lang-sdk` (`arniko-crush/Cargo.toml:15`) which doesn't exist~~. **Done:** dropped `arniko-crush` from `[workspace] members` and removed its dead `[workspace.dependencies]` entry (per A-6). `cargo metadata` succeeds; build is no longer hostage to crush-ast's working tree.
+- **A-2 (P0) ✅ `reactive` feature does not compile — the 6 known errors.** All in `crates/arniko/src/reactive/`. **Done:** resolved as side effect of B-4..B-7 — `mustang::SceneScheduler` path corrected, `mustang` refs gated under `gpu`, `flush(&mut mutator, Option<&SceneScheduler>)`, `QualName::new(...)` for `direct_mut.rs`. `cargo check -p arniko --features reactive` is green.
+- **A-3 (P0) ✅ `reactive` feature is incoherent — omits its own `gpu` dependency.** **Done:** with B-4..B-7's mustang gating the feature compiles without dragging `gpu` in. `--features reactive` alone passes.
+- **A-4 (P1) 🔶 PARTIAL `full`/`networking`** is now reduced to a single blocker. **Stage 1 ✅ (resolved on this branch, 2026-06-17):** the spec's two named exo-mesh compile errors — `exo-mesh/src/node.rs:13` `libp2p` undeclared and `:208` `peer_id` not on `Arc<NodeIdentity>` — are addressed purely within arniko: `crates/arniko/Cargo.toml` declares `exo-mesh` as a direct optional dep and the `networking` feature line enables `exo-mesh/p2p`, which triggers Cargo feature unification and materializes `libp2p` across the build graph. exo-mesh compiles and exo-bliss-net's previous failure modes are gone. **Stage 2 ⬜ (new sub-ticket A-4b):** enabling `libp2p` transitively pulled `rcgen 0.13.2`, whose blanket `impl<T: Into<String>> From<T>` for `OtherNameValue`/`DnValue` collides with a concrete impl required by a newer `time` crate version — `error[E0119] conflicting implementations of trait From<T>`. Two viable fixes: (a) trim exo-mesh's `libp2p` feature list to drop the `quic` path that brings rcgen in (out-of-tree edit OR vendor `crates/_vendored/exo-mesh`); (b) workspace-level `[workspace.dependencies] rcgen = "0.12"` override and reconcile. Either lands a green `cargo check -p arniko --features full,networking`. Per **D4**, this also re-opens the question of pinning arniko to a published exo-bliss-net so this upstream issue can't bite on every exo-mesh commit. **Acceptance (full):** `--features full` AND `--features networking` green from arniko's own tree.
 - **A-5 (P2) Clippy hygiene.** 18 warnings on the default build (missing `Default` impls for ~9 builder types, `method add` confusable with `std::ops::Add` ×5, `format!`-in-`format!`, double-ended `last`). → `clippy --fix` + add `Default`/`#[allow]`. **Acceptance:** `clippy -D warnings` clean (CI already gates this for arniko/bliss-dom).
-- **A-6 (P2) Stale workspace refs/docs.** Dead `arniko-crush` in root `[workspace.dependencies]:62`; `lib.rs:49` comment points at the old exosphere mustang path. → Clean up alongside A-1.
+- **A-6 (P2) ✅ Stale workspace refs/docs.** **Done:** alongside A-1 the dead `arniko-crush` workspace-dep entry was removed from the root `Cargo.toml`. The lib.rs stale mustang-path comment has not yet been audited — leaving as a residual cleanup that can fold into A-8 (new "stale comments" audit) if it gets created.
 
 ### EPIC B — Reactive runtime hardening  *(the SDK's value proposition; currently spike-quality)*
 
@@ -133,10 +180,135 @@ Inventory (runtime, excl. tests): ~178 `unwrap`, 18 `panic!`, 3 active `todo!`, 
 
 ## 5. Suggested milestone sequence
 
-1. **M1 — Unblock the build (EPIC A).** A-1 → A-2 → A-3 (then A-4). Without this nothing is verifiable; do it first.
+1. **M1 — Unblock the build (EPIC A).** A-1 → A-2 → A-3 (then A-4). Without this nothing is verifiable; do it first. **Status (2026-06-17):** A-1/A-2/A-3/A-6 ✅, A-4 stage 1 ✅, A-4 stage 2 (A-4b, rcgen/time blanket-impl conflict) ⬜. Effectively one ticket away from M1 done.
 2. **M2 — Reactive + component correctness (B-1..B-3, C-1..C-3). ✅ DONE.** Make the reactive path *correct* (flush, lists, click) and the components *safe* (theming, XSS, a11y). Extras: keyboard nav + focus-visible + reduced motion, unit + integration tests (C-5, E-1 partial, E-2 partial).
-3. **M3 — Robustness + tests (EPIC D P0/P1, E-1/E-2).** Stop the panics; lock in the behavior with the reactive-core + engine tests and a real CI gate.
-4. **M4 — Maturity + release (B-4..B-7, C-4..C-8, E-3..E-5, EPIC F).** Lifecycle, missing components, breadth tests, packaging — scoped by D1/D2/D3.
+3. **M3 — Robustness + tests (EPIC D P0/P1, E-1/E-2). ✅ DONE (2026-06-17).** Engine-panic
+   containment (D-1 → D-8 ✅ across M3/M4/D-2 phase splits; **D-2c-followup** 🟡 ⬜ = widen
+   `BaseDocument::root_element` to `-> Option<&Node>` so empty-doc `hit()`/`scroll_*`/`clear_*`
+   don't panic the painter); reactive-core + engine tests landed (E-1, 18 unit tests across
+   `signal`/`computed`/`reactor`; E-2, 25 `reactive_components.rs` + 4 new `dogfood_m4.rs`
+   integration tests). Reactive-core breadth + engine golden tests remain ⬜.
+
+4. **M4 — Reactive maturity + dogfood integration (B-4..B-7, D-4..D-8 sweep, dogfood demo).
+   ✅ DONE (2026-06-17).** The reactive path is now provable end-to-end through a single app.
+   **What landed:**
+   - **B-4 (Scope-based binding lifecycle, commit `0c4ae17`).** Every `mount` returns a
+     disposable `Scope`; node-id→binding map for per-node disposal; `Reactor.bindings` flat
+     under repeated mount+unmount.
+   - **`Reactor::park_scope` for closure-bound bindings.** Scopes created in patch closures
+     (Show/Switch re-mounts, `For` reconciliation) that return `()` have no caller to hold
+     the scope — `park_scope` re-homes the scope's `BindingHandle`s onto the reactor so
+     they survive past the closure return. Without it the bindings Drop immediately and
+     silently kill the child's reactivity after the first toggle.
+   - **B-5 (lock-poison cascade eliminated, commit `372ba64`).** `parking_lot` migration
+     across `signal`/`computed`/`reactor`/`sink`/`app` removes the `.unwrap()` poison
+     surface that bricked the app on a single panicking handler.
+   - **B-6 (event ergonomics, commit `893de31`).** Per-node keydown support + inline
+     `.on_*` handler chaining on view builders; `Div::with_on_input(...)` is no longer an
+     E0599.
+   - **B-7 (Show/Switch conditional rendering, commit `d79fa75`).** `Show<bool, _>` +
+     `Switch<T, R>` land; re-mount closures' returned scopes are `park_scope`d on the
+     reactor (same rationale as above). `create_effect`, `create_resource`,
+     `provide`/`inject`, `batch()`, error boundaries, programmatic flush, keyed lists 🟡 ⬜
+     (gated by **D3 — reactive ambition**).
+   - **For positional diff reconciliation** (carries through B-2). Keyed list diff;
+     item reactors are retained with disposal cascades; nested reactive children keep
+     updating across reconciliations.
+   - **`Component::to_view` bridge (ComponentView)** 🆕. The `Component::to_view(self) ->
+     ComponentView<Self>` RAII adapter (gated by `#[cfg(feature = "reactive")]`) lets
+     static components (`Badge`, `Card`, …) mount into the reactive `View` tree.
+     `Badge::new("M4").variant(BadgeVariant::Purple).to_view()` parcels into a
+     `ComponentView<Badge>` (which `impl View`); the trait import must be in scope for
+     method resolution. Consumed cleanly — one move, no manual `Box<dyn View>` wrap.
+   - **D-4..D-8** (engine panics, P1 sweep) folded into M4 alongside D-1..D-3 swept in M3.
+   - **Dogfood M4 demo** (`examples/dogfood_m4.rs` + `tests/dogfood_m4.rs`,
+     `required-features = ["reactive"]`). A single interactive markdown renderer drives
+     every reactive primitive end-to-end:
+     - `Signal<String>` — markdown source, mutated by click handlers, dummy-updates on
+       a timer-driven flush (B-1's self-driven flush carries through).
+     - `Computed<Vec<String>>` — heading list, derived via `.derive`, lazy re-eval on
+       read if any dep version has advanced.
+     - `For<_, _>` — outline sidebar that reconciles in place when the source bumps.
+     - `Switch<ViewMode, _>` — right-pane mode picker (rendered / source / outline); new
+       branch closure's returned scope is `park_scope`d so nested `Computed` reactivity
+       survives the toggle.
+     - `ComponentView<Badge>` — the top-bar app badge via the M4 RAII adapter.
+     Four headless integration tests (no winit):
+     - `d2c_followup_empty_doc_after_dogfood_mount_no_panic` — the dog's surfaced as a
+       regression target for the open D-2c-followup widening.
+     - `dogfood_signal_drives_computed_headings_round_trip` — full Signal → Computed →
+       For round-trip.
+     - `dogfood_switch_reconciles_branches_and_preserves_nested_reactivity` — Switch
+       branch survival + nested Computed update across toggles.
+     - `dogfood_component_view_badge_renders` — ComponentView<Badge> mount + render.
+   **What carries into M5+:**
+   - **B-7 remaining** (gated by **D3**): `create_effect`, `create_resource`,
+     `provide`/`inject`, `batch()`, error boundaries, programmatic flush, keyed lists.
+   - **C-4** unify the reactive surface — `toast.rs:10` `mount_toast -> usize`
+     diverges from the `*_reactive(Signal)` pattern.
+   - **C-5** hardcoded colors defeat theming — bulk wiped in `bar_chart`,
+     `progress_ring`, `sparkline`, `svg_bar_chart`, `toast`; remaining hot-spots in
+     `bliss-paint`/`bliss-shell` shaders.
+   - **C-6** constructor inconsistency — data-in-`new()` vs empty + `.add()`.
+   - **C-7** missing components for a general kit — Modal/Dialog, Drawer, Popover,
+     Menu/Dropdown; Select, Checkbox, Radio, Switch, Slider, Textarea; Tabs, Accordion,
+     Breadcrumb, Pagination, Steps; Table/DataGrid, List, Avatar, Tag/Chip, generic
+     Tree. **Scope gated by D2.**
+   - **C-8** dead code + stale docs — `placeholder_components.rs`,
+     `.dejavue/context.md:40` "13 components" → real count (~28), `lib.rs:28` theme list
+     4→6.
+   - **E-3..E-5** test breadth — `stylo_taffy/convert.rs` (850 LOC, 0 tests) table-driven;
+     `events/pointer.rs`+`keyboard.rs` hit-test/focus; ~9 untested components;
+     `bliss-paint` smoke tests; `--workspace` CI; macOS+Windows matrix; MSRV 1.85 pin;
+     visual/fuzz/coverage.
+   - **EPIC F** packaging (**gated by D1 — publish target** and **D4 — exosphere
+     coupling**): license compliance (F-3 P0), git-pinned dep blockers (F-1/F-2
+     P0-if-publishing), workspace metadata inheritance (F-4), top-level README +
+     audit (F-5), per-crate polish (F-6).
+   - **A-4b** (rcgen 0.13.2 / time blanket-impl E0119 unlocks `--features full`,
+     `--features networking` — requires either an exosphere-side cfg-gate PR
+     trimming libp2p `quic`/`relay` features, or an upstream rust-libp2p ≥ 0.56
+     release that bumps rcgen to `^0.14`).
+   - **D-2c-followup** (🟡; widens `BaseDocument::root_element` to `Option<&Node>`,
+     migrates 5 callers; tracked under D-2 in REMAINING_TRACKS).
+
+5. **M5 — Component completeness + breadth tests + release. Forward-looking.** Scope
+   crystallises once D1 (publish target) / D2 (SDK scope: general vs dashboard) /
+   D3 (reactive ambition: Leptos/Solid parity vs minimal) / D4 (exosphere coupling:
+   pinned/published vs path) resolve. The M4 close-out's M5+ backlog is the seed list:
+   - **B-7 remaining primitives** (gated by D3): `create_effect`, `create_resource`,
+     `provide`/`inject`, `batch()`, error boundaries, programmatic flush, keyed lists.
+   - **C-4..C-8** finish: unify reactive surface (`toast.rs:10` divergence, C-4);
+     finish color sweep in `bliss-paint`/`bliss-shell` shaders (C-5); constructor
+     consistency (C-6); missing-components-for-general-kit (C-7, **gated by D2** —
+     Modal/Dialog, Drawer, Popover, Menu/Dropdown, Select/Checkbox/Radio/Switch/Slider/
+     Textarea, Tabs/Accordion/Breadcrumb/Pagination/Steps, Table/DataGrid, List, Avatar,
+     Tag/Chip, generic Tree); dead code + stale docs (C-8 — `placeholder_components.rs`,
+     `.dejavue/context.md:40` count, theme list in `lib.rs:28`).
+   - **E-3..E-5** test breadth: table-driven `stylo_taffy/convert.rs` (850 LOC, 0
+     tests); `events/pointer.rs`+`keyboard.rs` hit-test/focus; ~9 untested components;
+     `bliss-paint` smoke tests; `--workspace` CI; macOS+Windows matrix; dedicated
+     MSRV (1.85) pin; visual/fuzz/coverage; wire `.cargo/audit.toml` into CI.
+   - **EPIC F** packaging (**gated by D1 + D4**): license compliance (F-3 P0);
+     git-pinned dep blockers (F-1/F-2 P0-if-publishing); workspace metadata
+     inheritance (F-4); top-level README + audit (F-5); per-crate polish (F-6).
+   - **A-4b** (rcgen 0.13.2 / time blanket-impl E0119 — `--features full,networking`
+     blocker; requires out-of-tree unblock via libp2p feature trim in exo-mesh
+     `Cargo.toml` + `p2p.rs`, or upstream rust-libp2p ≥ 0.56 release).
+   - **C-8 closed** (commit `283bd0e`, 2026-06-17 on `agent/vibe/dogfood-m4`):
+     orphan `placeholder_components.rs` deletion + `.dejavue/context.md` arniko-row "13→28"
+     component count reconcile + `lib.rs` crate doc-comment theme list 4→6 reconcile +
+     `DESIGN_SYSTEM.md` "Notes" section stale bullet removed. **Sub-task `C-8a` ⬜ Open:**
+     rustdoc `# Examples` for the 28 real component files (the deleted
+     `placeholder_components.rs:5` stubs were the old targets; the new scope is the 28 `pub mod`
+     modules under `crates/arniko/src/components/`: `alert`, `alert_panel`, `badge`, `bar_chart`,
+     `button`, `card`, `empty_state`, `feed`, `file_tree`, `input`, `kbd`, `keyboard_shortcuts`,
+     `metric_card`, `panel`, `progress_bar`, `progress_ring`, `separator`, `skeleton`, `sparkline`,
+     `spinner`, `splash_screen`, `status_badge`, `status_grid`, `svg_bar_chart`, `svg_line_chart`,
+     `theme_toggle`, `toast`, `tooltip`). Acceptance: `cargo doc -p arniko --no-deps` shows
+     `# Examples` headers on ≥25/28 components (≥89% coverage; near-duplicate CSS-only
+     escapes like `theme_toggle` / `keyboard_shortcuts` / `progress_ring` acceptable to skip).
+   - **D-2c-followup** 🟡 (close out D's last residual item).
 
 ## 6. Note for khukuri-desktop
 

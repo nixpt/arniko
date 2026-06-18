@@ -2,8 +2,8 @@
 //!
 //! Provides alert components for notifications and messages.
 
-use crate::{Component, ComponentMetadata};
 use crate::components::escape_html;
+use crate::{Component, ComponentMetadata};
 
 #[derive(Clone, PartialEq, Default)]
 pub enum AlertVariant {
@@ -14,6 +14,14 @@ pub enum AlertVariant {
     Error,
 }
 
+/// # Examples
+///
+/// ```rust,no_run
+/// use arniko::{Alert, AlertVariant};
+///
+/// let alert = Alert::new("Deployment successful")
+///     .variant(AlertVariant::Success);
+/// ```
 pub struct Alert {
     message: String,
     variant: AlertVariant,

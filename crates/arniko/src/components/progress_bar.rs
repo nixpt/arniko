@@ -1,7 +1,7 @@
 //! ProgressBar component for Arniko
 
-use crate::{Component, ComponentMetadata};
 use crate::components::escape_html;
+use crate::{Component, ComponentMetadata};
 
 #[derive(Clone, PartialEq, Default)]
 pub enum ProgressColor {
@@ -14,6 +14,17 @@ pub enum ProgressColor {
     Red,
 }
 
+/// # Examples
+///
+/// ```rust,no_run
+/// use arniko::{ProgressBar, ProgressColor};
+///
+/// let bar = ProgressBar::new(73.5)
+///     .max(100.0)
+///     .label("Uploading...")
+///     .color(ProgressColor::Green)
+///     .show_percentage(true);
+/// ```
 pub struct ProgressBar {
     value: f32,
     max: f32,
@@ -84,7 +95,8 @@ impl ProgressBar {
                 <span class="arniko-progress-label">{}</span>
                 <span class="arniko-progress-pct">{}</span>
             </div>"#,
-                escape_html(label_text), percentage_text
+                escape_html(label_text),
+                percentage_text
             )
         } else {
             String::new()

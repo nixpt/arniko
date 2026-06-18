@@ -4,9 +4,9 @@
 //! with a progress bar, status text, and optional branding elements.
 
 #[cfg(feature = "components")]
-use crate::{Component, ComponentMetadata};
-#[cfg(feature = "components")]
 use crate::components::escape_html;
+#[cfg(feature = "components")]
+use crate::{Component, ComponentMetadata};
 
 /// Configuration for the splash screen's appearance.
 #[derive(Clone, Debug)]
@@ -33,6 +33,33 @@ impl Default for SplashConfig {
 // ── HTML Component ───────────────────────────────────────────────────────────
 
 /// A full-screen splash/loading screen with a progress bar.
+/// # Examples
+///
+/// ```rust,no_run
+/// use arniko::{SplashScreen, SplashConfig};
+///
+/// let config = SplashConfig {
+///     progress: 42,
+///     status: "Loading...".into(),
+///     ..Default::default()
+/// };
+///
+/// let splash = SplashScreen::new(config)
+///     .display(true);
+///
+/// let html = splash.render();
+/// ```
+///
+/// With the `reactive` feature:
+///
+/// ```rust,no_run
+/// # #[cfg(feature = "reactive")] {
+/// use arniko::{SplashConfig, splash_screen_reactive, reactive::Signal};
+///
+/// let config_signal = Signal::new(SplashConfig::default());
+/// let view = splash_screen_reactive(&config_signal);
+/// # }
+/// ```
 #[cfg(feature = "components")]
 pub struct SplashScreen {
     config: SplashConfig,

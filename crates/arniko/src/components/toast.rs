@@ -4,12 +4,12 @@
 //! mount helper that shows/hides based on a `Signal<Option<String>>`.
 
 #[cfg(feature = "components")]
-use crate::{Component, ComponentMetadata};
-#[cfg(feature = "components")]
 use crate::components::escape_html;
+#[cfg(feature = "components")]
+use crate::{Component, ComponentMetadata};
 
 #[cfg(feature = "reactive")]
-use crate::reactive::{Div, Reactor, Signal, Text, View};
+use crate::reactive::{Div, Reactor, Scope, Signal, Text, View};
 #[cfg(feature = "reactive")]
 use bliss_dom::DocumentMutator;
 
@@ -34,6 +34,30 @@ pub enum ToastVariant {
 // ── HTML Component ───────────────────────────────────────────────────────────
 
 /// A static toast notification. Renders as a fixed-position banner.
+/// # Examples
+///
+/// ```rust,no_run
+/// use arniko::{Toast, ToastVariant, ToastPosition};
+///
+/// let toast = Toast::new("Deployment successful")
+///     .variant(ToastVariant::Success)
+///     .position(ToastPosition::Top);
+///
+/// let html = toast.render();
+/// ```
+///
+/// With the `reactive` feature:
+///
+/// ```rust,no_run
+/// # #[cfg(feature = "reactive")] {
+/// use arniko::{mount_toast, reactive::{Signal, Reactor}, bliss_dom::DocumentMutator};
+///
+/// // `mount_toast` registers a reactive binding on the supplied reactor
+/// // and returns the container node ID + the lifecycle scope:
+/// // let (id, scope) = mount_toast(mutator, reactor, parent_id,
+/// //                              &Signal::new(Some("test".into())));
+/// # }
+/// ```
 #[cfg(feature = "components")]
 pub struct Toast {
     message: String,
@@ -82,7 +106,10 @@ impl Toast {
 
         format!(
             r#"<div class="arniko-toast {} {}" style="{}" role="status" aria-live="polite">{}</div>"#,
-            variant_class, escape_html(&self.class), position_style, escape_html(&self.message)
+            variant_class,
+            escape_html(&self.class),
+            position_style,
+            escape_html(&self.message)
         )
     }
 }
@@ -108,13 +135,14 @@ impl Component for Toast {
 ///
 /// The toast is visible when `toast_message` is `Some` and hidden (opacity 0)
 /// when `None`. Text content updates reactively via the reactor.
+/// Returns the container node ID and a Scope for lifecycle management.
 #[cfg(feature = "reactive")]
 pub fn mount_toast(
     mutator: &mut DocumentMutator,
     reactor: &mut Reactor,
     parent_id: usize,
     toast_message: &Signal<Option<String>>,
-) -> usize {
+) -> (usize, Scope) {
     mount_toast_with_variant(
         mutator,
         reactor,
@@ -125,6 +153,7 @@ pub fn mount_toast(
 }
 
 /// Mount a reactive toast notification with a specific variant styling.
+/// Returns the container node ID and a Scope for lifecycle management.
 #[cfg(feature = "reactive")]
 pub fn mount_toast_with_variant(
     mutator: &mut DocumentMutator,
@@ -132,15 +161,15 @@ pub fn mount_toast_with_variant(
     parent_id: usize,
     toast_message: &Signal<Option<String>>,
     variant: ToastVariant,
-) -> usize {
+) -> (usize, Scope) {
     let bg_color = match variant {
-        ToastVariant::Info => "rgba(59,130,246,0.9)",
-        ToastVariant::Success => "rgba(34,197,94,0.9)",
-        ToastVariant::Warning => "rgba(245,158,11,0.9)",
-        ToastVariant::Error => "rgba(239,68,68,0.9)",
+        ToastVariant::Info => "var(--arniko-info)",
+        ToastVariant::Success => "var(--arniko-success)",
+        ToastVariant::Warning => "var(--arniko-warning)",
+        ToastVariant::Error => "var(--arniko-error)",
     };
     let inner_style = format!(
-        "padding:10px 20px; border-radius:6px; background:{}; color:#fff; font-size:13px; font-weight:600; box-shadow:0 4px 12px rgba(0,0,0,0.3); white-space:nowrap;",
+        "padding:10px 20px; border-radius:6px; background:{}; color:var(--arniko-white); font-size:13px; font-weight:600; box-shadow:0 4px 12px rgba(0,0,0,0.3); white-space:nowrap;",
         bg_color
     );
     let toast_container = Div::styled(
@@ -150,7 +179,7 @@ pub fn mount_toast_with_variant(
             vec![Box::new(Text("".to_string()))],
         ))],
     );
-    let container_id = toast_container.mount(mutator, reactor, parent_id);
+    let (container_id, scope) = toast_container.mount(mutator, reactor, parent_id);
 
     let inner_id = mutator.child_ids(container_id)[0];
     let text_id = mutator.child_ids(inner_id)[0];
@@ -183,7 +212,7 @@ pub fn mount_toast_with_variant(
         }
     });
 
-    container_id
+    (container_id, scope)
 }
 
 #[cfg(test)]

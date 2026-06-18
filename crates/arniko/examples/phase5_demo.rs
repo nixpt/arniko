@@ -16,7 +16,7 @@
 use arniko::mustang::scheduler::SceneScheduler;
 use arniko::reactive::direct_mut::DirectDomMutator;
 use arniko::reactive::{
-    Div, EventRouter, Reactor, ReactiveText, Signal, StaticHtml, Text, View,
+    Div, EventRouter, ReactiveText, Reactor, Signal, StaticHtml, Text, View,
     launch_reactive_configured,
 };
 use bliss_dom::DocumentMutator;
@@ -26,7 +26,11 @@ fn main() {
 
     launch_reactive_configured(
         // ── DOM + signal setup ────────────────────────────────────────────────
-        |mutator: &mut DocumentMutator, reactor: &mut Reactor, router: &mut EventRouter, root, _rt| {
+        |mutator: &mut DocumentMutator,
+         reactor: &mut Reactor,
+         router: &mut EventRouter,
+         root,
+         _rt| {
             let count = Signal::new(0i32);
 
             // Use DirectDomMutator to demonstrate the Phase 5 mutation API.
@@ -76,7 +80,7 @@ fn main() {
             );
 
             // Mount the view, capturing the button IDs.
-            let mounted = ui.mount(dm.raw(), reactor, root);
+            let (mounted, _scope) = ui.mount(dm.raw(), reactor, root);
             let _btn_minus = dm.raw().child_ids(mounted).get(2).copied();
             let _btn_plus = dm.raw().child_ids(mounted).get(3).copied();
 

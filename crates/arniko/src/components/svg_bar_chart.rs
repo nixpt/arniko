@@ -6,9 +6,9 @@
 //! Distinct from the HTML-based `BarChart` which uses `<div>` elements.
 
 #[cfg(feature = "components")]
-use crate::{Component, ComponentMetadata};
-#[cfg(feature = "components")]
 use crate::components::escape_html;
+#[cfg(feature = "components")]
+use crate::{Component, ComponentMetadata};
 
 /// A single bar entry in the SVG chart.
 #[derive(Clone, Debug)]
@@ -34,6 +34,30 @@ impl SvgBarEntry {
 ///
 /// Each bar is a `<rect>` scaled relative to the largest value. Labels are
 /// `<text>` elements positioned on the left; values on the right.
+/// # Examples
+///
+/// ```rust,no_run
+/// use arniko::{SvgBarChart, SvgBarEntry};
+///
+/// let chart = SvgBarChart::new()
+///     .title("Benchmarks")
+///     .title_icon("⚡")
+///     .value_suffix("ms")
+///     .add(SvgBarEntry::new("test_a", 12.3, "var(--arniko-cyan)"));
+///
+/// let html = chart.render();
+/// ```
+///
+/// With the `reactive` feature:
+///
+/// ```rust,no_run
+/// # #[cfg(feature = "reactive")] {
+/// use arniko::{SvgBarEntry, svg_bar_chart_reactive, reactive::Signal};
+///
+/// let entries_signal = Signal::new(Vec::<SvgBarEntry>::new());
+/// let view = svg_bar_chart_reactive(entries_signal);
+/// # }
+/// ```
 #[cfg(feature = "components")]
 pub struct SvgBarChart {
     entries: Vec<SvgBarEntry>,
@@ -172,7 +196,7 @@ impl SvgBarChart {
                 let value_str = format!("{:.2}{}", entry.value, self.value_suffix);
 
                 format!(
-                    r##"<text x="8" y="{y_label}" class="arniko-svgbar-label" fill="#94a3b8">{label}</text>
+                    r##"<text x="8" y="{y_label}" class="arniko-svgbar-label" fill="var(--arniko-text-muted)">{label}</text>
 <rect x="{bar_x}" y="{y_rect}" width="{width}" height="{bar_h}" fill="{color}" rx="2" opacity="0.85"/>
 <text x="{x_val}" y="{y_label}" class="arniko-svgbar-value" fill="{color}">{value_str}</text>
 "##,
@@ -215,7 +239,8 @@ impl SvgBarChart {
                         <span class="arniko-svgbar-icon">{}</span>
                         <span class="arniko-svgbar-title">{}</span>
                     </div>"#,
-                    escape_html(icon), escape_html(title)
+                    escape_html(icon),
+                    escape_html(title)
                 )
             }
             (Some(title), None) => {
@@ -237,7 +262,8 @@ impl SvgBarChart {
     <div class="arniko-svgbar-empty">{}</div>
 </div>
 "#,
-            escape_html(&self.class), self.empty_message
+            escape_html(&self.class),
+            self.empty_message
         )
     }
 }
@@ -334,8 +360,8 @@ mod tests {
     #[test]
     fn test_svg_bar_chart_with_entries() {
         let chart = SvgBarChart::new()
-            .add(SvgBarEntry::new("A", 50.0, "#ef4444"))
-            .add(SvgBarEntry::new("B", 30.0, "#00f2ff"));
+            .add(SvgBarEntry::new("A", 50.0, "var(--arniko-error)"))
+            .add(SvgBarEntry::new("B", 30.0, "var(--arniko-cyan)"));
         let html = chart.render();
         assert!(html.contains("<svg"));
         assert!(html.contains("A"));
@@ -351,7 +377,7 @@ mod tests {
         let chart = SvgBarChart::new()
             .title("Benchmark Performance")
             .title_icon("⚡")
-            .add(SvgBarEntry::new("test_bench", 12.3, "#00f2ff"));
+            .add(SvgBarEntry::new("test_bench", 12.3, "var(--arniko-cyan)"));
         let html = chart.render();
         assert!(html.contains("Benchmark Performance"));
         assert!(html.contains("⚡"));
@@ -362,9 +388,11 @@ mod tests {
     #[cfg(feature = "components")]
     #[test]
     fn test_svg_bar_chart_value_suffix() {
-        let chart = SvgBarChart::new()
-            .value_suffix("ms")
-            .add(SvgBarEntry::new("X", 5.0, "#00f2ff"));
+        let chart = SvgBarChart::new().value_suffix("ms").add(SvgBarEntry::new(
+            "X",
+            5.0,
+            "var(--arniko-cyan)",
+        ));
         let html = chart.render();
         assert!(html.contains("5.00ms"));
     }

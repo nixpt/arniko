@@ -17,9 +17,9 @@
 //! ```
 
 #[cfg(feature = "components")]
-use crate::{Component, ComponentMetadata};
-#[cfg(feature = "components")]
 use crate::components::escape_html;
+#[cfg(feature = "components")]
+use crate::{Component, ComponentMetadata};
 
 /// A single shortcut entry.
 #[derive(Clone, Debug)]
@@ -40,6 +40,32 @@ impl ShortcutEntry {
 // ── HTML Component ───────────────────────────────────────────────────────────
 
 /// A keyboard shortcuts cheatsheet rendered as a modal overlay.
+/// # Examples
+///
+/// ```rust,no_run
+/// use arniko::{KeyboardShortcuts, ShortcutEntry};
+///
+/// let shortcuts = KeyboardShortcuts::new(vec![
+///     ShortcutEntry::new("Ctrl+S", "Save file"),
+///     ShortcutEntry::new("?", "Show this help"),
+/// ]);
+///
+/// let html = shortcuts.render();
+/// ```
+///
+/// With the `reactive` feature:
+///
+/// ```rust,no_run
+/// # #[cfg(feature = "reactive")] {
+/// use arniko::{ShortcutEntry, shortcut_help_reactive, reactive::Signal};
+///
+/// let visible = Signal::new(false);
+/// let view = shortcut_help_reactive(
+///     &visible,
+///     vec![ShortcutEntry::new("Esc", "Close")]
+/// );
+/// # }
+/// ```
 #[cfg(feature = "components")]
 pub struct KeyboardShortcuts {
     shortcuts: Vec<ShortcutEntry>,
@@ -87,7 +113,8 @@ impl KeyboardShortcuts {
                     <span class="arniko-shortcut-keys">{}</span>
                     <span class="arniko-shortcut-action">{}</span>
                 </div>"#,
-                    escape_html(&s.keys), escape_html(&s.action)
+                    escape_html(&s.keys),
+                    escape_html(&s.action)
                 )
             })
             .collect();
@@ -103,7 +130,10 @@ impl KeyboardShortcuts {
                     <div class="arniko-shortcut-footer">{}</div>
                 </div>
             </div>"#,
-            escape_html(&self.class), escape_html(&self.title), rows, escape_html(&self.footer)
+            escape_html(&self.class),
+            escape_html(&self.title),
+            rows,
+            escape_html(&self.footer)
         )
     }
 }

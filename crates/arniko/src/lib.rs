@@ -26,7 +26,7 @@
 //! - **Components**: HTML component library with embedded CSS
 //! - **Compositor**: Post-processing effects for advanced CSS features
 //! - **Mustang**: GPU-accelerated effect compositor
-//! - **Theme**: Theme management system (Dark, Frosted, Cyberpunk, Aurora)
+//! - **Theme**: Theme management system (Dark, Light, System, Frosted, Cyberpunk, Aurora)
 //! - **CSS**: CSS normalization for Bliss compatibility
 //!
 //! ## Feature Flags
@@ -244,6 +244,16 @@ pub trait Component {
     /// Get component metadata
     fn metadata(&self) -> ComponentMetadata {
         ComponentMetadata::default()
+    }
+
+    /// Convert this component to a reactive View.
+    /// This allows static components to be used seamlessly in the reactive system.
+    #[cfg(feature = "reactive")]
+    fn to_view(self) -> crate::reactive::ComponentView<Self>
+    where
+        Self: Sized,
+    {
+        crate::reactive::ComponentView(self)
     }
 }
 

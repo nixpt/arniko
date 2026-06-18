@@ -1,7 +1,7 @@
 //! StatusGrid component for Arniko
 
-use crate::{Component, ComponentMetadata};
 use crate::components::escape_html;
+use crate::{Component, ComponentMetadata};
 
 #[derive(Clone, PartialEq, Default)]
 pub enum StatusState {
@@ -13,6 +13,17 @@ pub enum StatusState {
     Offline,
 }
 
+/// # Examples
+///
+/// ```rust,no_run
+/// use arniko::{StatusGrid, StatusIndicator, StatusState};
+///
+/// let grid = StatusGrid::new()
+///     .columns(2)
+///     .add(StatusIndicator::new("Daemon", "Running").state(StatusState::Active).pulse(true))
+///     .add(StatusIndicator::new("Mesh", "Degraded").state(StatusState::Warning))
+///     .add(StatusIndicator::new("Vault", "Locked").state(StatusState::Error));
+/// ```
 pub struct StatusIndicator {
     label: String,
     value: String,
@@ -70,7 +81,11 @@ impl StatusIndicator {
                     <span class="arniko-status-text">{}</span>
                 </div>
             </div>"#,
-            escape_html(&self.class), escape_html(&self.label), state_class, pulse_class, escape_html(&self.value)
+            escape_html(&self.class),
+            escape_html(&self.label),
+            state_class,
+            pulse_class,
+            escape_html(&self.value)
         )
     }
 }
@@ -85,6 +100,17 @@ impl Component for StatusIndicator {
     }
 }
 
+/// # Examples
+///
+/// ```rust,no_run
+/// use arniko::{StatusGrid, StatusIndicator, StatusState};
+///
+/// let grid = StatusGrid::new()
+///     .columns(2)
+///     .add(StatusIndicator::new("Daemon", "Running").state(StatusState::Active).pulse(true))
+///     .add(StatusIndicator::new("Mesh", "Degraded").state(StatusState::Warning))
+///     .add(StatusIndicator::new("Vault", "Locked").state(StatusState::Error));
+/// ```
 pub struct StatusGrid {
     items: Vec<StatusIndicator>,
     columns: u32,
@@ -127,7 +153,9 @@ impl StatusGrid {
             r#"<div class="arniko-status-grid {}" style="grid-template-columns: repeat({}, 1fr);">
                 {}
             </div>"#,
-            escape_html(&self.class), self.columns, items_html
+            escape_html(&self.class),
+            self.columns,
+            items_html
         )
     }
 }

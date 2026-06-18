@@ -2,9 +2,19 @@
 //!
 //! Provides card components with title and body content.
 
-use crate::{Component, ComponentMetadata};
 use crate::components::escape_html;
+use crate::{Component, ComponentMetadata};
 
+/// # Examples
+///
+/// ```rust,no_run
+/// use arniko::Card;
+///
+/// let card = Card::new()
+///     .title("System Status")
+///     .body("All systems operational")
+///     .class("dashboard-card");
+/// ```
 pub struct Card {
     title: Option<String>,
     body: Option<String>,

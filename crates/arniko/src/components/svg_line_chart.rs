@@ -8,8 +8,8 @@
 #[cfg(feature = "components")]
 use {
     super::svg_util::{build_area, build_path},
-    crate::{Component, ComponentMetadata},
     crate::components::escape_html,
+    crate::{Component, ComponentMetadata},
 };
 
 /// Line style for a series.
@@ -70,6 +70,30 @@ impl LineSeries {
 ///
 /// Each series is rendered as a `<path>` line with optional area fill, data point
 /// circles, grid lines, axis labels, and legend.
+/// # Examples
+///
+/// ```rust,no_run
+/// use arniko::{SvgLineChart, LineSeries, LineStyle};
+///
+/// let chart = SvgLineChart::new()
+///     .title("CPU/Mem")
+///     .x_labels(vec!["T1".into(), "T2".into(), "T3".into(), "T4".into()])
+///     .add_series(LineSeries::new("CPU", "var(--arniko-cyan)", vec![42.0, 51.0, 47.0, 60.0]).with_area())
+///     .add_series(LineSeries::new("Mem", "var(--arniko-accent)", vec![60.0, 65.0, 71.0, 73.0]).dashed());
+///
+/// let html = chart.render();
+/// ```
+///
+/// With the `reactive` feature:
+///
+/// ```rust,no_run
+/// # #[cfg(feature = "reactive")] {
+/// use arniko::{LineSeries, svg_line_chart_reactive, reactive::Signal};
+///
+/// let series_signal = Signal::new(Vec::<LineSeries>::new());
+/// let view = svg_line_chart_reactive(series_signal);
+/// # }
+/// ```
 #[cfg(feature = "components")]
 pub struct SvgLineChart {
     series: Vec<LineSeries>,
@@ -358,7 +382,8 @@ impl SvgLineChart {
                         <span class="arniko-linechart-icon">{}</span>
                         <span class="arniko-linechart-title">{}</span>
                     </div>"#,
-                    escape_html(icon), escape_html(title)
+                    escape_html(icon),
+                    escape_html(title)
                 )
             }
             (Some(title), None) => {
@@ -380,7 +405,8 @@ impl SvgLineChart {
     <div class="arniko-linechart-empty">{}</div>
 </div>
 "#,
-            escape_html(&self.class), escape_html(&self.empty_message)
+            escape_html(&self.class),
+            escape_html(&self.empty_message)
         )
     }
 }

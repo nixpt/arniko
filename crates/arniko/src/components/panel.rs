@@ -3,9 +3,22 @@
 //! A container with a title bar and body content.
 //! Maps to capsule-ui's Panel component.
 
-use crate::{Component, ComponentMetadata};
 use crate::components::escape_html;
+use crate::{Component, ComponentMetadata};
 
+/// # Examples
+///
+/// ```rust,no_run
+/// use arniko::Panel;
+///
+/// let panel = Panel::new()
+///     .title("Tree Inspector")
+///     .icon("👁️")
+///     .body("Pick a node...")
+///     .closable(true);
+///
+/// let html = panel.render();
+/// ```
 pub struct Panel {
     title: Option<String>,
     body: Option<String>,
@@ -54,7 +67,12 @@ impl Panel {
         let icon_html = self
             .icon
             .as_ref()
-            .map(|i| format!(r#"<span class="arniko-panel-icon">{}</span>"#, escape_html(i)))
+            .map(|i| {
+                format!(
+                    r#"<span class="arniko-panel-icon">{}</span>"#,
+                    escape_html(i)
+                )
+            })
             .unwrap_or_default();
 
         let close_btn = if self.closable {
@@ -66,7 +84,9 @@ impl Panel {
         let header_html = match &self.title {
             Some(t) => format!(
                 r#"<div class="arniko-panel-header">{}<span class="arniko-panel-title">{}</span>{}</div>"#,
-                icon_html, escape_html(t), close_btn
+                icon_html,
+                escape_html(t),
+                close_btn
             ),
             None => String::new(),
         };
@@ -79,7 +99,9 @@ impl Panel {
 
         format!(
             r#"<div class="arniko-panel {}">{}{}</div>"#,
-            escape_html(&self.class), header_html, body_html
+            escape_html(&self.class),
+            header_html,
+            body_html
         )
     }
 }

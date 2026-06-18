@@ -37,7 +37,7 @@ CARGO_TARGET_DIR=/build/target-arniko cargo check --workspace
 | `anyrender_vello` | Vello-backed anyrender implementation |
 | `tui-shell` | Ratatui/crossterm TUI shell (optional exoshell feature) |
 | `mustang` | GPU post-processor: blur/transform CSS synthetic effects (wgpu v27 / vello 0.7) |
-| `arniko` | Unified UI SDK: 13 components, 6 themes (Dark/Light/System/Frosted/Cyberpunk/Aurora) |
+| `arniko` | Unified UI SDK: 28 components, 6 themes (Dark/Light/System/Frosted/Cyberpunk/Aurora) |
 
 ## Memory
 

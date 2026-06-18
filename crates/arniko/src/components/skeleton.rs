@@ -2,6 +2,14 @@
 
 use crate::{Component, ComponentMetadata};
 
+/// # Examples
+///
+/// ```rust,no_run
+/// use arniko::{Skeleton, SkeletonCard};
+///
+/// let line = Skeleton::new().width("100%").height("16px");
+/// let card = SkeletonCard::new().class("w-64");
+/// ```
 pub struct Skeleton {
     width: String,
     height: String,
@@ -50,6 +58,14 @@ impl Component for Skeleton {
     }
 }
 
+/// # Examples
+///
+/// ```rust,no_run
+/// use arniko::{Skeleton, SkeletonCard};
+///
+/// let line = Skeleton::new().width("100%").height("16px");
+/// let card = SkeletonCard::new().class("w-64");
+/// ```
 pub struct SkeletonCard {
     class: String,
 }

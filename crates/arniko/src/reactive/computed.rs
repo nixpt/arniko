@@ -1,4 +1,5 @@
-use std::sync::{Arc, Mutex};
+use parking_lot::Mutex;
+use std::sync::Arc;
 
 use super::signal::{Reactive, Signal};
 
@@ -51,13 +52,13 @@ impl<T: Clone + Send + Sync + 'static> Reactive<T> for Computed<T> {
 
 impl<T: Clone + Send + Sync + 'static> Computed<T> {
     pub fn get(&self) -> T {
-        let mut inner = self.inner.lock().unwrap();
+        let mut inner = self.inner.lock();
         inner.maybe_recompute();
         inner.value.clone()
     }
 
     pub(super) fn version(&self) -> u64 {
-        let mut inner = self.inner.lock().unwrap();
+        let mut inner = self.inner.lock();
         inner.maybe_recompute();
         inner.version
     }

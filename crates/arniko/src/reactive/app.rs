@@ -1,4 +1,5 @@
-use std::sync::{Arc, Mutex};
+use parking_lot::Mutex;
+use std::sync::Arc;
 
 use anyrender_vello::VelloWindowRenderer;
 use bliss::dom::{Document, DocumentConfig};
@@ -64,9 +65,7 @@ impl ApplicationHandler for ReactiveApplication {
         for view in self.inner.windows.values_mut() {
             let mut inner = view.doc.inner_mut();
             let mut mutator = inner.mutate();
-            if let Ok(mut reactor) = self.reactor.lock() {
-                reactor.flush(&mut mutator, None);
-            }
+            self.reactor.lock().flush(&mut mutator, None);
             drop(mutator);
             drop(inner);
             view.request_redraw();
@@ -99,7 +98,7 @@ impl ApplicationHandler for ReactiveApplication {
             let mut mutator = inner.mutate();
             // No SceneScheduler in the non-GPU reactive launch path → no GPU
             // re-application coordination needed.
-            self.reactor.lock().unwrap().flush(&mut mutator, None);
+            self.reactor.lock().flush(&mut mutator, None);
             drop(mutator);
             drop(inner);
             view.request_redraw();
@@ -124,7 +123,13 @@ impl ApplicationHandler for ReactiveApplication {
 ///
 /// For GPU effects (blur, transforms, …), use [`launch_reactive_configured`] instead.
 pub fn launch_reactive(
-    setup: impl FnOnce(&mut bliss::dom::DocumentMutator, &mut Reactor, &mut EventRouter, usize, &ReactiveRuntime),
+    setup: impl FnOnce(
+        &mut bliss::dom::DocumentMutator,
+        &mut Reactor,
+        &mut EventRouter,
+        usize,
+        &ReactiveRuntime,
+    ),
 ) {
     launch_reactive_configured(setup, |_| {});
 }
@@ -150,7 +155,13 @@ pub fn launch_reactive(
 /// );
 /// ```
 pub fn launch_reactive_configured(
-    setup: impl FnOnce(&mut bliss::dom::DocumentMutator, &mut Reactor, &mut EventRouter, usize, &ReactiveRuntime),
+    setup: impl FnOnce(
+        &mut bliss::dom::DocumentMutator,
+        &mut Reactor,
+        &mut EventRouter,
+        usize,
+        &ReactiveRuntime,
+    ),
     configure_renderer: impl FnOnce(&mut VelloWindowRenderer),
 ) {
     let event_loop = create_default_event_loop();
@@ -179,9 +190,11 @@ pub fn launch_reactive_configured(
         inner.set_event_sink(Arc::new(sink));
         inner.set_events_enabled(true);
 
+        // D-2c-followup: root_element widened to Option<&Node>; degrade to a
+        // sentinel id (0) instead of unwrap-panicking.
         let root_id = inner
             .get_element_by_id("arniko-root")
-            .unwrap_or_else(|| inner.root_element().id);
+            .unwrap_or_else(|| inner.root_element().map(|r| r.id).unwrap_or(0));
 
         let mut reactor = Reactor::new();
         let mut mutator = inner.mutate();

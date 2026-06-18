@@ -110,7 +110,7 @@ fn main() {
             ],
         );
 
-        let ui_id = ui.mount(mutator, reactor, root);
+        let (ui_id, _scope) = ui.mount(mutator, reactor, root);
 
         // ── Wire click handlers ───────────────────────────────────────────────
         let counter_card = mutator.child_ids(ui_id)[1];
