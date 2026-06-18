@@ -100,6 +100,15 @@ bliss-html = { path = "../bliss-html" }
 name = "reactive_components"
 required-features = ["reactive"]
 
+# `tests/reactive_signals.rs` imports `arniko::reactive`, `arniko::mustang`, and
+# `bliss_dom` — all gated behind the `reactive` feature / workspace path. Without
+# `required-features = ["reactive"]`, `cargo clippy --all-targets` compiles this
+# test binary without the reactive feature and E0432/E0433-fails at the imports.
+# PR-#1-CI fix: gate it parallel to `reactive_components`.
+[[test]]
+name = "reactive_signals"
+required-features = ["reactive"]
+
 # Examples gated to the features they need so `cargo check -p arniko` (default
 # features only) stays green. Run with --features to build a specific example.
 [[example]]
