@@ -122,8 +122,7 @@ impl View for ErrorBoundary {
                 let new_container_id = mutator.create_element(div_name(), vec![]);
                 mutator.append_children(parent, &[new_container_id]);
                 let fallback_view = (self.fallback)();
-                let (_, fallback_scope) =
-                    fallback_view.mount(mutator, reactor, new_container_id);
+                let (_, fallback_scope) = fallback_view.mount(mutator, reactor, new_container_id);
                 combined_scope.merge(fallback_scope);
                 (new_container_id, combined_scope)
             }

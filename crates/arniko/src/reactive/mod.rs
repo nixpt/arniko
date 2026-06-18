@@ -15,8 +15,8 @@ mod sink;
 mod view;
 
 // Re-export renderer types needed to write set_scene_effects hooks.
-pub use anyrender_vello::{VelloScenePainter, VelloWindowRenderer};
 pub use crate::mustang::SceneScheduler;
+pub use anyrender_vello::{VelloScenePainter, VelloWindowRenderer};
 
 pub use app::{ReactiveRuntime, launch_reactive, launch_reactive_configured};
 pub use batch::batch;

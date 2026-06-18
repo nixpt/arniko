@@ -8,8 +8,8 @@
 #[cfg(feature = "components")]
 use {
     super::svg_util::{build_area, build_path},
-    crate::{Component, ComponentMetadata},
     crate::components::escape_html,
+    crate::{Component, ComponentMetadata},
 };
 
 /// Line style for a series.
@@ -358,7 +358,8 @@ impl SvgLineChart {
                         <span class="arniko-linechart-icon">{}</span>
                         <span class="arniko-linechart-title">{}</span>
                     </div>"#,
-                    escape_html(icon), escape_html(title)
+                    escape_html(icon),
+                    escape_html(title)
                 )
             }
             (Some(title), None) => {
@@ -380,7 +381,8 @@ impl SvgLineChart {
     <div class="arniko-linechart-empty">{}</div>
 </div>
 "#,
-            escape_html(&self.class), escape_html(&self.empty_message)
+            escape_html(&self.class),
+            escape_html(&self.empty_message)
         )
     }
 }

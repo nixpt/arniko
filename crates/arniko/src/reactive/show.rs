@@ -36,12 +36,15 @@ impl<R: Reactive<bool>> Show<R> {
 }
 
 impl<R: Reactive<bool>> View for Show<R> {
-    fn mount(&self, mutator: &mut DocumentMutator, reactor: &mut Reactor, parent: usize) -> (usize, Scope) {
+    fn mount(
+        &self,
+        mutator: &mut DocumentMutator,
+        reactor: &mut Reactor,
+        parent: usize,
+    ) -> (usize, Scope) {
         // Create a container div for the conditional content
-        let container_id = mutator.create_element(
-            QualName::new(None, ns!(html), local_name!("div")),
-            vec![],
-        );
+        let container_id =
+            mutator.create_element(QualName::new(None, ns!(html), local_name!("div")), vec![]);
         mutator.append_children(parent, &[container_id]);
 
         // Check initial condition
@@ -62,27 +65,29 @@ impl<R: Reactive<bool>> View for Show<R> {
         let child_fn = Arc::clone(&self.child);
         let container_id_copy = container_id;
         let reactor_ptr = reactor as *mut Reactor;
-        let scope = reactor.bind_scoped(condition, move |mutator: &mut DocumentMutator, visible| {
-            // Get the child state
-            let children = mutator.child_ids(container_id_copy);
-            
-            if *visible && children.is_empty() {
-                // Show: mount the child
-                let child_view = child_fn();
-                let reactor_ref = unsafe { &mut *reactor_ptr };
-                let (_, child_scope) = child_view.mount(mutator, reactor_ref, container_id_copy);
-                // Park the child's scope on the reactor so its bindings survive
-                // past this closure. Without parking, the scope would Drop here
-                // and remove the binding before the next flush — silently killing
-                // the child's reactivity after the first toggle.
-                reactor_ref.park_scope(child_scope);
-            } else if !*visible && !children.is_empty() {
-                // Hide: remove all children
-                for child_id in children {
-                    mutator.remove_and_drop_node(child_id);
+        let scope =
+            reactor.bind_scoped(condition, move |mutator: &mut DocumentMutator, visible| {
+                // Get the child state
+                let children = mutator.child_ids(container_id_copy);
+
+                if *visible && children.is_empty() {
+                    // Show: mount the child
+                    let child_view = child_fn();
+                    let reactor_ref = unsafe { &mut *reactor_ptr };
+                    let (_, child_scope) =
+                        child_view.mount(mutator, reactor_ref, container_id_copy);
+                    // Park the child's scope on the reactor so its bindings survive
+                    // past this closure. Without parking, the scope would Drop here
+                    // and remove the binding before the next flush — silently killing
+                    // the child's reactivity after the first toggle.
+                    reactor_ref.park_scope(child_scope);
+                } else if !*visible && !children.is_empty() {
+                    // Hide: remove all children
+                    for child_id in children {
+                        mutator.remove_and_drop_node(child_id);
+                    }
                 }
-            }
-        });
+            });
 
         combined_scope.merge(scope);
         (container_id, combined_scope)
@@ -134,12 +139,15 @@ where
     T: Clone + PartialEq + Send + Sync + 'static,
     R: Reactive<T>,
 {
-    fn mount(&self, mutator: &mut DocumentMutator, reactor: &mut Reactor, parent: usize) -> (usize, Scope) {
+    fn mount(
+        &self,
+        mutator: &mut DocumentMutator,
+        reactor: &mut Reactor,
+        parent: usize,
+    ) -> (usize, Scope) {
         // Create a container div for the switch content
-        let container_id = mutator.create_element(
-            QualName::new(None, ns!(html), local_name!("div")),
-            vec![],
-        );
+        let container_id =
+            mutator.create_element(QualName::new(None, ns!(html), local_name!("div")), vec![]);
         mutator.append_children(parent, &[container_id]);
 
         // Get initial value and mount the matching branch
@@ -164,7 +172,7 @@ where
             for child_id in children {
                 mutator.remove_and_drop_node(child_id);
             }
-            
+
             // Mount the new branch
             let child_view = branches(new_value);
             let reactor_ref = unsafe { &mut *reactor_ptr };

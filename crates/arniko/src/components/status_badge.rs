@@ -3,8 +3,8 @@
 //! A badge with a colored dot indicator and optional pulse animation.
 //! Maps to capsule-ui's StatusBadge component.
 
-use crate::{Component, ComponentMetadata};
 use crate::components::escape_html;
+use crate::{Component, ComponentMetadata};
 
 #[derive(Clone, Copy, PartialEq, Default)]
 pub enum StatusVariant {
@@ -66,7 +66,10 @@ impl StatusBadge {
 
         format!(
             r#"<span class="arniko-status-badge {} {}{}" role="status">{}</span>"#,
-            variant_class, escape_html(&self.class), pulse_class, escape_html(&self.label)
+            variant_class,
+            escape_html(&self.class),
+            pulse_class,
+            escape_html(&self.label)
         )
     }
 }

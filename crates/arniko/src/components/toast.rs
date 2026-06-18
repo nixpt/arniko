@@ -4,9 +4,9 @@
 //! mount helper that shows/hides based on a `Signal<Option<String>>`.
 
 #[cfg(feature = "components")]
-use crate::{Component, ComponentMetadata};
-#[cfg(feature = "components")]
 use crate::components::escape_html;
+#[cfg(feature = "components")]
+use crate::{Component, ComponentMetadata};
 
 #[cfg(feature = "reactive")]
 use crate::reactive::{Div, Reactor, Scope, Signal, Text, View};
@@ -82,7 +82,10 @@ impl Toast {
 
         format!(
             r#"<div class="arniko-toast {} {}" style="{}" role="status" aria-live="polite">{}</div>"#,
-            variant_class, escape_html(&self.class), position_style, escape_html(&self.message)
+            variant_class,
+            escape_html(&self.class),
+            position_style,
+            escape_html(&self.message)
         )
     }
 }

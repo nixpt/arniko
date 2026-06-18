@@ -4,9 +4,9 @@
 //! Renders a series of horizontal bars scaled proportionally to the largest value.
 
 #[cfg(feature = "components")]
-use crate::{Component, ComponentMetadata};
-#[cfg(feature = "components")]
 use crate::components::escape_html;
+#[cfg(feature = "components")]
+use crate::{Component, ComponentMetadata};
 
 /// A single bar entry in the chart.
 #[derive(Clone, Debug)]

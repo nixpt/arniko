@@ -46,7 +46,6 @@ use parking_lot::RwLock;
 
 use super::signal::Reactive;
 
-
 /// State of a `Resource<T>`.
 ///
 /// Pattern-matched by views that want to render different content per state.
@@ -104,7 +103,9 @@ struct ResourceInner<T> {
 
 impl<T: Clone + 'static> Clone for Resource<T> {
     fn clone(&self) -> Self {
-        Resource { inner: Arc::clone(&self.inner) }
+        Resource {
+            inner: Arc::clone(&self.inner),
+        }
     }
 }
 

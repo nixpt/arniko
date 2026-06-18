@@ -21,7 +21,6 @@
 use arniko::components::badge::Badge;
 use arniko::reactive::{Div, For, ReactiveHtml, ReactiveText, Reactor, Signal, Switch, Text, View};
 // Bring `Component` into scope so `Badge::new(...).to_view()` resolves via the M4 RAII adapter.
-#[allow(unused_imports)]
 use arniko::Component;
 use bliss_dom::{BaseDocument, DocumentConfig, DocumentMutator, qual_name};
 use bliss_html::HtmlProvider;

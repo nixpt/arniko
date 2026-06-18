@@ -48,7 +48,9 @@ pub(super) struct Context {
 
 impl Context {
     pub fn new() -> Self {
-        Context { map: HashMap::new() }
+        Context {
+            map: HashMap::new(),
+        }
     }
 }
 

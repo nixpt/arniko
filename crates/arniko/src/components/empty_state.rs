@@ -3,8 +3,8 @@
 //! A placeholder displayed when no content is available.
 //! Maps to capsule-ui's EmptyState component.
 
-use crate::{Component, ComponentMetadata};
 use crate::components::escape_html;
+use crate::{Component, ComponentMetadata};
 
 pub struct EmptyState {
     icon: Option<String>,
@@ -66,7 +66,11 @@ impl EmptyState {
 
         format!(
             r#"<div class="arniko-empty-state {}" role="status">{}<h3 class="arniko-empty-title">{}</h3>{}{}</div>"#,
-            escape_html(&self.class), icon_html, escape_html(&self.title), desc_html, action_html
+            escape_html(&self.class),
+            icon_html,
+            escape_html(&self.title),
+            desc_html,
+            action_html
         )
     }
 }

@@ -3,8 +3,8 @@
 //! Provides customizable button components with multiple variants and sizes.
 //! Supports rendering as both `<button>` and `<a>` (link) elements.
 
-use crate::{Component, ComponentMetadata};
 use crate::components::escape_html;
+use crate::{Component, ComponentMetadata};
 
 #[derive(Clone, PartialEq, Default)]
 pub enum ButtonVariant {
@@ -104,12 +104,17 @@ impl Button {
         if let Some(ref url) = self.href {
             format!(
                 r#"<a href="{}" class="{}"{} role="button">{}</a>"#,
-                escape_html(url), class_str, disabled, escape_html(&self.label)
+                escape_html(url),
+                class_str,
+                disabled,
+                escape_html(&self.label)
             )
         } else {
             format!(
                 r#"<button class="{}"{}>{}</button>"#,
-                class_str, disabled, escape_html(&self.label)
+                class_str,
+                disabled,
+                escape_html(&self.label)
             )
         }
     }

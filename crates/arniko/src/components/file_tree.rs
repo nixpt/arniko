@@ -4,9 +4,9 @@
 //! file and directory entries with indentation, icons, and selection state.
 
 #[cfg(feature = "components")]
-use crate::{Component, ComponentMetadata};
-#[cfg(feature = "components")]
 use crate::components::escape_html;
+#[cfg(feature = "components")]
+use crate::{Component, ComponentMetadata};
 
 // ── Data Types ───────────────────────────────────────────────────────────────
 
@@ -151,8 +151,7 @@ impl FileTree {
                     <span class="arniko-filetree-icon">{}</span>
                     <span class="arniko-filetree-name">{}</span>
                 </div>"#,
-                    row_class, selected_attr, escaped_path, tree_role,
-                    indent, icon, escaped_name
+                    row_class, selected_attr, escaped_path, tree_role, indent, icon, escaped_name
                 )
             })
             .collect();
@@ -184,7 +183,13 @@ impl FileTree {
                     {}
                 </div>
             </div>"##,
-            escape_html(&self.class), escape_html(&self.title), escape_html(&self.title_icon), escape_html(&self.title), escape_html(&self.state.root), rows, content_preview
+            escape_html(&self.class),
+            escape_html(&self.title),
+            escape_html(&self.title_icon),
+            escape_html(&self.title),
+            escape_html(&self.state.root),
+            rows,
+            content_preview
         )
     }
 
@@ -197,7 +202,11 @@ impl FileTree {
                 </div>
                 <div class="arniko-filetree-empty">{}</div>
             </div>"##,
-            escape_html(&self.class), escape_html(&self.title), escape_html(&self.title_icon), escape_html(&self.title), escape_html(&self.empty_message)
+            escape_html(&self.class),
+            escape_html(&self.title),
+            escape_html(&self.title_icon),
+            escape_html(&self.title),
+            escape_html(&self.empty_message)
         )
     }
 }

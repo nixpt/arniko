@@ -3,9 +3,9 @@
 //! These test the reactive core without requiring DOM — no bliss_dom dependency.
 //! Run with: `cargo test -p arniko --features reactive --test reactive_signals`
 
+use arniko::mustang::SceneScheduler;
 use arniko::reactive::direct_mut::DirectDomMutator;
 use arniko::reactive::{Computed, Reactive, ReactiveText, Reactor, Signal, View};
-use arniko::mustang::SceneScheduler;
 use bliss_dom::{BaseDocument, DocumentConfig, DocumentMutator, qual_name};
 use bliss_html::HtmlProvider;
 use std::sync::Arc;
@@ -170,7 +170,11 @@ fn test_computed_only_recomputes_when_deps_change() {
     let v0 = derived.reactive_version();
     // Reading without dep changes should not bump version
     let _ = derived.get();
-    assert_eq!(derived.reactive_version(), v0, "Version unchanged when deps unchanged");
+    assert_eq!(
+        derived.reactive_version(),
+        v0,
+        "Version unchanged when deps unchanged"
+    );
 
     // Reading again still no change
     let _ = derived.get();
@@ -246,10 +250,21 @@ fn test_multiple_bindings_on_one_reactor() {
     flush_reactive(&mut doc, &mut reactor);
 
     let text = node_text(&mut doc, root_id);
-    assert!(text.contains("FIRST"), "First binding should update: {}", text);
-    assert!(text.contains("SECOND"), "Second binding should update: {}", text);
+    assert!(
+        text.contains("FIRST"),
+        "First binding should update: {}",
+        text
+    );
+    assert!(
+        text.contains("SECOND"),
+        "Second binding should update: {}",
+        text
+    );
     assert!(!text.contains("first"), "Old value first should not remain");
-    assert!(!text.contains("second"), "Old value second should not remain");
+    assert!(
+        !text.contains("second"),
+        "Old value second should not remain"
+    );
 }
 
 #[test]
@@ -279,8 +294,16 @@ fn test_reactor_partial_dirty() {
     flush_reactive(&mut doc, &mut reactor);
 
     let text = node_text(&mut doc, root_id);
-    assert!(text.contains("ONE"), "Changed signal should update: {}", text);
-    assert!(text.contains("two"), "Unchanged signal should stay: {}", text);
+    assert!(
+        text.contains("ONE"),
+        "Changed signal should update: {}",
+        text
+    );
+    assert!(
+        text.contains("two"),
+        "Unchanged signal should stay: {}",
+        text
+    );
     assert!(!text.contains("one"), "Old value should be gone");
 }
 
@@ -744,7 +767,7 @@ fn test_lock_poison_cascade_panic_in_handler_is_contained() {
     use arniko::reactive::event_router;
 
     let (router, _sink) = event_router();
-    
+
     // Register a handler that panics
     router.on_click(1, || {
         panic!("Handler panic!");
@@ -795,9 +818,15 @@ fn test_show_view_hides_and_shows_content() {
     let (mut doc, root_id) = setup_doc();
     let mut reactor = Reactor::new();
     let visible = Signal::new(true);
-    let view = Show::new(visible.clone(), move || Box::new(Text("visible content".to_string())));
+    let view = Show::new(visible.clone(), move || {
+        Box::new(Text("visible content".to_string()))
+    });
     let _scope;
-    { let mut mutator = doc.mutate(); _scope = view.mount(&mut mutator, &mut reactor, root_id).1; drop(mutator); }
+    {
+        let mut mutator = doc.mutate();
+        _scope = view.mount(&mut mutator, &mut reactor, root_id).1;
+        drop(mutator);
+    }
     flush_reactive(&mut doc, &mut reactor);
     assert!(node_text(&mut doc, root_id).contains("visible content"));
     visible.set(false);
@@ -808,24 +837,29 @@ fn test_show_view_hides_and_shows_content() {
     assert!(node_text(&mut doc, root_id).contains("visible content"));
 }
 
-
 #[test]
 fn test_switch_view_changes_branches() {
     use arniko::reactive::{Switch, Text};
     #[derive(Clone, PartialEq)]
-    enum Page { Home, About, Contact }
+    enum Page {
+        Home,
+        About,
+        Contact,
+    }
     let (mut doc, root_id) = setup_doc();
     let mut reactor = Reactor::new();
     let page = Signal::new(Page::Home);
-    let view = Switch::new(page.clone(), |p: &Page| {
-        match p {
-            Page::Home => Box::new(Text("Home Page".to_string())),
-            Page::About => Box::new(Text("About Page".to_string())),
-            Page::Contact => Box::new(Text("Contact Page".to_string())),
-        }
+    let view = Switch::new(page.clone(), |p: &Page| match p {
+        Page::Home => Box::new(Text("Home Page".to_string())),
+        Page::About => Box::new(Text("About Page".to_string())),
+        Page::Contact => Box::new(Text("Contact Page".to_string())),
     });
     let _scope;
-    { let mut mutator = doc.mutate(); _scope = view.mount(&mut mutator, &mut reactor, root_id).1; drop(mutator); }
+    {
+        let mut mutator = doc.mutate();
+        _scope = view.mount(&mut mutator, &mut reactor, root_id).1;
+        drop(mutator);
+    }
     flush_reactive(&mut doc, &mut reactor);
     assert!(node_text(&mut doc, root_id).contains("Home Page"));
     page.set(Page::About);
@@ -837,4 +871,3 @@ fn test_switch_view_changes_branches() {
     assert!(node_text(&mut doc, root_id).contains("Contact Page"));
     assert!(!node_text(&mut doc, root_id).contains("About Page"));
 }
-

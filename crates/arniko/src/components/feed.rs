@@ -4,9 +4,9 @@
 //! timestamped events with severity levels and styled classes.
 
 #[cfg(feature = "components")]
-use crate::{Component, ComponentMetadata};
-#[cfg(feature = "components")]
 use crate::components::escape_html;
+#[cfg(feature = "components")]
+use crate::{Component, ComponentMetadata};
 
 // ── Data Types ───────────────────────────────────────────────────────────────
 
@@ -122,7 +122,11 @@ impl Feed {
                 </div>
             </div>
             "##,
-            escape_html(&self.class), escape_html(&self.title_icon), escape_html(&self.title), escape_html(&self.title), items_html
+            escape_html(&self.class),
+            escape_html(&self.title_icon),
+            escape_html(&self.title),
+            escape_html(&self.title),
+            items_html
         )
     }
 }

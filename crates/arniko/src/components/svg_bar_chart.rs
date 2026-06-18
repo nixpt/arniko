@@ -6,9 +6,9 @@
 //! Distinct from the HTML-based `BarChart` which uses `<div>` elements.
 
 #[cfg(feature = "components")]
-use crate::{Component, ComponentMetadata};
-#[cfg(feature = "components")]
 use crate::components::escape_html;
+#[cfg(feature = "components")]
+use crate::{Component, ComponentMetadata};
 
 /// A single bar entry in the SVG chart.
 #[derive(Clone, Debug)]
@@ -215,7 +215,8 @@ impl SvgBarChart {
                         <span class="arniko-svgbar-icon">{}</span>
                         <span class="arniko-svgbar-title">{}</span>
                     </div>"#,
-                    escape_html(icon), escape_html(title)
+                    escape_html(icon),
+                    escape_html(title)
                 )
             }
             (Some(title), None) => {
@@ -237,7 +238,8 @@ impl SvgBarChart {
     <div class="arniko-svgbar-empty">{}</div>
 </div>
 "#,
-            escape_html(&self.class), self.empty_message
+            escape_html(&self.class),
+            self.empty_message
         )
     }
 }
@@ -362,9 +364,11 @@ mod tests {
     #[cfg(feature = "components")]
     #[test]
     fn test_svg_bar_chart_value_suffix() {
-        let chart = SvgBarChart::new()
-            .value_suffix("ms")
-            .add(SvgBarEntry::new("X", 5.0, "var(--arniko-cyan)"));
+        let chart = SvgBarChart::new().value_suffix("ms").add(SvgBarEntry::new(
+            "X",
+            5.0,
+            "var(--arniko-cyan)",
+        ));
         let html = chart.render();
         assert!(html.contains("5.00ms"));
     }

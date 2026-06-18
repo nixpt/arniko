@@ -21,7 +21,6 @@ use arniko::reactive::{
     Div, For, ReactiveHtml, ReactiveText, Signal, Switch, Text, View, launch_reactive,
 };
 // Bring `Component` into scope so `Badge::new(...).to_view()` resolves.
-#[allow(unused_imports)]
 use arniko::Component;
 
 // ── Markdown source samples ──────────────────────────────────────────────────

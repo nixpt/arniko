@@ -17,9 +17,9 @@
 //! ```
 
 #[cfg(feature = "components")]
-use crate::{Component, ComponentMetadata};
-#[cfg(feature = "components")]
 use crate::components::escape_html;
+#[cfg(feature = "components")]
+use crate::{Component, ComponentMetadata};
 
 /// A single shortcut entry.
 #[derive(Clone, Debug)]
@@ -87,7 +87,8 @@ impl KeyboardShortcuts {
                     <span class="arniko-shortcut-keys">{}</span>
                     <span class="arniko-shortcut-action">{}</span>
                 </div>"#,
-                    escape_html(&s.keys), escape_html(&s.action)
+                    escape_html(&s.keys),
+                    escape_html(&s.action)
                 )
             })
             .collect();
@@ -103,7 +104,10 @@ impl KeyboardShortcuts {
                     <div class="arniko-shortcut-footer">{}</div>
                 </div>
             </div>"#,
-            escape_html(&self.class), escape_html(&self.title), rows, escape_html(&self.footer)
+            escape_html(&self.class),
+            escape_html(&self.title),
+            rows,
+            escape_html(&self.footer)
         )
     }
 }

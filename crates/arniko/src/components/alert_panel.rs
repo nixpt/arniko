@@ -5,9 +5,9 @@
 //! Complements the simpler single-banner `Alert` component.
 
 #[cfg(feature = "components")]
-use crate::{Component, ComponentMetadata};
-#[cfg(feature = "components")]
 use crate::components::escape_html;
+#[cfg(feature = "components")]
+use crate::{Component, ComponentMetadata};
 
 // ── Data Types ───────────────────────────────────────────────────────────────
 
@@ -168,7 +168,9 @@ impl AlertPanel {
                     <span class="arniko-alertpanel-header-icon">{}</span>
                     <span class="arniko-alertpanel-header-title">{} ({})</span>
                 </div>"#,
-                    icon, escape_html(title), count
+                    icon,
+                    escape_html(title),
+                    count
                 )
             }
             (Some(title), None) => {
@@ -176,7 +178,8 @@ impl AlertPanel {
                     r#"<div class="arniko-alertpanel-header">
                     <span class="arniko-alertpanel-header-title">{} ({})</span>
                 </div>"#,
-                    escape_html(title), count
+                    escape_html(title),
+                    count
                 )
             }
             _ => String::new(),

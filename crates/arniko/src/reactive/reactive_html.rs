@@ -50,7 +50,12 @@ impl<R: Reactive<String>> ReactiveHtml<R> {
 }
 
 impl<R: Reactive<String>> View for ReactiveHtml<R> {
-    fn mount(&self, mutator: &mut DocumentMutator, reactor: &mut Reactor, parent: usize) -> (usize, Scope) {
+    fn mount(
+        &self,
+        mutator: &mut DocumentMutator,
+        reactor: &mut Reactor,
+        parent: usize,
+    ) -> (usize, Scope) {
         let mut attrs = vec![];
         if let Some(ref cls) = self.class_name {
             attrs.push(Attribute {

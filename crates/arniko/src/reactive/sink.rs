@@ -1,6 +1,6 @@
+use parking_lot::Mutex;
 use std::collections::HashMap;
 use std::sync::Arc;
-use parking_lot::Mutex;
 
 use bliss::traits::events::{BlissKeyEvent, DomEvent, DomEventData, EventPhase, EventSink};
 
@@ -25,9 +25,7 @@ pub struct EventRouter {
 impl EventRouter {
     /// Register a click handler for a mounted node. The handler should call `signal.set()`.
     pub fn on_click(&self, node_id: usize, handler: impl Fn() + Send + Sync + 'static) -> &Self {
-        self.handlers
-            .lock()
-            .insert(node_id, Box::new(handler));
+        self.handlers.lock().insert(node_id, Box::new(handler));
         self
     }
 
@@ -50,7 +48,11 @@ impl EventRouter {
     ///
     /// The handler receives the [`BlissKeyEvent`] when a keydown event occurs
     /// and the node (or its children) has focus.
-    pub fn on_keydown_node(&self, node_id: usize, handler: impl Fn(&BlissKeyEvent) + Send + Sync + 'static) -> &Self {
+    pub fn on_keydown_node(
+        &self,
+        node_id: usize,
+        handler: impl Fn(&BlissKeyEvent) + Send + Sync + 'static,
+    ) -> &Self {
         self.key_handlers
             .lock()
             .entry(node_id)
@@ -61,7 +63,11 @@ impl EventRouter {
 
     /// Register an input handler for a text input element.
     /// The handler receives the current input value as a String.
-    pub fn on_input(&self, node_id: usize, handler: impl Fn(String) + Send + Sync + 'static) -> &Self {
+    pub fn on_input(
+        &self,
+        node_id: usize,
+        handler: impl Fn(String) + Send + Sync + 'static,
+    ) -> &Self {
         self.input_handlers
             .lock()
             .insert(node_id, Box::new(handler));

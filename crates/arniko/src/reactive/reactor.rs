@@ -252,7 +252,10 @@ where
                 child_reactor.park_scope(child_scope);
                 self.items.insert(
                     key.clone(),
-                    ItemState { node_id, reactor: child_reactor },
+                    ItemState {
+                        node_id,
+                        reactor: child_reactor,
+                    },
                 );
                 // Note: view.mount already appends `node_id` to `self.container_id`.
                 // Do NOT call `mutator.append_children` here — that would append
@@ -374,7 +377,7 @@ impl Reactor {
 
     /// Bind any `Reactive<T>` (a `Signal` or `Computed`) to a DOM patch function.
     /// The patch fires on `flush` whenever the source's version has advanced.
-    /// 
+    ///
     /// Note: This method does not return a handle for cleanup. For views that need
     /// lifecycle management, use `bind_scoped` instead.
     pub fn bind<T: Clone + 'static, R: Reactive<T>>(
@@ -395,7 +398,7 @@ impl Reactor {
 
     /// Bind with lifecycle tracking. Returns a `Scope` that, when dropped,
     /// automatically removes the binding from the reactor.
-    /// 
+    ///
     /// Use this for views that may be unmounted before the reactor is dropped.
     pub fn bind_scoped<T: Clone + 'static, R: Reactive<T>>(
         &mut self,

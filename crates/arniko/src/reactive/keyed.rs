@@ -147,12 +147,14 @@ where
             let key = (self.key_fn)(item);
             let mut child_reactor = Box::new(Reactor::new());
             let view = (self.template)(item);
-            let (node_id, child_scope) =
-                view.mount(mutator, &mut *child_reactor, container_id);
+            let (node_id, child_scope) = view.mount(mutator, &mut *child_reactor, container_id);
             child_reactor.park_scope(child_scope);
             items.insert(
                 key.clone(),
-                ItemState { node_id, reactor: child_reactor },
+                ItemState {
+                    node_id,
+                    reactor: child_reactor,
+                },
             );
             order.push(key);
         }

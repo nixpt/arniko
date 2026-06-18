@@ -38,11 +38,7 @@ use super::signal::Reactive;
 /// Deps are pre-declared via the `source` parameter. See the module rustdoc
 /// for the auto-dep-tracking limitation that is out of scope for this D3
 /// iteration.
-pub fn create_effect<T, R, F>(
-    reactor: &mut Reactor,
-    source: R,
-    effect: F,
-) -> super::reactor::Scope
+pub fn create_effect<T, R, F>(reactor: &mut Reactor, source: R, effect: F) -> super::reactor::Scope
 where
     T: Clone + 'static,
     R: Reactive<T>,

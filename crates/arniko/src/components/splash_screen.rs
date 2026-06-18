@@ -4,9 +4,9 @@
 //! with a progress bar, status text, and optional branding elements.
 
 #[cfg(feature = "components")]
-use crate::{Component, ComponentMetadata};
-#[cfg(feature = "components")]
 use crate::components::escape_html;
+#[cfg(feature = "components")]
+use crate::{Component, ComponentMetadata};
 
 /// Configuration for the splash screen's appearance.
 #[derive(Clone, Debug)]

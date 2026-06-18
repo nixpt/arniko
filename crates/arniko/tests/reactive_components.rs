@@ -10,7 +10,10 @@ use arniko::components::{
     mount_toast, mount_toast_with_variant, progress_ring_reactive, shortcut_help_reactive,
     splash_screen_reactive, theme_toggle_reactive,
 };
-use arniko::{Component, reactive::{For, Reactor, Signal, Text, View}};
+use arniko::{
+    Component,
+    reactive::{For, Reactor, Signal, Text, View},
+};
 use bliss_dom::{BaseDocument, DocumentConfig, DocumentMutator, qual_name};
 use bliss_html::HtmlProvider;
 use std::sync::Arc;
@@ -594,9 +597,8 @@ fn test_for_initial_mount_renders_all_items() {
         "cherry".to_string(),
     ]);
 
-    let view: For<String, Signal<Vec<String>>> = For::new(items, |item| {
-        Box::new(Text(item.clone()))
-    });
+    let view: For<String, Signal<Vec<String>>> =
+        For::new(items, |item| Box::new(Text(item.clone())));
     {
         let mut mutator = doc.mutate();
         mount_parked(&view, &mut mutator, &mut reactor, root_id);
@@ -614,14 +616,10 @@ fn test_for_initial_mount_renders_all_items() {
 fn test_for_add_item_preserves_existing() {
     let (mut doc, root_id) = setup_doc();
     let mut reactor = Reactor::new();
-    let items: Signal<Vec<String>> = Signal::new(vec![
-        "alpha".to_string(),
-        "beta".to_string(),
-    ]);
+    let items: Signal<Vec<String>> = Signal::new(vec!["alpha".to_string(), "beta".to_string()]);
 
-    let view: For<String, Signal<Vec<String>>> = For::new(items.clone(), |item| {
-        Box::new(Text(item.clone()))
-    });
+    let view: For<String, Signal<Vec<String>>> =
+        For::new(items.clone(), |item| Box::new(Text(item.clone())));
     {
         let mut mutator = doc.mutate();
         mount_parked(&view, &mut mutator, &mut reactor, root_id);
@@ -638,9 +636,17 @@ fn test_for_add_item_preserves_existing() {
     flush_reactive(&mut doc, &mut reactor);
 
     let text = node_text(&mut doc, root_id);
-    assert!(text.contains("alpha"), "Should still contain alpha: {}", text);
+    assert!(
+        text.contains("alpha"),
+        "Should still contain alpha: {}",
+        text
+    );
     assert!(text.contains("beta"), "Should still contain beta: {}", text);
-    assert!(text.contains("gamma"), "Should contain new item gamma: {}", text);
+    assert!(
+        text.contains("gamma"),
+        "Should contain new item gamma: {}",
+        text
+    );
 }
 
 #[test]
@@ -653,9 +659,8 @@ fn test_for_remove_item_drops_trailing() {
         "three".to_string(),
     ]);
 
-    let view: For<String, Signal<Vec<String>>> = For::new(items.clone(), |item| {
-        Box::new(Text(item.clone()))
-    });
+    let view: For<String, Signal<Vec<String>>> =
+        For::new(items.clone(), |item| Box::new(Text(item.clone())));
     {
         let mut mutator = doc.mutate();
         mount_parked(&view, &mut mutator, &mut reactor, root_id);
@@ -671,7 +676,11 @@ fn test_for_remove_item_drops_trailing() {
     let text = node_text(&mut doc, root_id);
     assert!(text.contains("one"), "Should still contain one: {}", text);
     assert!(text.contains("two"), "Should still contain two: {}", text);
-    assert!(!text.contains("three"), "Should NOT contain removed three: {}", text);
+    assert!(
+        !text.contains("three"),
+        "Should NOT contain removed three: {}",
+        text
+    );
 }
 
 #[test]
@@ -715,9 +724,8 @@ fn test_for_empty_to_populated() {
     let mut reactor = Reactor::new();
     let items: Signal<Vec<String>> = Signal::new(vec![]);
 
-    let view: For<String, Signal<Vec<String>>> = For::new(items.clone(), |item| {
-        Box::new(Text(item.clone()))
-    });
+    let view: For<String, Signal<Vec<String>>> =
+        For::new(items.clone(), |item| Box::new(Text(item.clone())));
     {
         let mut mutator = doc.mutate();
         mount_parked(&view, &mut mutator, &mut reactor, root_id);
@@ -741,14 +749,10 @@ fn test_for_empty_to_populated() {
 fn test_for_populated_to_empty() {
     let (mut doc, root_id) = setup_doc();
     let mut reactor = Reactor::new();
-    let items: Signal<Vec<String>> = Signal::new(vec![
-        "x".to_string(),
-        "y".to_string(),
-    ]);
+    let items: Signal<Vec<String>> = Signal::new(vec!["x".to_string(), "y".to_string()]);
 
-    let view: For<String, Signal<Vec<String>>> = For::new(items.clone(), |item| {
-        Box::new(Text(item.clone()))
-    });
+    let view: For<String, Signal<Vec<String>>> =
+        For::new(items.clone(), |item| Box::new(Text(item.clone())));
     {
         let mut mutator = doc.mutate();
         mount_parked(&view, &mut mutator, &mut reactor, root_id);
@@ -762,8 +766,16 @@ fn test_for_populated_to_empty() {
     flush_reactive(&mut doc, &mut reactor);
 
     let text = node_text(&mut doc, root_id);
-    assert!(!text.contains("x"), "Should NOT contain removed x: {}", text);
-    assert!(!text.contains("y"), "Should NOT contain removed y: {}", text);
+    assert!(
+        !text.contains("x"),
+        "Should NOT contain removed x: {}",
+        text
+    );
+    assert!(
+        !text.contains("y"),
+        "Should NOT contain removed y: {}",
+        text
+    );
 }
 
 #[test]
@@ -779,9 +791,8 @@ fn test_for_surviving_items_preserve_dom_nodes() {
         "drop".to_string(),
     ]);
 
-    let view: For<String, Signal<Vec<String>>> = For::new(items.clone(), |item| {
-        Box::new(Text(item.clone()))
-    });
+    let view: For<String, Signal<Vec<String>>> =
+        For::new(items.clone(), |item| Box::new(Text(item.clone())));
     let container_id = {
         let mut mutator = doc.mutate();
         let id = mount_parked(&view, &mut mutator, &mut reactor, root_id);
@@ -810,7 +821,11 @@ fn test_for_surviving_items_preserve_dom_nodes() {
         drop(mutator);
         ids
     };
-    assert_eq!(child_ids_after.len(), 2, "Should have 2 children after removal");
+    assert_eq!(
+        child_ids_after.len(),
+        2,
+        "Should have 2 children after removal"
+    );
     assert_eq!(
         child_ids_after[0], child_ids_before[0],
         "First surviving item should keep its DOM node ID"
@@ -828,9 +843,8 @@ fn test_for_new_items_get_fresh_dom_nodes() {
     let mut reactor = Reactor::new();
     let items: Signal<Vec<String>> = Signal::new(vec!["a".to_string()]);
 
-    let view: For<String, Signal<Vec<String>>> = For::new(items.clone(), |item| {
-        Box::new(Text(item.clone()))
-    });
+    let view: For<String, Signal<Vec<String>>> =
+        For::new(items.clone(), |item| Box::new(Text(item.clone())));
     let container_id = {
         let mut mutator = doc.mutate();
         let id = mount_parked(&view, &mut mutator, &mut reactor, root_id);
@@ -848,11 +862,7 @@ fn test_for_new_items_get_fresh_dom_nodes() {
     let original_id = child_ids_before[0];
 
     // Add new items (expand from 1 to 3)
-    items.set(vec![
-        "a".to_string(),
-        "b".to_string(),
-        "c".to_string(),
-    ]);
+    items.set(vec!["a".to_string(), "b".to_string(), "c".to_string()]);
     flush_reactive(&mut doc, &mut reactor);
 
     let child_ids_after = {
@@ -863,10 +873,19 @@ fn test_for_new_items_get_fresh_dom_nodes() {
     };
     assert_eq!(child_ids_after.len(), 3, "Should have 3 children");
     // Original item at position 0 keeps its node
-    assert_eq!(child_ids_after[0], original_id, "First item keeps its DOM node");
+    assert_eq!(
+        child_ids_after[0], original_id,
+        "First item keeps its DOM node"
+    );
     // New items at positions 1 and 2 have different (fresh) IDs
-    assert_ne!(child_ids_after[1], original_id, "New item should have fresh DOM node");
-    assert_ne!(child_ids_after[2], original_id, "New item should have fresh DOM node");
+    assert_ne!(
+        child_ids_after[1], original_id,
+        "New item should have fresh DOM node"
+    );
+    assert_ne!(
+        child_ids_after[2], original_id,
+        "New item should have fresh DOM node"
+    );
 }
 
 #[test]
@@ -936,9 +955,8 @@ fn test_for_multiple_reconciliations_no_arena_leak() {
     let mut reactor = Reactor::new();
     let items: Signal<Vec<String>> = Signal::new(vec!["base".to_string()]);
 
-    let view: For<String, Signal<Vec<String>>> = For::new(items.clone(), |item| {
-        Box::new(Text(item.clone()))
-    });
+    let view: For<String, Signal<Vec<String>>> =
+        For::new(items.clone(), |item| Box::new(Text(item.clone())));
     let container_id = {
         let mut mutator = doc.mutate();
         let id = mount_parked(&view, &mut mutator, &mut reactor, root_id);
@@ -970,11 +988,18 @@ fn test_for_multiple_reconciliations_no_arena_leak() {
         drop(mutator);
         ids.len()
     };
-    assert_eq!(child_count, 1, "Should have exactly 1 child after many reconciliations");
+    assert_eq!(
+        child_count, 1,
+        "Should have exactly 1 child after many reconciliations"
+    );
 
     let text = node_text(&mut doc, root_id);
     assert!(text.contains("base"), "Should still contain base: {}", text);
-    assert!(!text.contains("extra_"), "Should NOT contain any extra items: {}", text);
+    assert!(
+        !text.contains("extra_"),
+        "Should NOT contain any extra items: {}",
+        text
+    );
 }
 
 // ── ComponentView Drop Semantics Tests ────────────────────────────────────

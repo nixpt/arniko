@@ -4,9 +4,9 @@
 //! names and emits the next one on each click.
 
 #[cfg(feature = "components")]
-use crate::{Component, ComponentMetadata};
-#[cfg(feature = "components")]
 use crate::components::escape_html;
+#[cfg(feature = "components")]
+use crate::{Component, ComponentMetadata};
 
 /// A theme toggle button that displays the current theme and cycles to the next.
 #[cfg(feature = "components")]
@@ -39,7 +39,11 @@ impl ThemeToggle {
             escape_html(&self.current),
             escape_html(&self.current),
             escape_html(&self.next),
-            format!("{} → {}", escape_html(&self.current), escape_html(&self.next))
+            format!(
+                "{} → {}",
+                escape_html(&self.current),
+                escape_html(&self.next)
+            )
         )
     }
 }

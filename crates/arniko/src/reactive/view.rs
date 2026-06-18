@@ -11,12 +11,22 @@ use super::{Reactor, Signal};
 /// A component that mounts itself into the bliss-dom tree and registers reactive bindings.
 /// Returns the root node ID created under `parent` and a Scope for lifecycle management.
 pub trait View {
-    fn mount(&self, mutator: &mut DocumentMutator, reactor: &mut Reactor, parent: usize) -> (usize, Scope);
+    fn mount(
+        &self,
+        mutator: &mut DocumentMutator,
+        reactor: &mut Reactor,
+        parent: usize,
+    ) -> (usize, Scope);
 }
 
 // Box<dyn View> is itself a View
 impl View for Box<dyn View> {
-    fn mount(&self, mutator: &mut DocumentMutator, reactor: &mut Reactor, parent: usize) -> (usize, Scope) {
+    fn mount(
+        &self,
+        mutator: &mut DocumentMutator,
+        reactor: &mut Reactor,
+        parent: usize,
+    ) -> (usize, Scope) {
         (**self).mount(mutator, reactor, parent)
     }
 }
@@ -34,15 +44,23 @@ fn span_name() -> QualName {
 pub struct StaticHtml(pub String);
 
 impl View for StaticHtml {
-    fn mount(&self, mutator: &mut DocumentMutator, _reactor: &mut Reactor, parent: usize) -> (usize, Scope) {
+    fn mount(
+        &self,
+        mutator: &mut DocumentMutator,
+        _reactor: &mut Reactor,
+        parent: usize,
+    ) -> (usize, Scope) {
         let node_id = mutator.create_element(div_name(), vec![]);
         mutator.append_children(parent, &[node_id]);
         mutator.set_inner_html(node_id, &self.0);
         // StaticHtml has no reactive bindings, so return an empty scope
-        (node_id, Scope {
-            reactor: _reactor as *mut _,
-            handles: vec![],
-        })
+        (
+            node_id,
+            Scope {
+                reactor: _reactor as *mut _,
+                handles: vec![],
+            },
+        )
     }
 }
 
@@ -50,14 +68,22 @@ impl View for StaticHtml {
 pub struct Text(pub String);
 
 impl View for Text {
-    fn mount(&self, mutator: &mut DocumentMutator, _reactor: &mut Reactor, parent: usize) -> (usize, Scope) {
+    fn mount(
+        &self,
+        mutator: &mut DocumentMutator,
+        _reactor: &mut Reactor,
+        parent: usize,
+    ) -> (usize, Scope) {
         let node_id = mutator.create_text_node(&self.0);
         mutator.append_children(parent, &[node_id]);
         // Static text has no reactive bindings, so return an empty scope
-        (node_id, Scope {
-            reactor: _reactor as *mut _,
-            handles: vec![],
-        })
+        (
+            node_id,
+            Scope {
+                reactor: _reactor as *mut _,
+                handles: vec![],
+            },
+        )
     }
 }
 
@@ -78,7 +104,12 @@ impl<T: Clone + Display + 'static, R: Reactive<T>> ReactiveText<T, R> {
 }
 
 impl<T: Clone + Display + 'static, R: Reactive<T>> View for ReactiveText<T, R> {
-    fn mount(&self, mutator: &mut DocumentMutator, reactor: &mut Reactor, parent: usize) -> (usize, Scope) {
+    fn mount(
+        &self,
+        mutator: &mut DocumentMutator,
+        reactor: &mut Reactor,
+        parent: usize,
+    ) -> (usize, Scope) {
         let initial = self.source.get_value().to_string();
         let node_id = mutator.create_text_node(&initial);
         mutator.append_children(parent, &[node_id]);
@@ -116,7 +147,12 @@ impl Div {
 }
 
 impl View for Div {
-    fn mount(&self, mutator: &mut DocumentMutator, reactor: &mut Reactor, parent: usize) -> (usize, Scope) {
+    fn mount(
+        &self,
+        mutator: &mut DocumentMutator,
+        reactor: &mut Reactor,
+        parent: usize,
+    ) -> (usize, Scope) {
         let node_id = mutator.create_element(div_name(), self.attrs.clone());
         mutator.append_children(parent, &[node_id]);
         let mut combined_scope = Scope {
@@ -148,7 +184,12 @@ impl Span {
 }
 
 impl View for Span {
-    fn mount(&self, mutator: &mut DocumentMutator, reactor: &mut Reactor, parent: usize) -> (usize, Scope) {
+    fn mount(
+        &self,
+        mutator: &mut DocumentMutator,
+        reactor: &mut Reactor,
+        parent: usize,
+    ) -> (usize, Scope) {
         let node_id = mutator.create_element(span_name(), self.attrs.clone());
         mutator.append_children(parent, &[node_id]);
         let mut combined_scope = Scope {
@@ -170,7 +211,12 @@ pub struct ComponentView<C: crate::Component>(pub C);
 
 #[cfg(feature = "components")]
 impl<C: crate::Component> View for ComponentView<C> {
-    fn mount(&self, mutator: &mut DocumentMutator, reactor: &mut Reactor, parent: usize) -> (usize, Scope) {
+    fn mount(
+        &self,
+        mutator: &mut DocumentMutator,
+        reactor: &mut Reactor,
+        parent: usize,
+    ) -> (usize, Scope) {
         StaticHtml(self.0.render()).mount(mutator, reactor, parent)
     }
 }
@@ -236,7 +282,12 @@ where
     T: Clone + Send + Sync + 'static,
     R: Reactive<Vec<T>>,
 {
-    fn mount(&self, mutator: &mut DocumentMutator, reactor: &mut Reactor, parent: usize) -> (usize, Scope) {
+    fn mount(
+        &self,
+        mutator: &mut DocumentMutator,
+        reactor: &mut Reactor,
+        parent: usize,
+    ) -> (usize, Scope) {
         let container_id = mutator.create_element(div_name(), self.attrs.clone());
         mutator.append_children(parent, &[container_id]);
 
@@ -252,8 +303,7 @@ where
         for item in &initial_list {
             let mut child_reactor = Box::new(Reactor::new());
             let view = (self.template)(item);
-            let (node_id, child_scope) =
-                view.mount(mutator, &mut *child_reactor, container_id);
+            let (node_id, child_scope) = view.mount(mutator, &mut *child_reactor, container_id);
             // Park the child's scope on its own reactor so nested reactive views
             // (ReactiveText, Computed) keep updating across list reconciliations.
             // The child_reactor is dropped (disposal cascade) when its item is

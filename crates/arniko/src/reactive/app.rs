@@ -1,5 +1,5 @@
-use std::sync::Arc;
 use parking_lot::Mutex;
+use std::sync::Arc;
 
 use anyrender_vello::VelloWindowRenderer;
 use bliss::dom::{Document, DocumentConfig};
@@ -123,7 +123,13 @@ impl ApplicationHandler for ReactiveApplication {
 ///
 /// For GPU effects (blur, transforms, …), use [`launch_reactive_configured`] instead.
 pub fn launch_reactive(
-    setup: impl FnOnce(&mut bliss::dom::DocumentMutator, &mut Reactor, &mut EventRouter, usize, &ReactiveRuntime),
+    setup: impl FnOnce(
+        &mut bliss::dom::DocumentMutator,
+        &mut Reactor,
+        &mut EventRouter,
+        usize,
+        &ReactiveRuntime,
+    ),
 ) {
     launch_reactive_configured(setup, |_| {});
 }
@@ -149,7 +155,13 @@ pub fn launch_reactive(
 /// );
 /// ```
 pub fn launch_reactive_configured(
-    setup: impl FnOnce(&mut bliss::dom::DocumentMutator, &mut Reactor, &mut EventRouter, usize, &ReactiveRuntime),
+    setup: impl FnOnce(
+        &mut bliss::dom::DocumentMutator,
+        &mut Reactor,
+        &mut EventRouter,
+        usize,
+        &ReactiveRuntime,
+    ),
     configure_renderer: impl FnOnce(&mut VelloWindowRenderer),
 ) {
     let event_loop = create_default_event_loop();
