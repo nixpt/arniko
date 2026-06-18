@@ -72,3 +72,71 @@ Decisions NOT taken (deliberately):
 
 - **No `debug_assert!` in `paint_scene()` / `resolve_stylist()`** — silent empty-frame / no-op resolve is the right semantic at the top-of-pipeline with valid upstream guards. Adding assertions would create tracing-subscriber noise in production for non-error conditions.
 - **No `BaseDocument::root_element_id(&self) -> usize` helper** — only 4 sites take the `.map(|r| r.id).unwrap_or(0)` shape; a 5th uses `.final_layout.size`. Collapsing them removes the explicit "degrade to a sentinel id, not a panic" affordance the reader can grep. YAGNI deferred to a future refactor if the count grows.
+
+## D3: B-7 rest scope — model-fitting primitives (2026-06-17)
+
+Context: decision gate D3 (`docs/REMAINING_TRACKS.md` Decisions section) was unresolved before this session. Existing reactive model is poll-on-flush with version-counter + pre-declared deps in Computed (no push subscriber graph, no async runtime, no auto-dep-tracking). User-confirmed scope for B-7 rest: model-fitting primitives only. Out-of-scope items below require architectural change beyond D3-confirmed ambition.
+
+### NOT-FITTING-ITEMS (explicit out of scope for this iteration)
+
+* **Auto-dep-tracking `create_effect`** — would require push-subscriber-graph rewrite + per-binding dep-instrumentation stack. Deferred until D3 promotes framework-parity ambition.
+* **Async/futures `create_resource`** — arniko has no async runtime; integrating `tokio`/`async-std` is a D-level choice outside this iteration. Resource exposes a synchronous `.resolve(t)`/`.reject(e)` from a thread/timer/caller-supplied runtime.
+* **Push subscriber graph** — out of scope; Reactor rewrite.
+* **Nested provide/inject scopes** — single flat HashMap<TypeId, ...> on Reactor. Nested-scope semantics deferred.
+
+### IN-SCOPE PRIMITIVES
+
+1. `create_effect<R, F>(reactor, source: R, f: F) -> Scope` where `R: Reactive<T>`, `F: Fn(&T) + Send + Sync + 'static`. Wraps `Reactor::bind_scoped`/reactor.bind with a closure shape that does not require DOM patching. Model limit documented: deps declared via the source parameter (like Computed).
+2. `Resource<T>` (synchronous state-machine `ResourceState<T> ::= Pending | Resolved(T) | Error(String)`) impls `Reactive<ResourceState<T>>` so it slots into existing `bind_scoped` / Computed / Switch machinery. `create_resource(initial: T)` is a sugar for `Resource<T>::new(initial)`. Async driver wires `.resolve(t)` / `.reject(e)` from caller-supplied runtime.
+3. `provide<T>(&mut Reactor, T) / inject<T>(&Reactor) -> Option<Arc<T>>` keyed on `TypeId` via `HashMap<TypeId, Box<dyn Any + Send + Sync>>` inside Reactor. New-value-wins semantics. Arc ownership is correct because Reactor is shared via `Arc<Mutex<...>>` in `ReactiveApplication`.
+4. `batch(f)`: explicit entry-point combining many signal sets + a single flush. The model already batches (poll-on-flush means every set applies at next flush); `batch()` names the pattern. Caller supplies `&mut Reactor, &mut DocumentMutator, Option<&SceneScheduler>` — mirrors the launch path.
+5. `ErrorBoundary(fallback_fn, child_fn)`: View wrapper. `child_fn` mount runs under `std::panic::catch_unwind(AssertUnwindSafe(...))`. On panic: mount `fallback_fn`; binding flush also wrapped in catch_unwind. The panicked child's scope-handles are NOT merged into the returned parent scope (the child's binding slot becomes `None`); the fallback's bindings ARE merged.
+6. `KeyedFor<T, K, R: Reactive<Vec<T>>>: Key = Clone + Hash + Eq + Send + Sync + 'static`: keyed list diff replacing positional diff. State is `HashMap<K, ItemState>` + `Vec<K>` for paint-order. New keys mount; missing keys drop; existing keys preserve their DOM + child reactor. Reorders reposition via `mutator.insert_nodes_before(anchor_index, ...)`.
+
+### Files
+
+Added: `crates/arniko/src/reactive/{effect,resource,context,batch,error_boundary}.rs`. `KeyedFor` in `crates/arniko/src/reactive/view.rs`. Exports from `crates/arniko/src/reactive/mod.rs`. Tests in `crates/arniko/tests/reactive_signals.rs` (`test_batch_*`, `test_provide_inject_*`, `test_create_effect_*`, `test_resource_*`, `test_error_boundary_*`, `test_keyed_for_*`).
+
+### Acceptance
+
+`cargo test -p arniko --features reactive --tests`: prior 18 reactive_signals + new primitives' tests + prior 25 reactive_components (For positional diff tests untouched) all green. `cargo check --workspace` clean. New primitives documented with rustdoc that names the model-fitting limitation directly.
+
+## A-4b: 3-pivot diagnostic result (2026-06-17) — all rejected; A-4b still open
+
+Three in-session attempts to resolve A-4b (rcgen 0.13.2 / time blanket-impl E0119 conflict). All three failed; A-4b remains open and unblocks once an exosphere-side cfg-gate OR rust-libp2p 0.56+ ships.
+
+**Pivot 1 REJECTED:** `[patch.crates-io] time = "=0.3.35"`
+- Cargo error: `error: patch for 'time' points to the same source, but patches must point to different sources`.
+- Cause: `[patch.crates-io]` requires a non-crates.io source. A version-string shorthand at the same source is a no-op patch.
+
+**Pivot 2 REGISTERED BUT UNUSED:** `[patch.crates-io] time = { git = "https://github.com/time-rs/time.git", tag = "v0.3.35" }`
+- Cargo accepts syntax; lockfile registers git source (hash confirmed via `git ls-remote --tags`).
+- Build emits warning `patch 'time v0.3.35' was not used in the crate graph`.
+- E0119 PERSISTS because `x509-parser v0.17` (transitive via `libp2p-quic`) requires `time >= 0.3.36` for an internal feature flag. The cargo resolver correctly rejected 0.3.35 — the transitive constraint itself forces 0.3.36+ in the graph, regardless of any patch.
+
+**Pivot 3 BROKEN (then reverted):** trim `"quic"`+`"relay"` from `exo-mesh`'s `libp2p` features
+- `exo-mesh`'s `src/p2p.rs` (1083 LOC) uses `libp2p::quic` and `libp2p::relay` UNCONDITIONALLY (no `#[cfg]` gates). The `quic::tokio::Transport`, `udp/quic-v1` listener setup, and `relay::client::Behaviour` are interleaved with the rest of the network behaviour struct.
+- Without cfg-gating the src code, just trimming the feature list breaks exo-mesh BEFORE rcgen is reached.
+- Reverted via `cd /workspace/projects/exosphere && git checkout HEAD -- crates/exo/net/mesh/Cargo.toml`.
+
+**Verified clean tree after revert:** arniko: clean for A-4b changes (B-7 rest primitives remain unresolved from prior session — separate). exo-mesh/Cargo.toml restored. E0119 still reproducible on `--features networking`.
+
+**Net state:** A-4 stage 2 ⬜ OPEN. Three structural blockers eliminated; remaining candidates:
+
+* **A. cfg-gate exo-mesh's `p2p.rs`** for quic + relay branches + re-introduce them as `quic`/`relay` sub-features (default off) — out-of-tree (exosphere PR); SwarmBuilder chain hazard (must restructure chained builder pattern).
+* **B. Vendor exo-mesh** at `/workspace/projects/arniko/crates/_vendored/exo-mesh/` (with the same cfg-gate edit + license-file path fix) — in-ariko controllable; heavyweight vendoring debt.
+* **C. Defer** with explicit escalation: requires upstream `rust-libp2p` >= 0.56 (which bumps `libp2p-tls`'s `rcgen` pin to `^0.14`) OR an exosphere-side cfg-gate PR.
+
+D4 (publish `exo-bliss-net`) is ORTHOGONAL: `exo-bliss-net` uses `default-features = false, features = ["local"]` and does not pull libp2p at all. Reopening D4 does not unlock A-4b on its own.
+
+## A-4b: deferral decision (2026-06-17) — escalation to exosphere + upstream rust-libp2p
+
+Reason: three in-ariko pivots rejected (see the prior `A-4b: 3-pivot diagnostic result (2026-06-17)` section above). A-4b cannot be resolved within the arniko branch alone. Viable paths require either:
+
+1. **Exosphere-side PR.** Modify `crates/exo/net/mesh/Cargo.toml` to expose `quic` + `relay` as default-off sub-features and gate the `libp2p::quic`/`libp2p::relay` usage in `src/p2p.rs` via `#[cfg(feature = "...")]`. SwarmBuilder chain hazard: libp2p's swarm builder is a chained API; mid-chain `#[cfg]` is not legal, so the conditional `.with_quic()`/`.with_relay()` step must be split out (e.g. via `cfg_if` macro, `then_some`, or builder reconstruction). File this as a sibling exosphere PR; it cannot land in the arniko branch alone.
+
+2. **Upstream `rust-libp2p` ≥ 0.56.** Track when the next rust-libp2p release bumps `libp2p-tls`'s `rcgen = "^0.13"` to `"^0.14"`. Verifiable trigger: `cargo update -p rcgen` succeeds without E0119, AND `cargo update -p time` rolls `time` to ≥ 0.3.36 cleanly. Once available, arniko can drop this analysis entirely and re-resolve.
+
+D4 (publishing `exo-bliss-net` to crates.io) is ORTHOGONAL: exo-bliss-net uses `default-features = false, features = ["local"]` and does not pull libp2p, so D4 itself does not unblock A-4b. However, publishing exo-bliss-net would let downstream consumers pin arniko's exo-bliss-net semver and apply their own rcgen/libp2p-tls patches at the consumer layer — useful parallel work but a separate piece from A-4b.
+
+Outcome: A-4b remains open. M1 unblock is incomplete on `--features networking` and `--features full`. The remaining feature gates (`reactive`, `launch`, `gpu`, default) compile green from arniko's own tree at HEAD `655efdc` (re-verifiable via `cargo check -p arniko`, `cargo check -p arniko --features reactive`, etc.). **Acceptance criterion for A-4b resolution:** `cargo check -p arniko --features networking` AND `cargo check -p arniko --features full` BOTH exit 0. Re-test after either unblock event lands (exosphere cfg-gate PR merged, or rust-libp2p ≥ 0.56 published).

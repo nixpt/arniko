@@ -39,10 +39,21 @@
 - [x] **A-3 (P0) ✅ `reactive` feature omits its own `gpu` dependency.**
   **Done:** with B-4..B-7's `mustang` gating, the feature compiles without dragging `gpu` in. `--features reactive` builds standalone.
 
-- [ ] **A-4 (P1) 🔶 PARTIAL `full`/`networking`** reduced to a single blocker.
+- [ ] **A-4 (P1) 🔶 PARTIAL `full`/`networking`** — Stage 1 ✅; Stage 2 ⬜ ESCALATED (A-4b).
   **Stage 1 ✅ (resolved on this branch):** exo-mesh's two named errors (`:13 libp2p undeclared`, `:208 peer_id on Arc<NodeIdentity>`) are addressed without out-of-tree edits — `crates/arniko/Cargo.toml` lists `exo-mesh` as a direct optional dep and the `networking` feature enables `exo-mesh/p2p`, which triggers Cargo feature unification and materializes `libp2p` across the graph. exo-mesh compiles.
-  **Stage 2 ⬜ (new sub-ticket A-4b):** once `libp2p` is actually built, `rcgen 0.13.2` is pulled transitively (via libp2p 0.55's `quic`/etc. features) and conflicts with a concrete `From<X>` impl required by a newer `time` crate: `error[E0119]: conflicting implementations of trait From<T> for rcgen::OtherNameValue/DnValue`. Fix candidates: (a) trim exo-mesh's `libp2p` features (`"quic"`, maybe `"relay"`) — out-of-tree edit OR vendor `crates/_vendored/exo-mesh`; (b) workspace-level rcgen override to `0.12` and reconcile. Per D4 this also re-opens the question of pinning arniko to a published exo-bliss-net.
-  **Acceptance (full):** `--features full` AND `--features networking` green from arniko's own tree.
+  **Stage 2 ⬜ ESCALATED (A-4b, 2026-06-17):** rcgen 0.13.2 vs time blanket-impl E0119 was the only remaining blocker on `--features networking` and `--features full`. **Three in-ariko pivots rejected** (full diagnostic in `.dejavue/decisions.md` `A-4b: 3-pivot diagnostic result`):
+  1. `[patch.crates-io] time = "=0.3.35"` — rejected by Cargo as same-source no-op patch.
+  2. `[patch.crates-io] time = { git = "https://github.com/time-rs/time.git", tag = "v0.3.35" }` — registered but **unused**: x509-parser v0.17 (transitive via libp2p-quic) hard-pulls `time >= 0.3.36` for an internal feature flag, defeating the resolver.
+  3. Trim `"quic"`+`"relay"` from exo-mesh's `libp2p` features — `exo-mesh/src/p2p.rs` (1083 LOC) uses `libp2p::quic` and `libp2p::relay` UNCONDITIONALLY in transport + swarm behaviour; just trimming breaks exo-mesh's compile before rcgen is even reached.
+  **Out-of-tree unblock options** (any one of these resolves A-4b):
+  * **Exosphere-side cfg-gate PR.** Modify `crates/exo/net/mesh/Cargo.toml` to expose `quic` + `relay` as default-off sub-features; modify `crates/exo/net/mesh/src/p2p.rs` to gate `libp2p::quic`/`libp2p::relay` imports, transport setup, and behaviour wiring via `#[cfg(feature = "...")]`. **SwarmBuilder chain hazard:** libp2p's swarm builder is a chained API — mid-chain `#[cfg]` is not legal, so the conditional `.with_quic()`/`.with_relay()` step must be split out via a `cfg_if` macro, `then_some`, or builder reconstruction.
+  * **Upstream `rust-libp2p` ≥ 0.56.** Track when the next rust-libp2p release bumps `libp2p-tls`'s `rcgen = "^0.13"` → `"^0.14"`. Once available, arniko can re-resolve without any workspace patch. Verifiable trigger: `cargo update -p rcgen` succeeds without E0119, AND `cargo update -p time` rolls time forward to ≥ 0.3.36 cleanly.
+  **D4 is ORTHOGONAL:** publishing `exo-bliss-net` to crates.io does not itself unlock A-4b (exo-bliss-net uses `default-features = false, features = ["local"]` and does not pull libp2p). Revisiting D4 would let downstream consumers pin arniko's `exo-bliss-net` semver and apply their own rcgen/libp2p-tls patches at the consumer layer, but is a separate piece of work from A-4b.
+  **Acceptance (full):** `--features full` AND `--features networking` green from arniko's own tree. Verify via:
+  ```
+  cargo check -p arniko --features networking && cargo check -p arniko --features full
+  ```
+  Both should exit 0 once either unblock path lands. Currently red — `cargo check --features networking` fails with `rcgen v0.13.2 conflicting implementations of trait From<format_description::parse::format_item::HourBase> for type <HourBase as ModifierValue>::Type`. The `--features reactive`, `--features launch`, `default`, and `--features gpu` feature gates are green at HEAD `655efdc` (re-verifiable via `cargo check -p arniko`, `cargo check -p arniko --features reactive`, etc.). The live working tree may have unrelated dirty files (B-7 rest primitives from the prior session) that DO NOT change this gate status when checked against HEAD.
 
 - [ ] **A-5 (P2) Clippy hygiene.**
   18 warnings on default build. **Fix:** `clippy --fix` + add `Default`/`#[allow]`. **Acceptance:** `clippy -D warnings` clean.
