@@ -34,6 +34,30 @@ pub enum ToastVariant {
 // ── HTML Component ───────────────────────────────────────────────────────────
 
 /// A static toast notification. Renders as a fixed-position banner.
+/// # Examples
+///
+/// ```rust,no_run
+/// use arniko::{Toast, ToastVariant, ToastPosition};
+///
+/// let toast = Toast::new("Deployment successful")
+///     .variant(ToastVariant::Success)
+///     .position(ToastPosition::Top);
+///
+/// let html = toast.render();
+/// ```
+///
+/// With the `reactive` feature:
+///
+/// ```rust,no_run
+/// # #[cfg(feature = "reactive")] {
+/// use arniko::{mount_toast, reactive::{Signal, Reactor}, bliss_dom::DocumentMutator};
+///
+/// // `mount_toast` registers a reactive binding on the supplied reactor
+/// // and returns the container node ID + the lifecycle scope:
+/// // let (id, scope) = mount_toast(mutator, reactor, parent_id,
+/// //                              &Signal::new(Some("test".into())));
+/// # }
+/// ```
 #[cfg(feature = "components")]
 pub struct Toast {
     message: String,

@@ -6,6 +6,18 @@
 use crate::components::escape_html;
 use crate::{Component, ComponentMetadata};
 
+/// # Examples
+///
+/// ```rust,no_run
+/// use arniko::EmptyState;
+///
+/// let empty = EmptyState::new("No items found")
+///     .icon("📦")
+///     .description("Add your first item.")
+///     .action("<button>Add Item</button>");
+///
+/// let html = empty.render();
+/// ```
 pub struct EmptyState {
     icon: Option<String>,
     title: String,

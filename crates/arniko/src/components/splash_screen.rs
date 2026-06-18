@@ -33,6 +33,33 @@ impl Default for SplashConfig {
 // ── HTML Component ───────────────────────────────────────────────────────────
 
 /// A full-screen splash/loading screen with a progress bar.
+/// # Examples
+///
+/// ```rust,no_run
+/// use arniko::{SplashScreen, SplashConfig};
+///
+/// let config = SplashConfig {
+///     progress: 42,
+///     status: "Loading...".into(),
+///     ..Default::default()
+/// };
+///
+/// let splash = SplashScreen::new(config)
+///     .display(true);
+///
+/// let html = splash.render();
+/// ```
+///
+/// With the `reactive` feature:
+///
+/// ```rust,no_run
+/// # #[cfg(feature = "reactive")] {
+/// use arniko::{SplashConfig, splash_screen_reactive, reactive::Signal};
+///
+/// let config_signal = Signal::new(SplashConfig::default());
+/// let view = splash_screen_reactive(&config_signal);
+/// # }
+/// ```
 #[cfg(feature = "components")]
 pub struct SplashScreen {
     config: SplashConfig,

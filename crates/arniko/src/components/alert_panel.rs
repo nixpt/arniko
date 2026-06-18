@@ -66,6 +66,28 @@ impl AlertEntry {
 /// When no alerts are present, renders an "all clear" status.
 /// Otherwise renders a header with count, then individual alert items
 /// with icon, title, message, and timestamp.
+/// # Examples
+///
+/// ```rust,no_run
+/// use arniko::{AlertPanel, AlertEntry, AlertLevel};
+///
+/// let panel = AlertPanel::new()
+///     .title("Ops")
+///     .add(AlertEntry::new("a1", AlertLevel::Critical, "HVAC overheat", "Server room is hot.", "12:00"));
+///
+/// let html = panel.render();
+/// ```
+///
+/// With the `reactive` feature:
+///
+/// ```rust,no_run
+/// # #[cfg(feature = "reactive")] {
+/// use arniko::{AlertEntry, alert_panel_reactive, reactive::Signal};
+///
+/// let entries_signal = Signal::new(Vec::<AlertEntry>::new());
+/// let view = alert_panel_reactive(entries_signal);
+/// # }
+/// ```
 #[cfg(feature = "components")]
 pub struct AlertPanel {
     entries: Vec<AlertEntry>,

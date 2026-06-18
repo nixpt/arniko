@@ -26,6 +26,21 @@ pub enum ButtonSize {
     Icon,
 }
 
+/// # Examples
+///
+/// ```rust,no_run
+/// use arniko::{Button, ButtonVariant, ButtonSize};
+///
+/// let btn = Button::new("Save")
+///     .variant(ButtonVariant::Accent)
+///     .size(ButtonSize::Lg)
+///     .class("ml-2");
+///
+/// let html = btn.render();
+///
+/// // Bonus: render as an <a> element
+/// let link_html = Button::link("Go", "https://example.com").render();
+/// ```
 pub struct Button {
     label: String,
     variant: ButtonVariant,

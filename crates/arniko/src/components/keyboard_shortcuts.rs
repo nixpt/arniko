@@ -40,6 +40,32 @@ impl ShortcutEntry {
 // ── HTML Component ───────────────────────────────────────────────────────────
 
 /// A keyboard shortcuts cheatsheet rendered as a modal overlay.
+/// # Examples
+///
+/// ```rust,no_run
+/// use arniko::{KeyboardShortcuts, ShortcutEntry};
+///
+/// let shortcuts = KeyboardShortcuts::new(vec![
+///     ShortcutEntry::new("Ctrl+S", "Save file"),
+///     ShortcutEntry::new("?", "Show this help"),
+/// ]);
+///
+/// let html = shortcuts.render();
+/// ```
+///
+/// With the `reactive` feature:
+///
+/// ```rust,no_run
+/// # #[cfg(feature = "reactive")] {
+/// use arniko::{ShortcutEntry, shortcut_help_reactive, reactive::Signal};
+///
+/// let visible = Signal::new(false);
+/// let view = shortcut_help_reactive(
+///     &visible,
+///     vec![ShortcutEntry::new("Esc", "Close")]
+/// );
+/// # }
+/// ```
 #[cfg(feature = "components")]
 pub struct KeyboardShortcuts {
     shortcuts: Vec<ShortcutEntry>,

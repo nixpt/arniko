@@ -17,6 +17,17 @@ pub enum StatusVariant {
     Offline,
 }
 
+/// # Examples
+///
+/// ```rust,no_run
+/// use arniko::{StatusBadge, StatusVariant};
+///
+/// let badge = StatusBadge::new("Online")
+///     .variant(StatusVariant::Active)
+///     .pulse(true);
+///
+/// let html = badge.render();
+/// ```
 pub struct StatusBadge {
     label: String,
     variant: StatusVariant,

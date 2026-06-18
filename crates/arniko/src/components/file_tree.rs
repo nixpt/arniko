@@ -57,6 +57,32 @@ pub struct FileTreeState {
 // ── HTML Component ───────────────────────────────────────────────────────────
 
 /// A file tree browser panel.
+/// # Examples
+///
+/// ```rust,no_run
+/// use arniko::{FileTree, FileTreeState, FileTreeEntry};
+///
+/// let state = FileTreeState {
+///     root: "/src".to_string(),
+///     entries: vec![FileTreeEntry::new("src/main.rs", false, 1)],
+///     selected_file: None,
+///     file_content: None,
+/// };
+///
+/// let tree = FileTree::new().state(state);
+/// let html = tree.render();
+/// ```
+///
+/// With the `reactive` feature:
+///
+/// ```rust,no_run
+/// # #[cfg(feature = "reactive")] {
+/// use arniko::{FileTreeState, file_tree_reactive, reactive::Signal};
+///
+/// let state_signal = Signal::new(FileTreeState::default());
+/// let view = file_tree_reactive(state_signal);
+/// # }
+/// ```
 #[cfg(feature = "components")]
 pub struct FileTree {
     state: FileTreeState,

@@ -6,6 +6,19 @@
 use crate::components::escape_html;
 use crate::{Component, ComponentMetadata};
 
+/// # Examples
+///
+/// ```rust,no_run
+/// use arniko::Panel;
+///
+/// let panel = Panel::new()
+///     .title("Tree Inspector")
+///     .icon("👁️")
+///     .body("Pick a node...")
+///     .closable(true);
+///
+/// let html = panel.render();
+/// ```
 pub struct Panel {
     title: Option<String>,
     body: Option<String>,

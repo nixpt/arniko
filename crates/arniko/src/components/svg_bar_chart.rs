@@ -34,6 +34,30 @@ impl SvgBarEntry {
 ///
 /// Each bar is a `<rect>` scaled relative to the largest value. Labels are
 /// `<text>` elements positioned on the left; values on the right.
+/// # Examples
+///
+/// ```rust,no_run
+/// use arniko::{SvgBarChart, SvgBarEntry};
+///
+/// let chart = SvgBarChart::new()
+///     .title("Benchmarks")
+///     .title_icon("⚡")
+///     .value_suffix("ms")
+///     .add(SvgBarEntry::new("test_a", 12.3, "var(--arniko-cyan)"));
+///
+/// let html = chart.render();
+/// ```
+///
+/// With the `reactive` feature:
+///
+/// ```rust,no_run
+/// # #[cfg(feature = "reactive")] {
+/// use arniko::{SvgBarEntry, svg_bar_chart_reactive, reactive::Signal};
+///
+/// let entries_signal = Signal::new(Vec::<SvgBarEntry>::new());
+/// let view = svg_bar_chart_reactive(entries_signal);
+/// # }
+/// ```
 #[cfg(feature = "components")]
 pub struct SvgBarChart {
     entries: Vec<SvgBarEntry>,

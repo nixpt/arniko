@@ -39,6 +39,28 @@ impl BarEntry {
 ///
 /// Each bar is scaled relative to the largest value. Bars are rendered left
 /// to right with a label, colored fill, and numeric value display.
+/// # Examples
+///
+/// ```rust,no_run
+/// use arniko::{BarChart, BarEntry};
+///
+/// let chart = BarChart::new()
+///     .add(BarEntry::new("A", 50.0, "var(--arniko-error)"))
+///     .bar_height(8);
+///
+/// let html = chart.render();
+/// ```
+///
+/// With the `reactive` feature:
+///
+/// ```rust,no_run
+/// # #[cfg(feature = "reactive")] {
+/// use arniko::{BarEntry, bar_chart_reactive, reactive::Signal};
+///
+/// let entries_signal = Signal::new(Vec::<BarEntry>::new());
+/// let view = bar_chart_reactive(entries_signal);
+/// # }
+/// ```
 #[cfg(feature = "components")]
 pub struct BarChart {
     entries: Vec<BarEntry>,

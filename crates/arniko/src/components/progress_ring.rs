@@ -37,6 +37,27 @@ pub const DEFAULT_RING_THRESHOLDS: &[RingThreshold] = &[
 // ── HTML Component ───────────────────────────────────────────────────────────
 
 /// An SVG circular progress ring.
+/// # Examples
+///
+/// ```rust,no_run
+/// use arniko::{ProgressRing, RingThreshold, DEFAULT_RING_THRESHOLDS};
+///
+/// let ring = ProgressRing::new(75.0)
+///     .thresholds(DEFAULT_RING_THRESHOLDS.to_vec());
+///
+/// let html = ring.render();
+/// ```
+///
+/// With the `reactive` feature:
+///
+/// ```rust,no_run
+/// # #[cfg(feature = "reactive")] {
+/// use arniko::{progress_ring_reactive, DEFAULT_RING_THRESHOLDS, reactive::Signal};
+///
+/// let value_signal = Signal::new(50.0);
+/// let view = progress_ring_reactive(value_signal, DEFAULT_RING_THRESHOLDS.to_vec());
+/// # }
+/// ```
 #[cfg(feature = "components")]
 pub struct ProgressRing {
     value: f64,
