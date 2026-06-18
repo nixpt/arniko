@@ -26,7 +26,7 @@
 //! - **Components**: HTML component library with embedded CSS
 //! - **Compositor**: Post-processing effects for advanced CSS features
 //! - **Mustang**: GPU-accelerated effect compositor
-//! - **Theme**: Theme management system (Dark, Frosted, Cyberpunk, Aurora)
+//! - **Theme**: Theme management system (Dark, Light, System, Frosted, Cyberpunk, Aurora)
 //! - **CSS**: CSS normalization for Bliss compatibility
 //!
 //! ## Feature Flags

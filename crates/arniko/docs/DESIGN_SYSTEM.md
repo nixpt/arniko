@@ -635,5 +635,4 @@ arniko = { path = "../arniko", default-features = false, features = ["html"] }  
 ## Notes
 
 - **HTML escaping:** Component `render()` methods do NOT escape HTML in user-provided strings. Sanitize inputs before passing to components.
-- **Placeholder file:** `src/components/placeholder_components.rs` contains stub implementations that are shadowed by the real modules in `mod.rs`. It exists for backward compatibility during migration and should not be imported directly.
 - **GPU effects:** When `gpu` feature is enabled, `ComponentMetadata.requires_gpu` flags components that benefit from Mustang compositor passes. Most core components set this to `false`.
