@@ -10,7 +10,7 @@ use arniko::components::{
     mount_toast, mount_toast_with_variant, progress_ring_reactive, shortcut_help_reactive,
     splash_screen_reactive, theme_toggle_reactive,
 };
-use arniko::reactive::{For, Reactor, Signal, Text, View};
+use arniko::{Component, reactive::{For, Reactor, Signal, Text, View}};
 use bliss_dom::{BaseDocument, DocumentConfig, DocumentMutator, qual_name};
 use bliss_html::HtmlProvider;
 use std::sync::Arc;
@@ -975,4 +975,139 @@ fn test_for_multiple_reconciliations_no_arena_leak() {
     let text = node_text(&mut doc, root_id);
     assert!(text.contains("base"), "Should still contain base: {}", text);
     assert!(!text.contains("extra_"), "Should NOT contain any extra items: {}", text);
+}
+
+// ── ComponentView Drop Semantics Tests ────────────────────────────────────
+//
+// `ComponentView<C>` is a wrapping newtype
+// (`crates/arniko/src/reactive/view.rs::ComponentView<C>(pub C)`) that owns
+// a `C`. `Component::to_view(self)` consumes the underlying `C` and yields
+// a `ComponentView<Self>`. Mounting the `ComponentView` through the
+// reactive system uses `&self` (see `ComponentView::mount`), so `C` is
+// borrowed — not consumed — by the mount. The owning lexical scope (or
+// whoever holds the `ComponentView<C>` value) is the unique owner of `C`,
+// and `C::drop` should fire exactly once when the `ComponentView` goes
+// out of scope.
+
+/// Component that bumps a shared counter on Drop. Lets the tests assert
+/// the exact drop count of the wrapped `C` after a sequence of mount,
+/// binding-park, and out-of-scope events.
+struct DropCounter(std::sync::Arc<std::sync::atomic::AtomicUsize>);
+
+impl DropCounter {
+    fn new() -> (Self, std::sync::Arc<std::sync::atomic::AtomicUsize>) {
+        let counter = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
+        (Self(counter.clone()), counter)
+    }
+}
+
+impl Drop for DropCounter {
+    fn drop(&mut self) {
+        self.0.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+    }
+}
+
+impl arniko::Component for DropCounter {
+    fn render(&self) -> String {
+        format!(
+            "<span class=\"arniko-drop-counter\">{}</span>",
+            self.0.load(std::sync::atomic::Ordering::SeqCst),
+        )
+    }
+}
+
+#[test]
+fn component_view_drops_inner_c_on_scope_end() {
+    // Phase-5 advisory verification: `ComponentView<C>` follows Rust's
+    // normal RAII semantics — `C` drops exactly once when the
+    // `ComponentView` goes out of scope, even after the wrapper has
+    // been mounted through the reactive system (which involves only
+    // `&self`, not consuming `C`).
+    let (dropper, counter) = DropCounter::new();
+    assert_eq!(counter.load(std::sync::atomic::Ordering::SeqCst), 0);
+
+    {
+        let (mut doc, root_id) = setup_doc();
+        let mut reactor = Reactor::new();
+        // `to_view()` consumes `dropper`; from here on, `view` is the
+        // unique owner of the underlying `DropCounter` (i.e. `C`).
+        let view = dropper.to_view();
+
+        {
+            let mut mutator = doc.mutate();
+            mount_parked(&view, &mut mutator, &mut reactor, root_id);
+            drop(mutator);
+        }
+        flush_reactive(&mut doc, &mut reactor);
+
+        // Mount borrows `view` (the resulting Scope is parked in
+        // `reactor.parked_scopes`), but the `ComponentView<C>` value
+        // itself is still owned by the outer scope of this block.
+        // `C::drop` has NOT fired yet.
+        assert_eq!(
+            counter.load(std::sync::atomic::Ordering::SeqCst),
+            0,
+            "ComponentView's C should still be alive while view is in scope",
+        );
+
+        // `view` drops at end of this block → `DropCounter::drop` fires
+        // exactly once. The previously-mounted DOM node is also eligible
+        // for cleanup once the reactor drops, but the *component*'s drop
+        // fires before that (driven by the `ComponentView` going out of
+        // scope, not by the DOM-tree lifecycle).
+    }
+
+    assert_eq!(
+        counter.load(std::sync::atomic::Ordering::SeqCst),
+        1,
+        "ComponentView's C should drop exactly once when the view goes out of scope",
+    );
+}
+
+#[test]
+fn component_view_inner_c_not_dropped_while_reactor_alive() {
+    // Companion test: while the reactor holds a parked scope AND the
+    // ComponentView value is still live, `C` stays alive. This catches
+    // an inverse regression where some future optimization might
+    // (incorrectly) drop C eagerly on mount or parking.
+    let (dropper, counter) = DropCounter::new();
+    assert_eq!(counter.load(std::sync::atomic::Ordering::SeqCst), 0);
+
+    let (mut doc, root_id) = setup_doc();
+    let mut reactor = Reactor::new();
+    let view = dropper.to_view();
+
+    {
+        let mut mutator = doc.mutate();
+        mount_parked(&view, &mut mutator, &mut reactor, root_id);
+        drop(mutator);
+    }
+    flush_reactive(&mut doc, &mut reactor);
+
+    // Both view and reactor are still alive in this test's scope; `C`
+    // must still be alive.
+    assert_eq!(
+        counter.load(std::sync::atomic::Ordering::SeqCst),
+        0,
+        "C should not drop while both ComponentView and Reactor are alive",
+    );
+
+    // Explicit drop orderings: drop the reactor first (its
+    // `parked_scopes` Scope::drop chain fires), then drop the
+    // ComponentView. Counter should still be 0 until view drops.
+    drop(reactor);
+    assert_eq!(
+        counter.load(std::sync::atomic::Ordering::SeqCst),
+        0,
+        "C should not drop on Reactor::drop alone",
+    );
+
+    drop(view);
+    assert_eq!(
+        counter.load(std::sync::atomic::Ordering::SeqCst),
+        1,
+        "C should drop exactly once on ComponentView::drop",
+    );
+
+    drop(doc); // keep doc alive until the end for hygiene
 }
