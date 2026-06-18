@@ -133,8 +133,21 @@ required-features = ["launch"]
 
 [[example]]
 name = "advanced"
-required-features = ["gpu"]
+required-features = ["gpu"]  
 
 [[example]]
 name = "phase5_demo"
-required-features = ["reactive", "gpu"]
+required-features = ["reactive", "gpu"]  
+
+[[example]]
+name = "dogfood_m4"
+required-features = ["reactive"]
+
+# `tests/dogfood_m4.rs` exercises the full reactive surface to validate the
+# dogfood demo end-to-end (Signal → Computed → For → Switch → ComponentView via
+# Show/Switch mounting, plus the D-2c-followup empty-doc hit/paint/scroll/clear
+# backstop on a stripped DOM). Compile-gated on `reactive` so cargo check
+# / clippy --all-targets under default features stays green.
+[[test]]
+name = "dogfood_m4"
+required-features = ["reactive"]
