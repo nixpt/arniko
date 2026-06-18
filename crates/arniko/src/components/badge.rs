@@ -2,8 +2,8 @@
 //!
 //! Provides badge components for status indicators and labels.
 
-use crate::{Component, ComponentMetadata};
 use crate::components::escape_html;
+use crate::{Component, ComponentMetadata};
 
 #[derive(Clone, PartialEq, Default)]
 pub enum BadgeVariant {
@@ -16,6 +16,14 @@ pub enum BadgeVariant {
     Purple,
 }
 
+/// # Examples
+///
+/// ```rust,no_run
+/// use arniko::{Badge, BadgeVariant};
+///
+/// let badge = Badge::new("Live")
+///     .variant(BadgeVariant::Success);
+/// ```
 pub struct Badge {
     text: String,
     variant: BadgeVariant,
@@ -53,7 +61,9 @@ impl Badge {
 
         format!(
             r#"<span class="arniko-badge {} {}" role="status">{}</span>"#,
-            variant_class, escape_html(&self.class), escape_html(&self.text)
+            variant_class,
+            escape_html(&self.class),
+            escape_html(&self.text)
         )
     }
 }

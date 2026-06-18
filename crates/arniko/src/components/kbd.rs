@@ -1,8 +1,15 @@
 //! Kbd (Keyboard) component for Arniko
 
-use crate::{Component, ComponentMetadata};
 use crate::components::escape_html;
+use crate::{Component, ComponentMetadata};
 
+/// # Examples
+///
+/// ```rust,no_run
+/// use arniko::Kbd;
+///
+/// let key = Kbd::new("Ctrl + S").class("text-xs");
+/// ```
 pub struct Kbd {
     key: String,
     class: String,
@@ -24,7 +31,8 @@ impl Kbd {
     pub fn render(&self) -> String {
         format!(
             r#"<kbd class="arniko-kbd {}">{}</kbd>"#,
-            escape_html(&self.class), escape_html(&self.key)
+            escape_html(&self.class),
+            escape_html(&self.key)
         )
     }
 }

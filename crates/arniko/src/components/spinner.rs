@@ -10,6 +10,13 @@ pub enum SpinnerSize {
     Lg,
 }
 
+/// # Examples
+///
+/// ```rust,no_run
+/// use arniko::{Spinner, SpinnerSize};
+///
+/// let spinner = Spinner::new().size(SpinnerSize::Lg);
+/// ```
 pub struct Spinner {
     size: SpinnerSize,
     class: String,

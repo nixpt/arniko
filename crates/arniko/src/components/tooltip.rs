@@ -1,7 +1,7 @@
 //! Tooltip component for Arniko
 
-use crate::{Component, ComponentMetadata};
 use crate::components::escape_html;
+use crate::{Component, ComponentMetadata};
 
 #[derive(Clone, PartialEq, Default)]
 pub enum TooltipPosition {
@@ -12,6 +12,14 @@ pub enum TooltipPosition {
     Right,
 }
 
+/// # Examples
+///
+/// ```rust,no_run
+/// use arniko::{Tooltip, TooltipPosition};
+///
+/// let tip = Tooltip::new("Hover me", "This is the tooltip text")
+///     .position(TooltipPosition::Bottom);
+/// ```
 pub struct Tooltip {
     text: String,
     tooltip: String,
@@ -49,7 +57,10 @@ impl Tooltip {
 
         format!(
             r#"<span class="arniko-tooltip {}" data-tooltip="{}" data-tooltip-position="{}" role="tooltip" tabindex="0">{}</span>"#,
-            escape_html(&self.class), escape_html(&self.tooltip), position_attr, escape_html(&self.text)
+            escape_html(&self.class),
+            escape_html(&self.tooltip),
+            position_attr,
+            escape_html(&self.text)
         )
     }
 
@@ -89,7 +100,11 @@ mod tests {
         assert!(top.render().contains(r#"data-tooltip-position="top""#));
 
         let bottom = Tooltip::new("A", "B").position(TooltipPosition::Bottom);
-        assert!(bottom.render().contains(r#"data-tooltip-position="bottom""#));
+        assert!(
+            bottom
+                .render()
+                .contains(r#"data-tooltip-position="bottom""#)
+        );
     }
 
     #[test]

@@ -1,8 +1,15 @@
 //! Separator component for Arniko
 
-use crate::{Component, ComponentMetadata};
 use crate::components::escape_html;
+use crate::{Component, ComponentMetadata};
 
+/// # Examples
+///
+/// ```rust,no_run
+/// use arniko::Separator;
+///
+/// let sep = Separator::new().class("my-4");
+/// ```
 pub struct Separator {
     class: String,
 }
@@ -20,7 +27,10 @@ impl Separator {
     }
 
     pub fn render(&self) -> String {
-        format!(r#"<hr class="arniko-separator {}" role="separator" />"#, escape_html(&self.class))
+        format!(
+            r#"<hr class="arniko-separator {}" role="separator" />"#,
+            escape_html(&self.class)
+        )
     }
 }
 

@@ -2,9 +2,21 @@
 //!
 //! Provides customizable input components for forms and user input.
 
-use crate::{Component, ComponentMetadata};
 use crate::components::escape_html;
+use crate::{Component, ComponentMetadata};
 
+/// # Examples
+///
+/// ```rust,no_run
+/// use arniko::Input;
+///
+/// let input = Input::new()
+///     .input_type("email")
+///     .placeholder("user@example.com")
+///     .name("email")
+///     .value("")
+///     .disabled(false);
+/// ```
 pub struct Input {
     input_type: String,
     placeholder: String,
@@ -64,7 +76,11 @@ impl Input {
             format!(r#" name="{}""#, escape_html(&self.name))
         };
 
-        let aria_label = if self.name.is_empty() { &self.placeholder } else { &self.name };
+        let aria_label = if self.name.is_empty() {
+            &self.placeholder
+        } else {
+            &self.name
+        };
 
         format!(
             r#"<input class="arniko-input {}" type="{}" placeholder="{}" value="{}" aria-label="{}"{}{} />"#,

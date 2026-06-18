@@ -2,8 +2,8 @@
 //!
 //! Provides metric card components for displaying data with icons and trends.
 
-use crate::{Component, ComponentMetadata};
 use crate::components::escape_html;
+use crate::{Component, ComponentMetadata};
 
 #[derive(Clone, PartialEq, Default)]
 pub enum MetricColor {
@@ -24,6 +24,18 @@ pub enum MetricTrend {
     Down,
 }
 
+/// # Examples
+///
+/// ```rust,no_run
+/// use arniko::{MetricCard, MetricColor, MetricTrend};
+///
+/// let metric = MetricCard::new("CPU Usage", "42%")
+///     .subtitle("8 cores")
+///     .icon("🖥️")
+///     .color(MetricColor::Purple)
+///     .trend(MetricTrend::Up)
+///     .class("col-span-2");
+/// ```
 pub struct MetricCard {
     title: String,
     value: String,
@@ -94,7 +106,8 @@ impl MetricCard {
             .map(|icon| {
                 format!(
                     r#"<div class="arniko-metric-icon {}">{}</div>"#,
-                    color_class, escape_html(icon)
+                    color_class,
+                    escape_html(icon)
                 )
             })
             .unwrap_or_default();
@@ -102,7 +115,12 @@ impl MetricCard {
         let subtitle_html = self
             .subtitle
             .as_ref()
-            .map(|subtitle| format!(r#"<div class="arniko-metric-subtitle">{}</div>"#, escape_html(subtitle)))
+            .map(|subtitle| {
+                format!(
+                    r#"<div class="arniko-metric-subtitle">{}</div>"#,
+                    escape_html(subtitle)
+                )
+            })
             .unwrap_or_default();
 
         let trend_html = if !matches!(self.trend, MetricTrend::Stable) {
