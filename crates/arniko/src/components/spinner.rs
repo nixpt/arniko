@@ -91,4 +91,70 @@ mod tests {
         let spinner = Spinner::new().class("my-spinner");
         assert!(spinner.render().contains("my-spinner"));
     }
+
+    /// Golden-fixture table: every SpinnerSize emits the right size-class
+    /// fragment, and Default size correctly emits NO size class at all (the
+    /// upstream leniency check tends to mask regressions in this branch).
+    #[test]
+    fn test_spinner_sizes_golden() {
+        let cases: &[(SpinnerSize, &'static str)] = &[
+            (SpinnerSize::Default, ""),
+            (SpinnerSize::Sm, "arniko-spinner-sm"),
+            (SpinnerSize::Lg, "arniko-spinner-lg"),
+        ];
+        for (i, (size, expected_size_frag)) in cases.iter().enumerate() {
+            let html = Spinner::new().size(size.clone()).render();
+            assert!(
+                html.contains("arniko-spinner"),
+                "Spinner case #{i}: missing base class 'arniko-spinner'",
+            );
+            if !expected_size_frag.is_empty() {
+                assert!(
+                    html.contains(expected_size_frag),
+                    "Spinner case #{i}: missing size fragment '{expected_size_frag}'",
+                );
+            }
+        }
+    }
+
+    /// Golden-fixture table: Spinner size + custom class — both must coexist
+    /// in the rendered class attribute without collision or reordering.
+    #[test]
+    fn test_spinner_size_plus_class_golden() {
+        let cases: &[(&'static str, Spinner, &[&'static str])] = &[
+            (
+                "Default + class",
+                Spinner::new().class("ml-2"),
+                &["arniko-spinner", "ml-2"],
+            ),
+            (
+                "Sm + class",
+                Spinner::new().size(SpinnerSize::Sm).class("my-spinner"),
+                &["arniko-spinner-sm", "my-spinner"],
+            ),
+            (
+                "Lg + class",
+                Spinner::new().size(SpinnerSize::Lg).class("flex-center"),
+                &["arniko-spinner-lg", "flex-center"],
+            ),
+            (
+                "Default unwrapped",
+                Spinner::new(),
+                &["arniko-spinner"],
+            ),
+        ];
+        for (label, spinner, expected_frags) in cases {
+            let html = spinner.render();
+            for frag in *expected_frags {
+                assert!(
+                    html.contains(frag),
+                    "Spinner[{label}]: missing fragment {frag:?}\nhtml={html}",
+                );
+            }
+            assert!(
+                html.contains(r#"role="status""#),
+                "Spinner[{label}]: missing accessibility role\nhtml={html}",
+            );
+        }
+    }
 }

@@ -123,4 +123,27 @@ mod tests {
             assert!(html.contains(expected_class));
         }
     }
+
+    /// Golden-fixture table: every BadgeVariant maps to its unique CSS class.
+    /// Guards against silent rename of variant → class mappings; intentionally
+    /// covers the 6 variants (Default, Success, Warning, Error, Info, Purple)
+    /// so the broader surface is regression-locked, not just the 4 covered upstream.
+    #[test]
+    fn test_badge_variants_golden() {
+        let cases: &[(BadgeVariant, &str)] = &[
+            (BadgeVariant::Default, "arniko-badge-default"),
+            (BadgeVariant::Success, "arniko-badge-success"),
+            (BadgeVariant::Warning, "arniko-badge-warning"),
+            (BadgeVariant::Error, "arniko-badge-error"),
+            (BadgeVariant::Info, "arniko-badge-info"),
+            (BadgeVariant::Purple, "arniko-badge-purple"),
+        ];
+        for (i, (variant, expected)) in cases.iter().enumerate() {
+            let html = Badge::new("m").variant(variant.clone()).render();
+            assert!(
+                html.contains(expected),
+                "Badge case #{i}: missing '{expected}'",
+            );
+        }
+    }
 }
