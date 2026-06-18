@@ -295,6 +295,19 @@ Inventory (runtime, excl. tests): ~178 `unwrap`, 18 `panic!`, 3 active `todo!`, 
    - **A-4b** (rcgen 0.13.2 / time blanket-impl E0119 — `--features full,networking`
      blocker; requires out-of-tree unblock via libp2p feature trim in exo-mesh
      `Cargo.toml` + `p2p.rs`, or upstream rust-libp2p ≥ 0.56 release).
+   - **C-8 closed** (commit `283bd0e`, 2026-06-17 on `agent/vibe/dogfood-m4`):
+     orphan `placeholder_components.rs` deletion + `.dejavue/context.md` arniko-row "13→28"
+     component count reconcile + `lib.rs` crate doc-comment theme list 4→6 reconcile +
+     `DESIGN_SYSTEM.md` "Notes" section stale bullet removed. **Sub-task `C-8a` ⬜ Open:**
+     rustdoc `# Examples` for the 28 real component files (the deleted
+     `placeholder_components.rs:5` stubs were the old targets; the new scope is the 28 `pub mod`
+     modules under `crates/arniko/src/components/`: `alert`, `alert_panel`, `badge`, `bar_chart`,
+     `button`, `card`, `empty_state`, `feed`, `file_tree`, `input`, `kbd`, `keyboard_shortcuts`,
+     `metric_card`, `panel`, `progress_bar`, `progress_ring`, `separator`, `skeleton`, `sparkline`,
+     `spinner`, `splash_screen`, `status_badge`, `status_grid`, `svg_bar_chart`, `svg_line_chart`,
+     `theme_toggle`, `toast`, `tooltip`). Acceptance: `cargo doc -p arniko --no-deps` shows
+     `# Examples` headers on ≥25/28 components (≥89% coverage; near-duplicate CSS-only
+     escapes like `theme_toggle` / `keyboard_shortcuts` / `progress_ring` acceptable to skip).
    - **D-2c-followup** 🟡 (close out D's last residual item).
 
 ## 6. Note for khukuri-desktop

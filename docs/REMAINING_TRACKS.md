@@ -1,8 +1,8 @@
 # Arniko Remaining Track Work
 
-> **Generated:** 2026-06-16 · **Updated:** 2026-06-17 (after M1 follow-up commit series on branch `agent/vibe/ar-m4`)
+> **Generated:** 2026-06-16 · **Updated:** 2026-06-17 (after M1 follow-up commit series on branch `agent/vibe/ar-m4`) · **2026-06-18** (C-8 close-out at commit `283bd0e` on `agent/vibe/dogfood-m4`)
 > **Source:** `PRODUCTION_READINESS_SPEC.md` + `.dejavue/state.md`
-> **Status:** M2 complete + M1 substantially complete (only A-4b outstanding) → M3 (engine robustness + D P0s) is the next frontier.
+> **Status:** **M2 ✅** + **M4 ✅** DONE (reactive maturity + dogfood demo). C-8 carried out of M5 backlog at commit `283bd0e`; sub-task **C-8a** ⬜ Open (rustdoc `# Examples` for the 28 real components) → **M5 next** (component completeness + breadth tests + release, gated by **D1** / **D2** / **D3** / **D4**).
 >
 > This document tracks all **remaining** work across epics A–F. Completed items
 > (✅) are listed for context; **items with no checkmark are outstanding.**
@@ -15,7 +15,7 @@
 |------|------|-----------|-------------|
 | A — Build & workspace | 4/6 + 1 partial | **1** | 0 (A-4b is P1 rcgen/time blocker) |
 | B — Reactive hardening | 3/7 | **4** | 0 |
-| C — Component library | 4/8 + 4 extras | **4** | 0 |
+| C — Component library | 5/8 + 4 extras (C-8a rustdoc-examples sub-task ⬜ Open) | **5** (C-4..C-7, C-8a) | 0 |
 | D — Engine robustness | 8/9 (D-1..D-8 ✅ across `M3`/`M4`/`D-2` phases) + D-2c-followup tracked | **1** (D-9) + D-2c-followup | 0 |
 | E — Testing & CI | 2/5 partial | **3** | 0 (partial done) |
 | F — Packaging & release | 0/6 | **6** | 3 (F-1, F-2, F-3) |
@@ -160,7 +160,8 @@ production-grade framework:
 | C-5: Hardcoded colors | P1 | ⬜ Open |
 | C-6: Constructor inconsistency | P1 | ⬜ Open |
 | C-7: Missing core components | P1 | ⬜ Open |
-| C-8: Dead code + stale docs | P2 | ⬜ Open |
+| C-8: Dead code + stale docs | P2 | ✅ Done (commit `283bd0e`) |
+| C-8a: rustdoc `# Examples` for the 28 real components | P2 | ⬜ Open |
 
 ### C-4 (P1) — Unify the reactive surface
 
@@ -192,13 +193,25 @@ Data-in-`new()` (`Sparkline`, `SplashScreen`) vs empty + `.add()` (`Feed`, `Aler
 | Navigation | Tabs, Accordion, Breadcrumb, Pagination, Steps |
 | Data | Table/DataGrid, List, Avatar, Tag/Chip, generic Tree |
 
-### C-8 (P2) — Dead code + stale docs
+### C-8 (P2) — Dead code + stale docs ✅ Done (commit `283bd0e`, 2026-06-17)
 
-**Fix:**
-- Delete orphaned `placeholder_components.rs`
-- Update `.dejavue/context.md:40` "13 components" → actual count (~28)
-- Reconcile `lib.rs:28` theme list (4) vs the real 6
-- Add rustdoc `# Examples` to components
+**Done at commit `283bd0e` on `agent/vibe/dogfood-m4`:**
+- Deleted orphaned `crates/arniko/src/components/placeholder_components.rs` — orphan file with no `pub mod placeholder_components;` line in `crates/arniko/src/components/mod.rs`, so it compiled to nothing. The 8 placeholder structs (`MetricCard`, `ProgressBar`, `StatusGrid`, `Tooltip`, `Spinner`, `Skeleton`, `Separator`, `Kbd`) were inaccessible to any external consumer because the module tree never pulled them in; the pre-existing real `pub mod metric_card;` / `pub mod progress_bar;` / etc. shadowed them by virtue of being the only declared ones. No `[[bin]]` / `[[example]]` / `build.rs` / `#[path = "..."]` / `include!()` referenced the file, so cargo sees the deletion as a no-op for the type system.
+- Updated `.dejavue/context.md` arniko row of the architecture-map table: `"13 components"` → `"28 components"`. Count via `grep '^pub mod ' crates/arniko/src/components/mod.rs | wc -l = 29`; minus 1 `pub mod styles;` CSS carrier = **28**.
+- Reconciled `crates/arniko/src/lib.rs` crate doc-comment `//! - **Theme**:` line: 4 names → 6 names (`Light,` + `System,` added) to match `.dejavue/context.md` as source of truth.
+- Removed the stale "Placeholder file: … shadowed by the real modules" bullet from `crates/arniko/docs/DESIGN_SYSTEM.md` "Notes" section (the file it described no longer exists).
+
+**Sub-task `C-8a` (P2, ⬜ Open):** rustdoc `# Examples` for the 28 real component files. The targets are now the post-delete module set:
+
+```
+crates/arniko/src/components/{alert, alert_panel, badge, bar_chart, button, card, empty_state,
+                              feed, file_tree, input, kbd, keyboard_shortcuts, metric_card,
+                              panel, progress_bar, progress_ring, separator, skeleton,
+                              sparkline, spinner, splash_screen, status_badge, status_grid,
+                              svg_bar_chart, svg_line_chart, theme_toggle, toast, tooltip}.rs
+```
+
+Each target gets a 3–6-line `# Examples` block: `new(...)` construction → 1–3 chained-setter calls → one-line `.render()` (HTML feature) or `.to_view()` (reactive feature) usage. The deleted `placeholder_components.rs:5` line was the rustdoc-mode placeholder; the pass is now scoped to the 28 real modules. Acceptance: `cargo doc -p arniko --no-deps` shows `# Examples` headers on ≥25/28 components (≥89% coverage; the theme_toggle / keyboard_shortcuts / progress_ring near-duplicates of CSS-only escapes are acceptable to skip).
 
 ---
 
