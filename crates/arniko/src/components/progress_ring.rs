@@ -15,20 +15,21 @@ pub struct RingThreshold {
 }
 
 /// Predefined thresholds: red < 50, yellow < 80, green ≥ 80.
+/// Uses CSS custom property tokens for theming support.
 pub const DEFAULT_RING_THRESHOLDS: &[RingThreshold] = &[
     RingThreshold {
         up_to: 50.0,
-        color: "#ef4444",
+        color: "var(--arniko-error)",
         label: "CRITICAL",
     },
     RingThreshold {
         up_to: 80.0,
-        color: "#f59e0b",
+        color: "var(--arniko-warning)",
         label: "WARNING",
     },
     RingThreshold {
         up_to: 100.0,
-        color: "#10b981",
+        color: "var(--arniko-success)",
         label: "SECURE",
     },
 ];
@@ -114,7 +115,7 @@ impl ProgressRing {
             }
         }
         // Fallback
-        ("#10b981", "OK")
+        ("var(--arniko-success)", "OK")
     }
 
     pub fn render(&self) -> String {
@@ -147,7 +148,7 @@ impl ProgressRing {
             r#"<div class="arniko-progress-ring {cls}" style="width:{w}px;height:{h}px;" role="progressbar" aria-valuenow="{pct:.0}" aria-valuemin="0" aria-valuemax="100" aria-label="{label}">
                 <svg class="arniko-ring-svg" viewBox="0 0 {v} {v}" xmlns="http://www.w3.org/2000/svg">
                     <circle class="arniko-ring-bg" cx="{c}" cy="{c}" r="{r}"
-                        fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="{sw}" />
+                        fill="none" stroke="var(--arniko-border-light)" stroke-width="{sw}" />
                     <circle class="arniko-ring-value" cx="{c}" cy="{c}" r="{r}"
                         fill="none" stroke="{color}" stroke-width="{sw}"
                         stroke-linecap="round"

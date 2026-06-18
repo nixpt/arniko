@@ -172,7 +172,7 @@ impl SvgBarChart {
                 let value_str = format!("{:.2}{}", entry.value, self.value_suffix);
 
                 format!(
-                    r##"<text x="8" y="{y_label}" class="arniko-svgbar-label" fill="#94a3b8">{label}</text>
+                    r##"<text x="8" y="{y_label}" class="arniko-svgbar-label" fill="var(--arniko-text-muted)">{label}</text>
 <rect x="{bar_x}" y="{y_rect}" width="{width}" height="{bar_h}" fill="{color}" rx="2" opacity="0.85"/>
 <text x="{x_val}" y="{y_label}" class="arniko-svgbar-value" fill="{color}">{value_str}</text>
 "##,
@@ -334,8 +334,8 @@ mod tests {
     #[test]
     fn test_svg_bar_chart_with_entries() {
         let chart = SvgBarChart::new()
-            .add(SvgBarEntry::new("A", 50.0, "#ef4444"))
-            .add(SvgBarEntry::new("B", 30.0, "#00f2ff"));
+            .add(SvgBarEntry::new("A", 50.0, "var(--arniko-error)"))
+            .add(SvgBarEntry::new("B", 30.0, "var(--arniko-cyan)"));
         let html = chart.render();
         assert!(html.contains("<svg"));
         assert!(html.contains("A"));
@@ -351,7 +351,7 @@ mod tests {
         let chart = SvgBarChart::new()
             .title("Benchmark Performance")
             .title_icon("⚡")
-            .add(SvgBarEntry::new("test_bench", 12.3, "#00f2ff"));
+            .add(SvgBarEntry::new("test_bench", 12.3, "var(--arniko-cyan)"));
         let html = chart.render();
         assert!(html.contains("Benchmark Performance"));
         assert!(html.contains("⚡"));
@@ -364,7 +364,7 @@ mod tests {
     fn test_svg_bar_chart_value_suffix() {
         let chart = SvgBarChart::new()
             .value_suffix("ms")
-            .add(SvgBarEntry::new("X", 5.0, "#00f2ff"));
+            .add(SvgBarEntry::new("X", 5.0, "var(--arniko-cyan)"));
         let html = chart.render();
         assert!(html.contains("5.00ms"));
     }

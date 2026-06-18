@@ -136,13 +136,13 @@ pub fn mount_toast_with_variant(
     variant: ToastVariant,
 ) -> (usize, Scope) {
     let bg_color = match variant {
-        ToastVariant::Info => "rgba(59,130,246,0.9)",
-        ToastVariant::Success => "rgba(34,197,94,0.9)",
-        ToastVariant::Warning => "rgba(245,158,11,0.9)",
-        ToastVariant::Error => "rgba(239,68,68,0.9)",
+        ToastVariant::Info => "var(--arniko-info)",
+        ToastVariant::Success => "var(--arniko-success)",
+        ToastVariant::Warning => "var(--arniko-warning)",
+        ToastVariant::Error => "var(--arniko-error)",
     };
     let inner_style = format!(
-        "padding:10px 20px; border-radius:6px; background:{}; color:#fff; font-size:13px; font-weight:600; box-shadow:0 4px 12px rgba(0,0,0,0.3); white-space:nowrap;",
+        "padding:10px 20px; border-radius:6px; background:{}; color:var(--arniko-white); font-size:13px; font-weight:600; box-shadow:0 4px 12px rgba(0,0,0,0.3); white-space:nowrap;",
         bg_color
     );
     let toast_container = Div::styled(

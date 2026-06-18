@@ -70,7 +70,12 @@ impl<R: Reactive<bool>> View for Show<R> {
                 // Show: mount the child
                 let child_view = child_fn();
                 let reactor_ref = unsafe { &mut *reactor_ptr };
-                let (_, _) = child_view.mount(mutator, reactor_ref, container_id_copy);
+                let (_, child_scope) = child_view.mount(mutator, reactor_ref, container_id_copy);
+                // Park the child's scope on the reactor so its bindings survive
+                // past this closure. Without parking, the scope would Drop here
+                // and remove the binding before the next flush — silently killing
+                // the child's reactivity after the first toggle.
+                reactor_ref.park_scope(child_scope);
             } else if !*visible && !children.is_empty() {
                 // Hide: remove all children
                 for child_id in children {
@@ -163,7 +168,10 @@ where
             // Mount the new branch
             let child_view = branches(new_value);
             let reactor_ref = unsafe { &mut *reactor_ptr };
-            let (_, _) = child_view.mount(mutator, reactor_ref, container_id_copy);
+            let (_, child_scope) = child_view.mount(mutator, reactor_ref, container_id_copy);
+            // Park the branch's scope so its bindings survive past this closure
+            // (same rationale as Show::mount's re-mount path above).
+            reactor_ref.park_scope(child_scope);
         });
 
         combined_scope.merge(scope);

@@ -11,7 +11,7 @@ default = ["html", "components"]
 html = []                    # HTML string generation
 components = ["html"]        # UI components
 gpu = ["mustang/gpu"]        # GPU acceleration via Mustang
-networking = ["exo-bliss-net"]        # Exosphere networking
+networking = ["exo-bliss-net", "exo-mesh/p2p"]    # Exosphere networking (forces libp2p on via feature unification — see A-4)
 launch = ["bliss"]           # Native window launch via bliss
 reactive = ["bliss", "bliss-dom", "anyrender_vello", "winit", "keyboard-types", "mustang"]  # Reactive Signal + View + EventSink + launch (mustang: SceneScheduler hook)
 full = ["html", "components", "gpu", "networking", "launch", "reactive"]
@@ -74,6 +74,17 @@ optional = true
 # Networking dependencies (optional)
 [dependencies.exo-bliss-net]
 path = "../../../exosphere/crates/platform/sdk/exo-bliss-net"
+optional = true
+
+# EPIC A-4 / D-4: exo-bliss-net pulls exo-mesh with only the `local` feature,
+# but exo-mesh/src/node.rs has unconditional `use libp2p::Multiaddr;` and an
+# unconditional `MeshNode::peer_id` that calls `NodeIdentity::peer_id()` only
+# defined under `cfg(feature = "p2p")`. Without forcing `p2p` here, the build
+# fails when `networking`/`full` is on. Listing exo-mesh as a direct optional
+# dep and enabling `p2p` via the `exo-mesh/p2p` feature syntax below triggers
+# Cargo feature unification so `libp2p` is materialized across the graph.
+[dependencies.exo-mesh]
+path = "../../../exosphere/crates/exo/net/mesh"
 optional = true
 
 [dependencies.keyboard-types]

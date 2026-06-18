@@ -342,7 +342,9 @@ fn test_root_element_none_safety() {
     assert!(!scroll_event_seen);
 
     // set_layout / scroll_event are no-ops on the (non-Element) document root.
-    // clear_focus / clear_hover are no-ops on empty doc.
-    assert!(!doc.clear_focus());
+    // clear_focus returns () (RAII blur the cached focus target); clear_hover
+    // returns bool. Both must run without panic on empty doc (focus_node_id /
+    // hover_node_id = None).
+    doc.clear_focus();
     assert!(!doc.clear_hover());
 }

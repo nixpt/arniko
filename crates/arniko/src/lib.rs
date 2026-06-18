@@ -245,6 +245,16 @@ pub trait Component {
     fn metadata(&self) -> ComponentMetadata {
         ComponentMetadata::default()
     }
+
+    /// Convert this component to a reactive View.
+    /// This allows static components to be used seamlessly in the reactive system.
+    #[cfg(feature = "reactive")]
+    fn to_view(self) -> crate::reactive::ComponentView<Self>
+    where
+        Self: Sized,
+    {
+        crate::reactive::ComponentView(self)
+    }
 }
 
 /// Component metadata

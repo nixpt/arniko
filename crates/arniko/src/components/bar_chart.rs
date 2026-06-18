@@ -198,8 +198,8 @@ mod tests {
     #[test]
     fn test_bar_chart_with_entries() {
         let chart = BarChart::new()
-            .add(BarEntry::new("A", 50.0, "#ef4444"))
-            .add(BarEntry::new("B", 30.0, "#f59e0b"));
+            .add(BarEntry::new("A", 50.0, "var(--arniko-error)"))
+            .add(BarEntry::new("B", 30.0, "var(--arniko-warning)"));
         let html = chart.render();
         assert!(html.contains("A"));
         assert!(html.contains("B"));
@@ -210,7 +210,7 @@ mod tests {
     #[test]
     fn test_bar_chart_no_values() {
         let chart = BarChart::new()
-            .add(BarEntry::new("X", 10.0, "#00f2ff"))
+            .add(BarEntry::new("X", 10.0, "var(--arniko-cyan)"))
             .show_values(false);
         let html = chart.render();
         assert!(html.contains("X"));

@@ -30,7 +30,7 @@ impl Sparkline {
     pub fn new(values: Vec<f64>) -> Self {
         Self {
             values,
-            color: "#00f2ff".to_string(),
+            color: "var(--arniko-cyan)".to_string(),
             width: 240.0,
             height: 40.0,
             padding: 4.0,

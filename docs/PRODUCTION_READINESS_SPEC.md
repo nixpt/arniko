@@ -1,6 +1,6 @@
 # Arniko Production-Readiness Spec
 
-> **Status:** M2 in-progress · **Authored:** 2026-06-16 (foreman-z, [zorro] box, 6-agent analysis) ·
+> **Status:** M1 substantially complete · **Authored:** 2026-06-16 (foreman-z, [zorro] box, 6-agent analysis) ·
 > **Owner:** foreman-x (arniko) · **Audience:** anyone working on the arniko / Bliss stack.
 >
 > This is a north-star spec, not a sprint plan. It defines what "production-grade" means for
@@ -12,8 +12,18 @@
 > 🆕 extras delivered: keyboard nav, ARIA/keyboard unit tests (C-5🆕),
 > focus-visible outlines (C-6🆕), reduced motion (C-7🆕).
 > E-1/E-2 partial (18 reactive + 10 For integration tests).
-> **A-1/A-2/A-3** verified green on this box — workspace + reactive feature compile clean.
-> M2 is effectively done; M3 (engine robustness, EPIC D P0s) is the next frontier.
+>
+> **M1 follow-up (2026-06-17):** A-1 ✅ (workspace rebuild with `arniko-crush` excluded),
+> A-2/A-3 ✅ (the six predicted `reactive`-feature errors were already resolved by the
+> B-4..B-7 commits — `mustang::SceneScheduler` path corrected, mustang refs gated, flush
+> signature updated), A-6 ✅ (dead `arniko-crush` workspace-dep entry removed alongside A-1).
+> A-4 🔶 PARTIAL: stage 1 — exo-mesh's unconditional `libp2p::Multiaddr` import and
+> unbounded `MeshNode::peer_id` call into `Arc<NodeIdentity>` are now resolved via Cargo
+> feature unification (arniko lists exo-mesh as a direct optional dep and enables
+> `exo-mesh/p2p` through the `networking` feature); stage 2 — a separate
+> rcgen 0.13.2 / time blanket-impl conflict (E0119) surfaced once `libp2p` was actually
+> built. See A-4 below.
+> M3 (engine robustness, EPIC D P0s) is the next frontier.
 
 ## 1. What arniko is
 
@@ -60,12 +70,12 @@ Each ticket: problem → fix → acceptance. File refs are `crate/path:line`.
 
 ### EPIC A — Build & workspace integrity  *(must land first; nothing else is verifiable without it)*
 
-- **A-1 (P0) Workspace won't load standalone.** Root `Cargo.toml` member `crates/arniko-crush` depends on `../../../crush-ast/crates/crush-lang-sdk` (`arniko-crush/Cargo.toml:15`) which doesn't exist (crush-ast has `crush-cast`/`crush-vm`, no `crush-lang-sdk`). Cargo loads all member manifests first, so **every** `cargo` command fails `os error 2` in-repo. → Restore/rename the `crush-lang-sdk` crate in crush-ast, OR `[workspace] exclude` + drop `arniko-crush` from members until its dep is vendored. **Acceptance:** `cargo metadata` succeeds at the real repo root.
-- **A-2 (P0) `reactive` feature does not compile — the 6 known errors.** All in `crates/arniko/src/reactive/`: `mod.rs:12` `arniko_mustang::SceneScheduler` (crate is re-exported as `mustang`); `direct_mut.rs:34` + `reactor.rs:143` `crate::mustang::…` (only exists under `feature="gpu"`); `app.rs:92` `flush(&mut mutator)` needs 2 args; `direct_mut.rs:130/137` `local_name!(…).into()` can't make a `QualName`. → `mustang::SceneScheduler`; add `gpu` to the `reactive` feature OR `#[cfg(feature="gpu")]`-gate the refs; `flush(&mut mutator, None)`; `QualName::new(None, ns!(), local_name!("id"))`. **Acceptance:** `cargo check -p arniko --features reactive` green.
-- **A-3 (P0) `reactive` feature is incoherent — omits its own `gpu` dependency.** `reactive` hard-references `crate::mustang::SceneScheduler` but doesn't pull `gpu` (`arniko/Cargo.toml:9-17`), so it can never compile in isolation. → Either `reactive = [..., "gpu"]` or gate every `mustang` ref under `gpu`. **Acceptance:** the feature builds with *only* `--features reactive`.
-- **A-4 (P1) `full`/`networking` is red due to upstream exosphere.** `full ⊃ networking ⊃ exo-bliss-net ⊃ exosphere exo-mesh`, which fails to compile (`exo-mesh/src/node.rs:13` `libp2p` undeclared, `:208` `peer_id` on `Arc<NodeIdentity>`). arniko's networked build is hostage to exosphere's working tree. → Fix exo-mesh upstream; per **D4** consider depending on a pinned/published exo-bliss-net. **Acceptance:** `--features full` green from arniko's own tree.
+- **A-1 (P0) ✅ Workspace won't load standalone.** ~~Root `Cargo.toml` member `crates/arniko-crush` depends on `../../../crush-ast/crates/crush-lang-sdk` (`arniko-crush/Cargo.toml:15`) which doesn't exist~~. **Done:** dropped `arniko-crush` from `[workspace] members` and removed its dead `[workspace.dependencies]` entry (per A-6). `cargo metadata` succeeds; build is no longer hostage to crush-ast's working tree.
+- **A-2 (P0) ✅ `reactive` feature does not compile — the 6 known errors.** All in `crates/arniko/src/reactive/`. **Done:** resolved as side effect of B-4..B-7 — `mustang::SceneScheduler` path corrected, `mustang` refs gated under `gpu`, `flush(&mut mutator, Option<&SceneScheduler>)`, `QualName::new(...)` for `direct_mut.rs`. `cargo check -p arniko --features reactive` is green.
+- **A-3 (P0) ✅ `reactive` feature is incoherent — omits its own `gpu` dependency.** **Done:** with B-4..B-7's mustang gating the feature compiles without dragging `gpu` in. `--features reactive` alone passes.
+- **A-4 (P1) 🔶 PARTIAL `full`/`networking`** is now reduced to a single blocker. **Stage 1 ✅ (resolved on this branch, 2026-06-17):** the spec's two named exo-mesh compile errors — `exo-mesh/src/node.rs:13` `libp2p` undeclared and `:208` `peer_id` not on `Arc<NodeIdentity>` — are addressed purely within arniko: `crates/arniko/Cargo.toml` declares `exo-mesh` as a direct optional dep and the `networking` feature line enables `exo-mesh/p2p`, which triggers Cargo feature unification and materializes `libp2p` across the build graph. exo-mesh compiles and exo-bliss-net's previous failure modes are gone. **Stage 2 ⬜ (new sub-ticket A-4b):** enabling `libp2p` transitively pulled `rcgen 0.13.2`, whose blanket `impl<T: Into<String>> From<T>` for `OtherNameValue`/`DnValue` collides with a concrete impl required by a newer `time` crate version — `error[E0119] conflicting implementations of trait From<T>`. Two viable fixes: (a) trim exo-mesh's `libp2p` feature list to drop the `quic` path that brings rcgen in (out-of-tree edit OR vendor `crates/_vendored/exo-mesh`); (b) workspace-level `[workspace.dependencies] rcgen = "0.12"` override and reconcile. Either lands a green `cargo check -p arniko --features full,networking`. Per **D4**, this also re-opens the question of pinning arniko to a published exo-bliss-net so this upstream issue can't bite on every exo-mesh commit. **Acceptance (full):** `--features full` AND `--features networking` green from arniko's own tree.
 - **A-5 (P2) Clippy hygiene.** 18 warnings on the default build (missing `Default` impls for ~9 builder types, `method add` confusable with `std::ops::Add` ×5, `format!`-in-`format!`, double-ended `last`). → `clippy --fix` + add `Default`/`#[allow]`. **Acceptance:** `clippy -D warnings` clean (CI already gates this for arniko/bliss-dom).
-- **A-6 (P2) Stale workspace refs/docs.** Dead `arniko-crush` in root `[workspace.dependencies]:62`; `lib.rs:49` comment points at the old exosphere mustang path. → Clean up alongside A-1.
+- **A-6 (P2) ✅ Stale workspace refs/docs.** **Done:** alongside A-1 the dead `arniko-crush` workspace-dep entry was removed from the root `Cargo.toml`. The lib.rs stale mustang-path comment has not yet been audited — leaving as a residual cleanup that can fold into A-8 (new "stale comments" audit) if it gets created.
 
 ### EPIC B — Reactive runtime hardening  *(the SDK's value proposition; currently spike-quality)*
 
@@ -133,7 +143,7 @@ Inventory (runtime, excl. tests): ~178 `unwrap`, 18 `panic!`, 3 active `todo!`, 
 
 ## 5. Suggested milestone sequence
 
-1. **M1 — Unblock the build (EPIC A).** A-1 → A-2 → A-3 (then A-4). Without this nothing is verifiable; do it first.
+1. **M1 — Unblock the build (EPIC A).** A-1 → A-2 → A-3 (then A-4). Without this nothing is verifiable; do it first. **Status (2026-06-17):** A-1/A-2/A-3/A-6 ✅, A-4 stage 1 ✅, A-4 stage 2 (A-4b, rcgen/time blanket-impl conflict) ⬜. Effectively one ticket away from M1 done.
 2. **M2 — Reactive + component correctness (B-1..B-3, C-1..C-3). ✅ DONE.** Make the reactive path *correct* (flush, lists, click) and the components *safe* (theming, XSS, a11y). Extras: keyboard nav + focus-visible + reduced motion, unit + integration tests (C-5, E-1 partial, E-2 partial).
 3. **M3 — Robustness + tests (EPIC D P0/P1, E-1/E-2).** Stop the panics; lock in the behavior with the reactive-core + engine tests and a real CI gate.
 4. **M4 — Maturity + release (B-4..B-7, C-4..C-8, E-3..E-5, EPIC F).** Lifecycle, missing components, breadth tests, packaging — scoped by D1/D2/D3.
