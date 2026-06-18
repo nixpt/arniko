@@ -1,8 +1,8 @@
 # Arniko Remaining Track Work
 
-> **Generated:** 2026-06-16 · **Updated:** 2026-06-17 (after M1 follow-up commit series on branch `agent/vibe/ar-m4`) · **2026-06-18** (C-8 close-out at commit `283bd0e` on `agent/vibe/dogfood-m4`)
+> **Generated:** 2026-06-16 · **Updated:** 2026-06-17 (after M1 follow-up commit series on branch `agent/vibe/ar-m4`) · **2026-06-18** (C-8 close-out at commit `283bd0e` on `agent/vibe/dogfood-m4`) · **2026-06-18** (C-8a close-out: rustdoc `# Examples` for all 28 components in two slices — slice 1 verbatim from DESIGN_SYSTEM.md `051d4b3`, slice 2 synthesized from public API `a23a931`)
 > **Source:** `PRODUCTION_READINESS_SPEC.md` + `.dejavue/state.md`
-> **Status:** **M2 ✅** + **M4 ✅** DONE (reactive maturity + dogfood demo). C-8 carried out of M5 backlog at commit `283bd0e`; sub-task **C-8a** ⬜ Open (rustdoc `# Examples` for the 28 real components) → **M5 next** (component completeness + breadth tests + release, gated by **D1** / **D2** / **D3** / **D4**).
+> **Status:** **M2 ✅** + **M4 ✅** DONE (reactive maturity + dogfood demo). C-8 ✅ done at commit `283bd0e`; sub-task **C-8a** ✅ done at commits `051d4b3` + `a23a931` (rustdoc `# Examples` for all 28 components, two-slice close-out) → **M5 next** (remaining C-4..C-7 component completeness + breadth tests + release, gated by **D1** / **D2** / **D3** / **D4**). A-4b (rcgen/time E0119 cfg-gate) **kept on Epic A backlog separately** — orthogonal to C-8a's rustdoc scope (different fix path: exosphere-side PR vs local rustdoc content; different acceptance: `cargo check --features networking` vs `cargo doc`).
 >
 > This document tracks all **remaining** work across epics A–F. Completed items
 > (✅) are listed for context; **items with no checkmark are outstanding.**
@@ -15,7 +15,7 @@
 |------|------|-----------|-------------|
 | A — Build & workspace | 4/6 + 1 partial | **1** | 0 (A-4b is P1 rcgen/time blocker) |
 | B — Reactive hardening | 3/7 | **4** | 0 |
-| C — Component library | 5/8 + 4 extras (C-8a rustdoc-examples sub-task ⬜ Open) | **5** (C-4..C-7, C-8a) | 0 |
+| C — Component library | 6/8 (C-8a rustdoc-examples ✅ at commits `051d4b3` + `a23a931`) | **4** (C-4..C-7) | 0 |
 | D — Engine robustness | 8/9 (D-1..D-8 ✅ across `M3`/`M4`/`D-2` phases) + D-2c-followup tracked | **1** (D-9) + D-2c-followup | 0 |
 | E — Testing & CI | 2/5 partial | **3** | 0 (partial done) |
 | F — Packaging & release | 0/6 | **6** | 3 (F-1, F-2, F-3) |
@@ -23,6 +23,24 @@
 > **M1 follow-up (2026-06-17):** A-1, A-2, A-3, A-6 ✅. A-4 stage 1 ✅ (exo-mesh libp2p gating
 > via Cargo feature unification). A-4 stage 2 (A-4b) ⬜ — rcgen 0.13.2 / time
 > blanket-impl conflict (E0119). C-5 ✅ swept theming tokens across components.
+
+> **M4 follow-up (2026-06-18):** C-8 ✅ at commit `283bd0e` (orphaned `placeholder_components.rs`
+> deletion + 28-components count reconciliation; matches `crates/arniko/src/lib.rs:25`
+> theme list and `crates/arniko/docs/DESIGN_SYSTEM.md` as the source of truth). WIP sweep
+> `5083165` (rustfmt artifact on 34 .rs files: import reorders, signature wraps, format-args
+> wraps — pure mechanical, no behavior change). **C-8a ✅** at commits `051d4b3` (slice 1
+> — verbatim `# Examples` copy from DESIGN_SYSTEM.md on the 12 components with inline
+> builders) + `a23a931` (slice 2 — synthesized `# Examples` from public API for the
+> remaining 16 components). Slice 2 includes reactive blocks under `# #[cfg(feature =
+> "reactive")] { ... # }` fences for the 12 components with `*_reactive` signal helpers.
+> Acceptance met 100%: 28 of 28 component modules carry `<h1>Examples</h1>` H1 headers in
+> `cargo doc -p arniko --no-deps` output (the originally-skipped 3 — theme_toggle,
+> keyboard_shortcuts, progress_ring — all got synthesized examples in slice 2). A-4b
+> **kept on Epic A backlog** (not folded under C-8a) — the rcgen/time cfg-gate blocker
+> requires an exosphere-side PR with mid-chain `#[cfg]` hazards (SwarmBuilder chain),
+> and its acceptance gate (`--features networking && --features full` exit 0) is a
+> different surface from `cargo doc`. See A-4 entry below for the 3-pivot diagnostic
+> detail.
 
 ---
 
@@ -161,7 +179,7 @@ production-grade framework:
 | C-6: Constructor inconsistency | P1 | ⬜ Open |
 | C-7: Missing core components | P1 | ⬜ Open |
 | C-8: Dead code + stale docs | P2 | ✅ Done (commit `283bd0e`) |
-| C-8a: rustdoc `# Examples` for the 28 real components | P2 | ⬜ Open |
+| C-8a: rustdoc `# Examples` for the 28 real components | P2 | ✅ Done (two-slice close-out: slice 1 verbatim from DESIGN_SYSTEM.md `051d4b3`, slice 2 synthesized from public API `a23a931`) |
 
 ### C-4 (P1) — Unify the reactive surface
 
@@ -201,7 +219,9 @@ Data-in-`new()` (`Sparkline`, `SplashScreen`) vs empty + `.add()` (`Feed`, `Aler
 - Reconciled `crates/arniko/src/lib.rs` crate doc-comment `//! - **Theme**:` line: 4 names → 6 names (`Light,` + `System,` added) to match `.dejavue/context.md` as source of truth.
 - Removed the stale "Placeholder file: … shadowed by the real modules" bullet from `crates/arniko/docs/DESIGN_SYSTEM.md` "Notes" section (the file it described no longer exists).
 
-**Sub-task `C-8a` (P2, ⬜ Open):** rustdoc `# Examples` for the 28 real component files. The targets are now the post-delete module set:
+**Sub-task `C-8a` (P2, ✅ Done, 2026-06-18):** rustdoc `# Examples` for the 28 real component files.
+
+**Done at commits `051d4b3` (slice 1, 12 files) and `a23a931` (slice 2, 16 files) on `agent/vibe/dogfood-m4`** — 28 of 28 component modules now carry a struct-level `/// # Examples` rustdoc block, every one rendered as a `<h1>Examples</h1>` H1 header in `cargo doc -p arniko --no-deps` output. The post-delete module set:
 
 ```
 crates/arniko/src/components/{alert, alert_panel, badge, bar_chart, button, card, empty_state,
@@ -211,7 +231,29 @@ crates/arniko/src/components/{alert, alert_panel, badge, bar_chart, button, card
                               svg_bar_chart, svg_line_chart, theme_toggle, toast, tooltip}.rs
 ```
 
-Each target gets a 3–6-line `# Examples` block: `new(...)` construction → 1–3 chained-setter calls → one-line `.render()` (HTML feature) or `.to_view()` (reactive feature) usage. The deleted `placeholder_components.rs:5` line was the rustdoc-mode placeholder; the pass is now scoped to the 28 real modules. Acceptance: `cargo doc -p arniko --no-deps` shows `# Examples` headers on ≥25/28 components (≥89% coverage; the theme_toggle / keyboard_shortcuts / progress_ring near-duplicates of CSS-only escapes are acceptable to skip).
+**Two-slice strategy:**
+
+* **Slice 1 — verbatim copy from DESIGN_SYSTEM.md** (`051d4b3`, 12 files): `alert`, `badge`, `card`, `input`, `kbd`, `metric_card`, `progress_bar`, `status_grid` (+ `status_indicator`), `tooltip`, `spinner`, `skeleton` (+ `skeleton_card`), `separator`. Each `# Examples` block was copy-pasted verbatim from the corresponding component section in `crates/arniko/docs/DESIGN_SYSTEM.md`. The slice concentrated risk in a single, easily reviewable commit where every new line already existed in the project doc — bisections of this commit point to a code change that's literally a doc-block dedup.
+
+* **Slice 2 — synthesized from public API** (`a23a931`, 16 files): `alert_panel`, `bar_chart`, `button`, `empty_state`, `feed`, `file_tree`, `keyboard_shortcuts`, `panel`, `progress_ring`, `sparkline`, `splash_screen`, `status_badge`, `svg_bar_chart`, `svg_line_chart`, `theme_toggle`, `toast`. Each block exercises the public constructor + 1–3 chained builder methods + `.render()` so the example compiles and produces real HTML when pasted into a fresh crate. For the 12 with reactive helpers (`alert_panel`, `bar_chart`, `feed`, `file_tree`, `keyboard_shortcuts`, `progress_ring`, `sparkline`, `splash_screen`, `svg_bar_chart`, `svg_line_chart`, `theme_toggle`, `toast`), a second ```rust,no_run``` block under `# #[cfg(feature = "reactive")] { ... # }` shows the `Signal` / `mount_*` / `*_reactive` reactive-flow usage. Toast's reactive example is a commented-out signature (the `mount_toast` API requires a live `DocumentMutator` runtime, un-callable inside `rust,no_run`). Cfg-gated structs (12 of 16 in slice 2) have the `///` block ABOVE the `#[cfg(feature = "components")]` attribute line, matching slice 1's positioning convention — rustdoc applies the `///` to the next *real* item (the struct) and skips the attribute line.
+
+**Conventions locked across both slices:**
+
+* H1 markdown `# Examples` so rustdoc renders as `<h1>Examples</h1>` on the type page (where readers are looking, not buried under the module listing).
+* ```rust,no_run``` attribute — no `main()` (same as `crates/arniko/src/lib.rs:7-22`).
+* Bare crate paths `use arniko::{Foo, FooVariant};` matching the `arniko::*` re-export surface from `lib.rs:45`.
+* Examples end in `;` and assign to `let html = foo.render();` to make them unambiguously useful.
+* The `# #[cfg(feature = "reactive")] { ... # }` rustdoc-fence pattern strips the `##`-prefixed lines during code-block rendering, so the gated reactive example renders for default-feature `cargo doc` but only compiles when the `reactive` feature is enabled.
+
+**Acceptance gate met — 28/28 verified** (matching the C-8a spec's ≥25/28 floor, the originally-skipped 3 — `theme_toggle`, `keyboard_shortcuts`, `progress_ring` — all got synthesized examples in slice 2 so no skip-list remains in the final close-out):
+
+```
+# 28 unique modules × `<h1>Examples...</h1>` H1 hits in target/doc/arniko/components/*.html
+#   (skeleton + status_grid each render 2 hits for SkeletonCard / StatusIndicator — 30 total)
+cargo doc -p arniko --no-deps   # exit 0
+```
+
+All cargo gates green on the close-out commits: `cargo check` 0 errors; `cargo check --tests --examples --features reactive,html,components` 0 errors (1 pre-existing warning in `crates/arniko/tests/dogfood_m4.rs:115`); `cargo clippy --lib` 0 errors (18 pre-existing warnings baseline); `cargo test -p arniko --tests` 146/146; `cargo test -p arniko --test dogfood_m4 --features reactive` 4/4.
 
 ---
 
