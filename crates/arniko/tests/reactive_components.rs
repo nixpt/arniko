@@ -74,7 +74,7 @@ fn find_by_class(doc: &mut BaseDocument, root_id: usize, class: &str) -> Option<
         }
     }
     let children = {
-        let mut mutator = doc.mutate();
+        let mutator = doc.mutate();
         mutator.child_ids(root_id)
     };
     for child_id in children {
@@ -83,6 +83,30 @@ fn find_by_class(doc: &mut BaseDocument, root_id: usize, class: &str) -> Option<
         }
     }
     None
+}
+
+/// Mount a view and park the returned `Scope` on the reactor so its
+/// reactive bindings survive past the call site.
+///
+/// This handles the very common test idiom of `view.mount(...)` invoked
+/// as a statement, where the returned `Scope` would otherwise be silently
+/// dropped at the semicolon and (via `Scope::drop`) deregister every
+/// binding it carries. With the parking step the bindings stay live so
+/// later `signal.set(...)` + `flush_reactive(...)` can fire patches.
+///
+/// Production code should generally capture the returned `Scope` and
+/// drop it explicitly (or call `scope.unmount()`) — see
+/// `test_binding_lifecycle_scope_cleanup` for the explicit-cleanup
+/// pattern this helper side-steps.
+fn mount_parked<V: View + ?Sized>(
+    view: &V,
+    mutator: &mut DocumentMutator,
+    reactor: &mut Reactor,
+    parent: usize,
+) -> usize {
+    let (id, scope) = view.mount(mutator, reactor, parent);
+    reactor.park_scope(scope);
+    id
 }
 
 // ── Toast Tests ──────────────────────────────────────────────────────────────
@@ -201,7 +225,7 @@ fn test_progress_ring_reactive_mounts() {
     );
     {
         let mut mutator = doc.mutate();
-        view.mount(&mut mutator, &mut reactor, root_id);
+        mount_parked(&view, &mut mutator, &mut reactor, root_id);
         drop(mutator);
     }
     flush_reactive(&mut doc, &mut reactor);
@@ -227,7 +251,7 @@ fn test_progress_ring_reactive_updates() {
     );
     {
         let mut mutator = doc.mutate();
-        view.mount(&mut mutator, &mut reactor, root_id);
+        mount_parked(&view, &mut mutator, &mut reactor, root_id);
         drop(mutator);
     }
     flush_reactive(&mut doc, &mut reactor);
@@ -264,7 +288,7 @@ fn test_bar_chart_reactive_mounts() {
     let view = bar_chart_reactive(entries);
     {
         let mut mutator = doc.mutate();
-        view.mount(&mut mutator, &mut reactor, root_id);
+        mount_parked(&view, &mut mutator, &mut reactor, root_id);
         drop(mutator);
     }
     flush_reactive(&mut doc, &mut reactor);
@@ -301,7 +325,7 @@ fn test_bar_chart_reactive_empty() {
     let view = bar_chart_reactive(entries);
     {
         let mut mutator = doc.mutate();
-        view.mount(&mut mutator, &mut reactor, root_id);
+        mount_parked(&view, &mut mutator, &mut reactor, root_id);
         drop(mutator);
     }
     flush_reactive(&mut doc, &mut reactor);
@@ -323,7 +347,7 @@ fn test_bar_chart_reactive_updates() {
     let view = bar_chart_reactive(entries.clone());
     {
         let mut mutator = doc.mutate();
-        view.mount(&mut mutator, &mut reactor, root_id);
+        mount_parked(&view, &mut mutator, &mut reactor, root_id);
         drop(mutator);
     }
     flush_reactive(&mut doc, &mut reactor);
@@ -365,7 +389,7 @@ fn test_shortcut_help_reactive_visible() {
     let view = shortcut_help_reactive(&visible, shortcuts);
     {
         let mut mutator = doc.mutate();
-        view.mount(&mut mutator, &mut reactor, root_id);
+        mount_parked(&view, &mut mutator, &mut reactor, root_id);
         drop(mutator);
     }
     flush_reactive(&mut doc, &mut reactor);
@@ -420,7 +444,7 @@ fn test_shortcut_help_reactive_toggle() {
     let view = shortcut_help_reactive(&visible, shortcuts);
     {
         let mut mutator = doc.mutate();
-        view.mount(&mut mutator, &mut reactor, root_id);
+        mount_parked(&view, &mut mutator, &mut reactor, root_id);
         drop(mutator);
     }
     flush_reactive(&mut doc, &mut reactor);
@@ -451,7 +475,7 @@ fn test_theme_toggle_reactive_mounts() {
     let view = theme_toggle_reactive(&theme);
     {
         let mut mutator = doc.mutate();
-        view.mount(&mut mutator, &mut reactor, root_id);
+        mount_parked(&view, &mut mutator, &mut reactor, root_id);
         drop(mutator);
     }
     flush_reactive(&mut doc, &mut reactor);
@@ -486,7 +510,7 @@ fn test_splash_screen_reactive_mounts() {
     let view = splash_screen_reactive(&config);
     {
         let mut mutator = doc.mutate();
-        view.mount(&mut mutator, &mut reactor, root_id);
+        mount_parked(&view, &mut mutator, &mut reactor, root_id);
         drop(mutator);
     }
     flush_reactive(&mut doc, &mut reactor);
@@ -529,7 +553,7 @@ fn test_splash_screen_reactive_updates() {
     let view = splash_screen_reactive(&config);
     {
         let mut mutator = doc.mutate();
-        view.mount(&mut mutator, &mut reactor, root_id);
+        mount_parked(&view, &mut mutator, &mut reactor, root_id);
         drop(mutator);
     }
     flush_reactive(&mut doc, &mut reactor);
@@ -575,7 +599,7 @@ fn test_for_initial_mount_renders_all_items() {
     });
     {
         let mut mutator = doc.mutate();
-        view.mount(&mut mutator, &mut reactor, root_id);
+        mount_parked(&view, &mut mutator, &mut reactor, root_id);
         drop(mutator);
     }
     flush_reactive(&mut doc, &mut reactor);
@@ -600,7 +624,7 @@ fn test_for_add_item_preserves_existing() {
     });
     {
         let mut mutator = doc.mutate();
-        view.mount(&mut mutator, &mut reactor, root_id);
+        mount_parked(&view, &mut mutator, &mut reactor, root_id);
         drop(mutator);
     }
     flush_reactive(&mut doc, &mut reactor);
@@ -634,7 +658,7 @@ fn test_for_remove_item_drops_trailing() {
     });
     {
         let mut mutator = doc.mutate();
-        view.mount(&mut mutator, &mut reactor, root_id);
+        mount_parked(&view, &mut mutator, &mut reactor, root_id);
         drop(mutator);
     }
     flush_reactive(&mut doc, &mut reactor);
@@ -666,7 +690,7 @@ fn test_for_item_content_updates_via_child_reactors() {
     });
     {
         let mut mutator = doc.mutate();
-        view.mount(&mut mutator, &mut reactor, root_id);
+        mount_parked(&view, &mut mutator, &mut reactor, root_id);
         drop(mutator);
     }
     flush_reactive(&mut doc, &mut reactor);
@@ -696,7 +720,7 @@ fn test_for_empty_to_populated() {
     });
     {
         let mut mutator = doc.mutate();
-        view.mount(&mut mutator, &mut reactor, root_id);
+        mount_parked(&view, &mut mutator, &mut reactor, root_id);
         drop(mutator);
     }
     flush_reactive(&mut doc, &mut reactor);
@@ -727,7 +751,7 @@ fn test_for_populated_to_empty() {
     });
     {
         let mut mutator = doc.mutate();
-        view.mount(&mut mutator, &mut reactor, root_id);
+        mount_parked(&view, &mut mutator, &mut reactor, root_id);
         drop(mutator);
     }
     flush_reactive(&mut doc, &mut reactor);
@@ -760,7 +784,7 @@ fn test_for_surviving_items_preserve_dom_nodes() {
     });
     let container_id = {
         let mut mutator = doc.mutate();
-        let (id, _scope) = view.mount(&mut mutator, &mut reactor, root_id);
+        let id = mount_parked(&view, &mut mutator, &mut reactor, root_id);
         drop(mutator);
         id
     };
@@ -768,7 +792,7 @@ fn test_for_surviving_items_preserve_dom_nodes() {
 
     // Capture child node IDs before mutation
     let child_ids_before = {
-        let mut mutator = doc.mutate();
+        let mutator = doc.mutate();
         let ids = mutator.child_ids(container_id);
         drop(mutator);
         ids
@@ -781,7 +805,7 @@ fn test_for_surviving_items_preserve_dom_nodes() {
 
     // Check that survivors kept their DOM node IDs
     let child_ids_after = {
-        let mut mutator = doc.mutate();
+        let mutator = doc.mutate();
         let ids = mutator.child_ids(container_id);
         drop(mutator);
         ids
@@ -809,14 +833,14 @@ fn test_for_new_items_get_fresh_dom_nodes() {
     });
     let container_id = {
         let mut mutator = doc.mutate();
-        let (id, _scope) = view.mount(&mut mutator, &mut reactor, root_id);
+        let id = mount_parked(&view, &mut mutator, &mut reactor, root_id);
         drop(mutator);
         id
     };
     flush_reactive(&mut doc, &mut reactor);
 
     let child_ids_before = {
-        let mut mutator = doc.mutate();
+        let mutator = doc.mutate();
         let ids = mutator.child_ids(container_id);
         drop(mutator);
         ids
@@ -832,7 +856,7 @@ fn test_for_new_items_get_fresh_dom_nodes() {
     flush_reactive(&mut doc, &mut reactor);
 
     let child_ids_after = {
-        let mut mutator = doc.mutate();
+        let mutator = doc.mutate();
         let ids = mutator.child_ids(container_id);
         drop(mutator);
         ids
@@ -861,7 +885,7 @@ fn test_for_nested_reactivity_after_reconciliation() {
     });
     {
         let mut mutator = doc.mutate();
-        view.mount(&mut mutator, &mut reactor, root_id);
+        mount_parked(&view, &mut mutator, &mut reactor, root_id);
         drop(mutator);
     }
     flush_reactive(&mut doc, &mut reactor);
@@ -917,7 +941,7 @@ fn test_for_multiple_reconciliations_no_arena_leak() {
     });
     let container_id = {
         let mut mutator = doc.mutate();
-        let (id, _scope) = view.mount(&mut mutator, &mut reactor, root_id);
+        let id = mount_parked(&view, &mut mutator, &mut reactor, root_id);
         drop(mutator);
         id
     };
@@ -941,7 +965,7 @@ fn test_for_multiple_reconciliations_no_arena_leak() {
 
     // After many cycles, should have exactly 1 child
     let child_count = {
-        let mut mutator = doc.mutate();
+        let mutator = doc.mutate();
         let ids = mutator.child_ids(container_id);
         drop(mutator);
         ids.len()

@@ -243,14 +243,22 @@ where
         // Mount initial items, each with a dedicated child reactor so nested
         // reactive views (ReactiveText, Computed) keep updating across list
         // reconciliations.
+        //
+        // Each child_reactor is heap-allocated (Box) so its address is stable
+        // across the `children.push(...)` move below — parked scopes hold raw
+        // pointers to the reactor's memory.
         let initial_list = self.source.get_value();
         let mut children = Vec::with_capacity(initial_list.len());
         for item in &initial_list {
-            let mut child_reactor = Reactor::new();
+            let mut child_reactor = Box::new(Reactor::new());
             let view = (self.template)(item);
-            let (node_id, _child_scope) = view.mount(mutator, &mut child_reactor, container_id);
-            // Child scopes are managed by the child reactors, which are stored in children
-            // and will be dropped when the item is removed
+            let (node_id, child_scope) =
+                view.mount(mutator, &mut *child_reactor, container_id);
+            // Park the child's scope on its own reactor so nested reactive views
+            // (ReactiveText, Computed) keep updating across list reconciliations.
+            // The child_reactor is dropped (disposal cascade) when its item is
+            // removed during a future reconciliation.
+            child_reactor.park_scope(child_scope);
             children.push(ItemState {
                 node_id,
                 reactor: child_reactor,
