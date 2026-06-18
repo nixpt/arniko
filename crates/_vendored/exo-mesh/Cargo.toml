@@ -1,0 +1,97 @@
+[package]
+name = "exo-mesh"
+version = "0.2.99-a4b"
+edition = "2021"
+description = "Exosphere P2P Service Mesh - zero-config networking via DIDs"
+license-file = "../../../../LICENSE"
+
+[features]
+default = ["local", "lan", "p2p"]
+local = []      # Unix socket IPC
+lan = ["dep:libp2p"]  # mDNS discovery (included in libp2p)
+p2p = ["dep:libp2p"] # Full P2P stack (included in libp2p)
+mdns = ["dep:libp2p"]
+# A-4b cfg-gate: re-add `quic` + `relay` as default-off sub-features so
+# arniko's `networking` feature compiles against a libp2p tree WITHOUT the
+# `quic` path (which transitively pulls rcgen 0.13.2 -> E0119 blanket-impl
+# conflict with newer `time`). Activating them via
+# `arniko --features networking,quic,relay` re-introduces rcgen transitively
+# but the cfg-gating mechanism is what unlocks the default build at all.
+# See `docs/PRODUCTION_READINESS_SPEC.md` A-4 and `.dejavue/decisions.md`
+# `A-4b: deferral decision` for context.
+quic = ["libp2p/quic"]
+relay = ["libp2p/relay"]
+
+[dependencies]
+# Async runtime
+tokio = { version = "1.0", features = ["full", "sync"] }
+futures = "0.3"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# P2P networking
+# A-4b cfg-gate: `quic` + `relay` removed from the libp2p feature line;
+# they are exposed as default-off exo-mesh sub-features (`quic`, `relay`
+# above) so the `networking`/`full` arniko builds skip rcgen 0.13.2's
+# blanket-impl E0119 conflict with newer `time` (libp2p-tls -> x509-parser ->
+# time >= 0.3.36 is the conflict pass-through). Re-enable for QUIC transport
+# + relay-driven NAT traversal ONLY when explicitly opted in via
+# `arniko --features networking,quic,relay`.
+libp2p = { version = "0.55", features = ["tokio", "dns", "tcp", "yamux", "identify", "kad", "mdns", "noise", "macros", "gossipsub", "request-response", "cbor"], optional = true }
+# A-4b cfg-gate: cfg-if macro stitches compile-time conditional chains in
+# `src/p2p.rs` (libp2p's transport builder is a chained API; mid-chain
+# `#[cfg]` attributes are not legal). Tiny pure-functions crate, no
+# transitive impact.
+cfg-if = "1"
+# libp2p-quic = { version = "0.10", features = ["tokio"], optional = true }
+# libp2p-noise = { version = "0.44", optional = true }
+# libp2p-kad = { version = "0.45", optional = true }
+# libp2p-mdns = { version = "0.45", features = ["tokio"], optional = true }
+# libp2p-relay = { version = "0.17", optional = true }
+
+# Cryptography (for DID/identity)
+ed25519-dalek = { version = "2.0", features = ["rand_core"] }
+bs58 = "0.5"
+multibase = "0.9"
+
+# Error handling
+anyhow = "1.0"
+thiserror = "1.0"
+
+# Identity addressing (RESOLVE-02): the ExoAddress naming/URI model lives in exo-identity.
+# One-way dep mesh -> identity (identity is foundational and does NOT depend on mesh, so no
+# cycle) so the ServiceAddress<->ExoAddress bridge in address_bridge.rs sees both types.
+#
+# A-4b vendoring-style: arniko's workspace doesn't declare `exo-identity`/`mesh-proto`,
+# so we point directly at the exosphere tree (same approach as arniko's
+# `[dependencies.exo-bliss-net]` which points at `../../../exosphere/...`). When/if
+# exo-identity + mesh-proto get published to crates.io (or vendored into arniko's
+# tree per D-4 publish-or-vendor decision), these paths can collapse.
+exo-identity = { path = "../../../../exosphere/crates/exo/identity" }
+mesh-proto = { path = "../../../../exosphere/crates/mesh-proto" }
+
+# Logging
+tracing = "0.1"
+
+# Time
+chrono = "0.4"
+
+# Utilities
+dashmap = "5.5"
+parking_lot = "0.12"
+rand = "0.8"
+# A-4b vendoring-style: arniko's workspace doesn't declare `uuid`, so we hardcode
+# the version here. uuid v1.10 is stable; arniko's other crates use the same major.
+uuid = "1"
+
+[dev-dependencies]
+tokio-test = "0.4"
+tracing-subscriber = "0.3"
+tempfile = "3"
+
+[[example]]
+name = "mesh_node"
+path = "examples/mesh_node.rs"
+required-features = ["lan", "p2p"]
