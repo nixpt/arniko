@@ -4,8 +4,11 @@ version = "0.1.0"
 license = "Apache-2.0"
 description = "AccessKit UI accessibility infrastructure: cross-platform adapter"
 keywords = ["gui", "ui", "accessibility"]
-edition = "2024"
-rust-version = "1.85.0"
+categories = ["gui", "accessibility"]
+edition.workspace = true
+rust-version.workspace = true
+homepage.workspace = true
+repository.workspace = true
 
 [features]
 default = ["accesskit_unix", "async-io"]

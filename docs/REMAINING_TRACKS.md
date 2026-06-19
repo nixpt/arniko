@@ -1,8 +1,8 @@
 # Arniko Remaining Track Work
 
-> **Generated:** 2026-06-16 · **Updated:** 2026-06-17 (after M1 follow-up commit series on branch `agent/vibe/ar-m4`) · **2026-06-18** (C-8 close-out at commit `283bd0e` on `agent/vibe/dogfood-m4`) · **2026-06-18** (C-8a close-out: rustdoc `# Examples` for all 28 components in two slices — slice 1 verbatim from DESIGN_SYSTEM.md `051d4b3`, slice 2 synthesized from public API `a23a931`) · **2026-06-19** (A-4b+A-4c ✅: vendored exo-mesh + networking/full gate clean) · **2026-06-19** (B ✅ COMPLETE: B-7 all primitives confirmed present + tested — `batch`/`create_effect`/`create_resource`/`provide`+`inject`/`ErrorBoundary`/`KeyedFor`; toast doctest fix) · **2026-06-19** (C ✅ COMPLETE: C-4 `toast_reactive`, C-5 color tokens, C-6 constructor docs, C-7 `Table`/`Tabs`/`Tag` dashboard components; D2=dashboard kit resolved) · **2026-06-19** (E-1/E-2 confirmed ✅; E-3 ✅: 28 enum-conversion tests in `stylo_taffy/convert.rs` — `box_sizing`/`position`/`overflow`/`flex_direction`/`flex_wrap`/`float`/`clear`/`grid_auto_flow` all table-driven; E-4 ✅: CI YAML bug fixed in `arniko-crush`, `cargo test -p stylo_taffy` added, `workspace-check` + `platform-matrix` jobs added)
+> **Generated:** 2026-06-16 · **Updated:** 2026-06-17 (after M1 follow-up commit series on branch `agent/vibe/ar-m4`) · **2026-06-18** (C-8 close-out at commit `283bd0e` on `agent/vibe/dogfood-m4`) · **2026-06-18** (C-8a close-out: rustdoc `# Examples` for all 28 components in two slices — slice 1 verbatim from DESIGN_SYSTEM.md `051d4b3`, slice 2 synthesized from public API `a23a931`) · **2026-06-19** (A-4b+A-4c ✅: vendored exo-mesh + networking/full gate clean) · **2026-06-19** (B ✅ COMPLETE: B-7 all primitives confirmed present + tested — `batch`/`create_effect`/`create_resource`/`provide`+`inject`/`ErrorBoundary`/`KeyedFor`; toast doctest fix) · **2026-06-19** (C ✅ COMPLETE: C-4 `toast_reactive`, C-5 color tokens, C-6 constructor docs, C-7 `Table`/`Tabs`/`Tag` dashboard components; D2=dashboard kit resolved) · **2026-06-19** (E-1/E-2 confirmed ✅; E-3 ✅: 28 enum-conversion tests in `stylo_taffy/convert.rs`; E-4 ✅: CI YAML bug fixed, `workspace-check` + `platform-matrix` jobs added) · **2026-06-19** (F-3 ✅: LICENSE-MIT+APACHE+MPL at root + per-crate; A-1 fix committed; F-4 ✅: workspace.package inheritance across all crates, single 0.2.99 version track; F-5 ✅: README.md + cargo-audit CI job)
 > **Source:** `PRODUCTION_READINESS_SPEC.md` + `.dejavue/state.md`
-> **Status:** **M2 ✅** + **M4 ✅** + **Epic A ✅** + **Epic B ✅** + **Epic C ✅** + **Epic D ✅** + **Epic E (E-1..E-4) ✅** DONE. **M5 next** (E-5 P2, Epic F, gated by **D1** / **D4**).
+> **Status:** **M2 ✅** + **M4 ✅** + **Epic A ✅** + **Epic B ✅** + **Epic C ✅** + **Epic D ✅** + **Epic E (E-1..E-4) ✅** + **Epic F (F-3..F-5) ✅** DONE. **Remaining:** E-5 P2, F-1/F-2 (blocked D1/D4), F-6 P2.
 >
 > This document tracks all **remaining** work across epics A–F. Completed items
 > (✅) are listed for context; **items with no checkmark are outstanding.**
@@ -18,7 +18,7 @@
 | C — Component library | 8/8 ✅ | **0** | 0 |
 | D — Engine robustness | 9/9 ✅ | **0** | 0 |
 | E — Testing & CI | 4/5 ✅ | **1** | 0 |
-| F — Packaging & release | 0/6 | **6** | 3 (F-1, F-2, F-3) |
+| F — Packaging & release | 3/6 ✅ | **3** | 0 (F-1/F-2 blocked on D1/D4) |
 
 > **M1 follow-up (2026-06-17):** A-1, A-2, A-3, A-6 ✅. A-4 stage 1 ✅ (exo-mesh libp2p gating
 > via Cargo feature unification). A-4 stage 2 (A-4b) ⬜ — rcgen 0.13.2 / time
@@ -378,11 +378,11 @@ round-trips, `query_selector.rs`, ≥1 `layout/construct.rs` geometry golden.
 
 | Item | Priority | Status |
 |------|----------|--------|
-| F-1: Git-pinned deps block crates.io | P0-if-pub | ⬜ Open |
-| F-2: Cross-repo path deps | P0-if-pub | ⬜ Open |
-| F-3: License compliance | P0 | ⬜ Open |
-| F-4: Workspace package inheritance | P1 | ⬜ Open |
-| F-5: Top-level README + cargo audit/deny | P1 | ⬜ Open |
+| F-1: Git-pinned deps block crates.io | P0-if-pub | ⬜ Blocked on D1 (publish target decision) |
+| F-2: Cross-repo path deps | P0-if-pub | ⬜ Blocked on D4 (exosphere coupling decision) |
+| F-3: License compliance | P0 | ✅ Done (s304: LICENSE-MIT+APACHE+MPL at root; per-crate for arniko/accesskit_xplat/stylo_taffy; git rename crates/arniko/LICENSE→LICENSE-MIT; A-1 fix: arniko-crush removed from workspace members) |
+| F-4: Workspace package inheritance | P1 | ✅ Done (s304: bliss-*/arniko/mustang/tui-shell/debug_timer/accesskit_xplat all inherit edition/rust-version/license/homepage/repository from workspace.package; version.workspace=true for all bliss-* + arniko/mustang/tui-shell → single 0.2.99 track) |
+| F-5: Top-level README + cargo audit/deny | P1 | ✅ Done (s304: README.md added with arch map + feature flags; cargo-audit job added to CI) |
 | F-6: Per-crate metadata + docs + examples | P2 | ⬜ Open |
 
 ### F-1 (P0 if publishing) — Git-pinned deps block crates.io

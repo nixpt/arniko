@@ -19,9 +19,9 @@ members = [
     "crates/mustang",
     # Arniko SDK
     "crates/arniko",
-    # CRUSH integration
-    "crates/arniko-crush",
 ]
+# arniko-crush excluded: requires sibling crush-ast at ../../../crush-ast (not in-repo)
+# Checked separately in CI via the arniko-crush job that checks out crush-ast first.
 
 [workspace.package]
 version      = "0.2.99"
@@ -70,9 +70,9 @@ bliss-traits  = { path = "crates/bliss-traits", version = "0.2.99", default-feat
 stylo_taffy   = { path = "crates/stylo_taffy",  version = "0.2.99", default-features = false }
 debug_timer   = { path = "crates/debug_timer",  version = "0.1.3" }
 accesskit_xplat = { path = "crates/accesskit_xplat", version = "0.1", default-features = false }
-mustang       = { path = "crates/mustang",      version = "0.1.0" }
-arniko        = { path = "crates/arniko",       version = "0.1.0" }
-arniko-crush  = { path = "crates/arniko-crush", version = "0.1.0" }
+mustang       = { path = "crates/mustang",      version = "0.2.99" }
+arniko        = { path = "crates/arniko",       version = "0.2.99" }
+# arniko-crush not listed — excluded from workspace; has its own Cargo.toml with explicit version.
 
 # Servo / Stylo
 style         = { version = "0.11.0", package = "stylo" }
