@@ -11,7 +11,23 @@ default = ["html", "components"]
 html = []                    # HTML string generation
 components = ["html"]        # UI components
 gpu = ["mustang/gpu"]        # GPU acceleration via Mustang
-networking = ["exo-bliss-net", "exo-mesh/p2p"]    # Exosphere networking (forces libp2p on via feature unification — see A-4)
+# A-4 + A-4b cfg-gate: `networking` enables `exo-mesh/p2p` only (Stage 1).
+# `exo-bliss-net` was declared here but never imported in arniko src — dropped
+# in A-4c to eliminate the upstream exo-mesh 0.1.0 (pulled by exo-bliss-net)
+# from the graph. That upstream copy had an unconditional `use libp2p::Multiaddr`
+# in node.rs, which failed (E0432) when compiled with only the `local` feature
+# (as exo-bliss-net requests). Removing exo-bliss-net collapses the graph to a
+# single exo-mesh entry (the vendored 0.2.99-a4b). Re-add exo-bliss-net only
+# when arniko genuinely imports from it.
+networking = ["exo-mesh/p2p"]    # Exosphere networking (vendored exo-mesh only)
+# A-4b cfg-gate: opt-in to libp2p's `quic` + `relay` features via the
+# vendored exo-mesh sub-features. DEFAULT OFF. Activating either (or both)
+# re-introduces rcgen 0.13.2's blanket-impl E0119 conflict with newer `time`
+# transitively (via libp2p-tls/x509-parser). Required only for QUIC transport
+# + relay-driven NAT traversal; the TCP/gossipsub/kad stack works fine
+# WITHOUT these.
+quic = ["exo-mesh/quic"]
+relay = ["exo-mesh/relay"]
 launch = ["bliss"]           # Native window launch via bliss
 reactive = ["bliss", "bliss-dom", "anyrender_vello", "winit", "keyboard-types", "mustang"]  # Reactive Signal + View + EventSink + launch (mustang: SceneScheduler hook)
 full = ["html", "components", "gpu", "networking", "launch", "reactive"]
@@ -76,15 +92,18 @@ optional = true
 path = "../../../exosphere/crates/platform/sdk/exo-bliss-net"
 optional = true
 
-# EPIC A-4 / D-4: exo-bliss-net pulls exo-mesh with only the `local` feature,
-# but exo-mesh/src/node.rs has unconditional `use libp2p::Multiaddr;` and an
-# unconditional `MeshNode::peer_id` that calls `NodeIdentity::peer_id()` only
-# defined under `cfg(feature = "p2p")`. Without forcing `p2p` here, the build
-# fails when `networking`/`full` is on. Listing exo-mesh as a direct optional
-# dep and enabling `p2p` via the `exo-mesh/p2p` feature syntax below triggers
-# Cargo feature unification so `libp2p` is materialized across the graph.
+# A-4b cfg-gate: exo-mesh is vendored under `crates/_vendored/exo-mesh/`
+# instead of reaching into the exosphere working tree. The vendored copy
+# exposes `quic` + `relay` as default-off sub-features so arniko's
+# `networking` feature compiles against a libp2p tree WITHOUT the `quic`
+# path (which transitively pulls rcgen 0.13.2 -> E0119 blanket-impl conflict
+# with newer `time`). arniko mirrors these as `quic` + `relay` opt-in
+# features (above); default builds skip both for the A-4b acceptance gate.
+# See `crates/_vendored/exo-mesh/Cargo.toml` for the libp2p feature trim +
+# the sub-feature declarations, and `.dejavue/decisions.md` A-4b for the
+# diagnostic trail.
 [dependencies.exo-mesh]
-path = "../../../exosphere/crates/exo/net/mesh"
+path = "../_vendored/exo-mesh"
 optional = true
 
 [dependencies.keyboard-types]

@@ -32,7 +32,7 @@ categories   = ["gui"]
 edition      = "2024"
 rust-version = "1.85.0"
 
-# ── patch: redirect crates-io bliss-* to in-repo ──────────────────────────────
+# ── patch: redirect crates-io bliss-* + exo-mesh to in-repo / vendored ───────
 [patch.crates-io]
 bliss         = { path = "crates/bliss" }
 bliss-dom     = { path = "crates/bliss-dom" }
@@ -43,6 +43,19 @@ bliss-shell   = { path = "crates/bliss-shell" }
 bliss-traits  = { path = "crates/bliss-traits" }
 stylo_taffy   = { path = "crates/stylo_taffy" }
 anyrender_vello = { path = "crates/anyrender_vello" }
+
+# A-4b cfg-gate: redirect all `exo-mesh` resolution sources (the one arniko's
+# `[dependencies.exo-mesh]` declares path-deps, AND the one exo-bliss-net pulls
+# transitively from exosphere's tree) to the vendored copy under
+# `crates/_vendored/exo-mesh/`. Without this, cargo's lockfile can't decide
+# between the two `exo-mesh v0.1.0` candidates ("only one can be written to
+# lockfile unambiguously"). Side-effect benefit: the vendored exo-mesh's
+# cfg-gated libp2p feature list (no `quic`/`relay` in the libp2p dep line;
+# `quic` and `relay` available only as exo-mesh's own default-off
+# sub-features) is the canonical source now, and the rcgen/E0119 conflict
+# can't surface unless a downstream consumer opts in via
+# `arniko --features networking,quic,relay`.
+exo-mesh      = { path = "crates/_vendored/exo-mesh" }
 
 # ── workspace.dependencies ────────────────────────────────────────────────────
 [workspace.dependencies]
