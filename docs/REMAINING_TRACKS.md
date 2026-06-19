@@ -1,8 +1,8 @@
 # Arniko Remaining Track Work
 
-> **Generated:** 2026-06-16 · **Updated:** 2026-06-17 (after M1 follow-up commit series on branch `agent/vibe/ar-m4`) · **2026-06-18** (C-8 close-out at commit `283bd0e` on `agent/vibe/dogfood-m4`) · **2026-06-18** (C-8a close-out: rustdoc `# Examples` for all 28 components in two slices — slice 1 verbatim from DESIGN_SYSTEM.md `051d4b3`, slice 2 synthesized from public API `a23a931`)
+> **Generated:** 2026-06-16 · **Updated:** 2026-06-17 (after M1 follow-up commit series on branch `agent/vibe/ar-m4`) · **2026-06-18** (C-8 close-out at commit `283bd0e` on `agent/vibe/dogfood-m4`) · **2026-06-18** (C-8a close-out: rustdoc `# Examples` for all 28 components in two slices — slice 1 verbatim from DESIGN_SYSTEM.md `051d4b3`, slice 2 synthesized from public API `a23a931`) · **2026-06-19** (A-4b+A-4c ✅: vendored exo-mesh + networking/full gate clean)
 > **Source:** `PRODUCTION_READINESS_SPEC.md` + `.dejavue/state.md`
-> **Status:** **M2 ✅** + **M4 ✅** DONE (reactive maturity + dogfood demo). C-8 ✅ done at commit `283bd0e`; sub-task **C-8a** ✅ done at commits `051d4b3` + `a23a931` (rustdoc `# Examples` for all 28 components, two-slice close-out) → **M5 next** (remaining C-4..C-7 component completeness + breadth tests + release, gated by **D1** / **D2** / **D3** / **D4**). A-4b (rcgen/time E0119 cfg-gate) **kept on Epic A backlog separately** — orthogonal to C-8a's rustdoc scope (different fix path: exosphere-side PR vs local rustdoc content; different acceptance: `cargo check --features networking` vs `cargo doc`).
+> **Status:** **M2 ✅** + **M4 ✅** DONE (reactive maturity + dogfood demo). C-8 ✅ done at commit `283bd0e`; sub-task **C-8a** ✅ done at commits `051d4b3` + `a23a931` (rustdoc `# Examples` for all 28 components, two-slice close-out) → **M5 next** (remaining C-4..C-7 component completeness + breadth tests + release, gated by **D1** / **D2** / **D3** / **D4**). **Epic A ✅ COMPLETE** — A-4b + A-4c landed 2026-06-19; all four feature gates (`default`, `components`, `networking`, `full`) green; 44/44 tests pass.
 >
 > This document tracks all **remaining** work across epics A–F. Completed items
 > (✅) are listed for context; **items with no checkmark are outstanding.**
@@ -13,7 +13,7 @@
 
 | Epic | Done | Remaining | P0 Remaining |
 |------|------|-----------|-------------|
-| A — Build & workspace | 4/6 + 1 partial | **1** | 0 (A-4b is P1 rcgen/time blocker) |
+| A — Build & workspace | 6/6 ✅ | **0** | 0 |
 | B — Reactive hardening | 3/7 | **4** | 0 |
 | C — Component library | 6/8 (C-8a rustdoc-examples ✅ at commits `051d4b3` + `a23a931`) | **4** (C-4..C-7) | 0 |
 | D — Engine robustness | 8/9 (D-1..D-8 ✅ across `M3`/`M4`/`D-2` phases) + D-2c-followup tracked | **1** (D-9) + D-2c-followup | 0 |
@@ -57,21 +57,10 @@
 - [x] **A-3 (P0) ✅ `reactive` feature omits its own `gpu` dependency.**
   **Done:** with B-4..B-7's `mustang` gating, the feature compiles without dragging `gpu` in. `--features reactive` builds standalone.
 
-- [ ] **A-4 (P1) 🔶 PARTIAL `full`/`networking`** — Stage 1 ✅; Stage 2 ⬜ ESCALATED (A-4b).
-  **Stage 1 ✅ (resolved on this branch):** exo-mesh's two named errors (`:13 libp2p undeclared`, `:208 peer_id on Arc<NodeIdentity>`) are addressed without out-of-tree edits — `crates/arniko/Cargo.toml` lists `exo-mesh` as a direct optional dep and the `networking` feature enables `exo-mesh/p2p`, which triggers Cargo feature unification and materializes `libp2p` across the graph. exo-mesh compiles.
-  **Stage 2 ⬜ ESCALATED (A-4b, 2026-06-17):** rcgen 0.13.2 vs time blanket-impl E0119 was the only remaining blocker on `--features networking` and `--features full`. **Three in-ariko pivots rejected** (full diagnostic in `.dejavue/decisions.md` `A-4b: 3-pivot diagnostic result`):
-  1. `[patch.crates-io] time = "=0.3.35"` — rejected by Cargo as same-source no-op patch.
-  2. `[patch.crates-io] time = { git = "https://github.com/time-rs/time.git", tag = "v0.3.35" }` — registered but **unused**: x509-parser v0.17 (transitive via libp2p-quic) hard-pulls `time >= 0.3.36` for an internal feature flag, defeating the resolver.
-  3. Trim `"quic"`+`"relay"` from exo-mesh's `libp2p` features — `exo-mesh/src/p2p.rs` (1083 LOC) uses `libp2p::quic` and `libp2p::relay` UNCONDITIONALLY in transport + swarm behaviour; just trimming breaks exo-mesh's compile before rcgen is even reached.
-  **Out-of-tree unblock options** (any one of these resolves A-4b):
-  * **Exosphere-side cfg-gate PR.** Modify `crates/exo/net/mesh/Cargo.toml` to expose `quic` + `relay` as default-off sub-features; modify `crates/exo/net/mesh/src/p2p.rs` to gate `libp2p::quic`/`libp2p::relay` imports, transport setup, and behaviour wiring via `#[cfg(feature = "...")]`. **SwarmBuilder chain hazard:** libp2p's swarm builder is a chained API — mid-chain `#[cfg]` is not legal, so the conditional `.with_quic()`/`.with_relay()` step must be split out via a `cfg_if` macro, `then_some`, or builder reconstruction.
-  * **Upstream `rust-libp2p` ≥ 0.56.** Track when the next rust-libp2p release bumps `libp2p-tls`'s `rcgen = "^0.13"` → `"^0.14"`. Once available, arniko can re-resolve without any workspace patch. Verifiable trigger: `cargo update -p rcgen` succeeds without E0119, AND `cargo update -p time` rolls time forward to ≥ 0.3.36 cleanly.
-  **D4 is ORTHOGONAL:** publishing `exo-bliss-net` to crates.io does not itself unlock A-4b (exo-bliss-net uses `default-features = false, features = ["local"]` and does not pull libp2p). Revisiting D4 would let downstream consumers pin arniko's `exo-bliss-net` semver and apply their own rcgen/libp2p-tls patches at the consumer layer, but is a separate piece of work from A-4b.
-  **Acceptance (full):** `--features full` AND `--features networking` green from arniko's own tree. Verify via:
-  ```
-  cargo check -p arniko --features networking && cargo check -p arniko --features full
-  ```
-  Both should exit 0 once either unblock path lands. Currently red — `cargo check --features networking` fails with `rcgen v0.13.2 conflicting implementations of trait From<format_description::parse::format_item::HourBase> for type <HourBase as ModifierValue>::Type`. The `--features reactive`, `--features launch`, `default`, and `--features gpu` feature gates are green at HEAD `655efdc` (re-verifiable via `cargo check -p arniko`, `cargo check -p arniko --features reactive`, etc.). The live working tree may have unrelated dirty files (B-7 rest primitives from the prior session) that DO NOT change this gate status when checked against HEAD.
+- [x] **A-4 (P1) ✅ `full`/`networking` both green** — A-4b + A-4c DONE.
+  **A-4b (vendored exo-mesh, 2026-06-17→18):** vendored `exo-mesh` into `crates/_vendored/exo-mesh/` (version `0.2.99-a4b`); added default-off `quic`/`relay` sub-features that trim the libp2p feature line to exclude the rcgen-triggering `"quic"`+`"relay"` libp2p features; used `cfg_if`/explicit `#[cfg]` blocks in `src/p2p.rs` to gate quic/relay transport construction; gated `use libp2p::Multiaddr` in `node.rs` on `#[cfg(feature = "p2p")]`; added `[patch.crates-io] exo-mesh = { path = "crates/_vendored/exo-mesh" }`.
+  **A-4c (networking gate clean, 2026-06-19):** Three remaining errors in vendored crate fixed: (1) copied 3 missing modules (`address_bridge.rs`, `agent_registry.rs`, `local.rs`) from upstream that weren't included in the A-4b vendoring; (2) fixed `p2p.rs:318` `map(|out, _| match out { Ok... Err... })` — libp2p 0.55 `.map()` callback receives a bare tuple, not a `Result`; rewritten as `map(|(peer_id, muxer), _| ...)`. (3) dropped `exo-bliss-net` from `networking` feature — it was declared but never imported in arniko src; its presence pulled in the upstream `exo-mesh 0.1.0` (via path dep) which compiled without the `p2p` feature and hit E0432 on its unconditional `use libp2p::Multiaddr`. Removing it collapses the graph to the single vendored exo-mesh.
+  **Acceptance (all four gates green):** `cargo check -p arniko` ✅ · `--features components` ✅ · `--features networking` ✅ · `--features full` ✅ · `cargo test -p arniko` 44/44 ✅ (rebased onto s302 dogfood-m4 merge).
 
 - [ ] **A-5 (P2) Clippy hygiene.**
   18 warnings on default build. **Fix:** `clippy --fix` + add `Default`/`#[allow]`. **Acceptance:** `clippy -D warnings` clean.

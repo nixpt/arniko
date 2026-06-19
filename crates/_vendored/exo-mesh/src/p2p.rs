@@ -315,17 +315,8 @@ impl P2pTransport {
         // restriction (which the docs flagged in the A-4b hazard note).
         let transport: libp2p::core::transport::Boxed<(PeerId, libp2p::core::muxing::StreamMuxerBox)> =
             tcp_transport
-                .map(|out, _| match out {
-                    Ok((peer_id, muxer)) => (peer_id, libp2p::core::muxing::StreamMuxerBox::new(muxer)),
-                    Err(_) => {
-                        // TCP transport error path — we mapped to a uniform
-                        // tuple type so this branch is unreachable in practice
-                        // (the `?` operator short-circuits before the muxer
-                        // is constructed). The unreachable!() is intentional:
-                        // it lets the closure produce a uniform Output type
-                        // without forcing a separate Result-handling path.
-                        unreachable!("tcp transport error path is unreachable")
-                    }
+                .map(|(peer_id, muxer), _| {
+                    (peer_id, libp2p::core::muxing::StreamMuxerBox::new(muxer))
                 })
                 .boxed();
 
