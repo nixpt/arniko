@@ -2,7 +2,7 @@
 
 > **Generated:** 2026-06-16 · **Updated:** 2026-06-17 (after M1 follow-up commit series on branch `agent/vibe/ar-m4`) · **2026-06-18** (C-8 close-out at commit `283bd0e` on `agent/vibe/dogfood-m4`) · **2026-06-18** (C-8a close-out: rustdoc `# Examples` for all 28 components in two slices — slice 1 verbatim from DESIGN_SYSTEM.md `051d4b3`, slice 2 synthesized from public API `a23a931`) · **2026-06-19** (A-4b+A-4c ✅: vendored exo-mesh + networking/full gate clean) · **2026-06-19** (B ✅ COMPLETE: B-7 all primitives confirmed present + tested — `batch`/`create_effect`/`create_resource`/`provide`+`inject`/`ErrorBoundary`/`KeyedFor`; toast doctest fix) · **2026-06-19** (C ✅ COMPLETE: C-4 `toast_reactive`, C-5 color tokens, C-6 constructor docs, C-7 `Table`/`Tabs`/`Tag` dashboard components; D2=dashboard kit resolved)
 > **Source:** `PRODUCTION_READINESS_SPEC.md` + `.dejavue/state.md`
-> **Status:** **M2 ✅** + **M4 ✅** + **Epic A ✅** + **Epic B ✅** + **Epic C ✅** DONE. **M5 next** (Epic D remaining + E + F, gated by **D1** / **D4**).
+> **Status:** **M2 ✅** + **M4 ✅** + **Epic A ✅** + **Epic B ✅** + **Epic C ✅** + **Epic D ✅** DONE. **M5 next** (Epic E + F, gated by **D1** / **D4**).
 >
 > This document tracks all **remaining** work across epics A–F. Completed items
 > (✅) are listed for context; **items with no checkmark are outstanding.**
@@ -16,7 +16,7 @@
 | A — Build & workspace | 6/6 ✅ | **0** | 0 |
 | B — Reactive hardening | 7/7 ✅ | **0** | 0 |
 | C — Component library | 8/8 ✅ | **0** | 0 |
-| D — Engine robustness | 8/9 (D-1..D-8 ✅ across `M3`/`M4`/`D-2` phases) + D-2c-followup tracked | **1** (D-9) + D-2c-followup | 0 |
+| D — Engine robustness | 9/9 ✅ | **0** | 0 |
 | E — Testing & CI | 2/5 partial | **3** | 0 (partial done) |
 | F — Packaging & release | 0/6 | **6** | 3 (F-1, F-2, F-3) |
 
@@ -246,7 +246,7 @@ All cargo gates green on the close-out commits: `cargo check` 0 errors; `cargo c
 
 ---
 
-## EPIC D — Engine Robustness *(panic-driven; hotspot is bliss-dom)*
+## EPIC D — Engine Robustness ✅ COMPLETE
 
 > Inventory (runtime, excl. tests): ~178 `unwrap`, 18 `panic!`, 3 active `todo!`, 2 `unimplemented!`,
 > ~12 `unreachable!`. bliss-dom is the hotspot (139 unwrap / 13 panic! / 8 unreachable!).
@@ -261,7 +261,7 @@ All cargo gates green on the close-out commits: `cargo check` 0 errors; `cargo c
 | D-6: Payload-decode panics | P1 | ✅ Done (`D-6: fix payload-decode/attacker-input panics in engine`) |
 | D-7: Resource-failure panics | P1 | ✅ Done (`D-7: fix remaining production panics in layout subsystem`) |
 | D-8: Error-type design | P1 | ✅ Done (`D-8: fix attacker-reachable .unwrap() sites in bliss-dom`) |
-| D-9: Strip `dbg!`, audit casts, accesskit stubs | P2 | ⬜ Open |
+| D-9: Strip `dbg!`, audit casts, accesskit stubs | P2 | ✅ Done (s304 2026-06-19 — 2 remaining dbg! stripped: construct.rs → eprintln!, css_box.rs test → assertion; accesskit_xplat WinRT/UIKit → no-op Option<Adapter>; inline.rs cast audit comment added) |
 
 ### D-1 (P0) — `_ => todo!()` on keyboard input
 

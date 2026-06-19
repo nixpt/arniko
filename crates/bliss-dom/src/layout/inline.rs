@@ -1,3 +1,9 @@
+// D-9 cast audit: all `id as usize` casts here convert Parley/Taffy node IDs
+// (usize or u32) to usize for slab indexing.  On 64-bit targets this is
+// lossless; on 32-bit targets node counts are always < 2^32 so no truncation.
+// Float-domain casts (as f32 / as f64) are inherent to layout coordinate math
+// and cannot overflow in any meaningful sense.  No saturating_ / checked_
+// wrappers are needed for these patterns.
 use parley::AlignmentOptions;
 use taffy::{
     AvailableSpace, BlockContext, BlockFormattingContext, BoxSizing, CollapsibleMarginSet,
