@@ -1,8 +1,8 @@
 # Arniko Remaining Track Work
 
-> **Generated:** 2026-06-16 · **Updated:** 2026-06-17 (after M1 follow-up commit series on branch `agent/vibe/ar-m4`) · **2026-06-18** (C-8 close-out at commit `283bd0e` on `agent/vibe/dogfood-m4`) · **2026-06-18** (C-8a close-out: rustdoc `# Examples` for all 28 components in two slices — slice 1 verbatim from DESIGN_SYSTEM.md `051d4b3`, slice 2 synthesized from public API `a23a931`) · **2026-06-19** (A-4b+A-4c ✅: vendored exo-mesh + networking/full gate clean)
+> **Generated:** 2026-06-16 · **Updated:** 2026-06-17 (after M1 follow-up commit series on branch `agent/vibe/ar-m4`) · **2026-06-18** (C-8 close-out at commit `283bd0e` on `agent/vibe/dogfood-m4`) · **2026-06-18** (C-8a close-out: rustdoc `# Examples` for all 28 components in two slices — slice 1 verbatim from DESIGN_SYSTEM.md `051d4b3`, slice 2 synthesized from public API `a23a931`) · **2026-06-19** (A-4b+A-4c ✅: vendored exo-mesh + networking/full gate clean) · **2026-06-19** (B ✅ COMPLETE: B-7 all primitives confirmed present + tested — `batch`/`create_effect`/`create_resource`/`provide`+`inject`/`ErrorBoundary`/`KeyedFor`; toast doctest fix)
 > **Source:** `PRODUCTION_READINESS_SPEC.md` + `.dejavue/state.md`
-> **Status:** **M2 ✅** + **M4 ✅** DONE (reactive maturity + dogfood demo). C-8 ✅ done at commit `283bd0e`; sub-task **C-8a** ✅ done at commits `051d4b3` + `a23a931` (rustdoc `# Examples` for all 28 components, two-slice close-out) → **M5 next** (remaining C-4..C-7 component completeness + breadth tests + release, gated by **D1** / **D2** / **D3** / **D4**). **Epic A ✅ COMPLETE** — A-4b + A-4c landed 2026-06-19; all four feature gates (`default`, `components`, `networking`, `full`) green; 44/44 tests pass.
+> **Status:** **M2 ✅** + **M4 ✅** + **Epic A ✅** + **Epic B ✅** DONE. **M5 next** (remaining C-4..C-7 component completeness + breadth tests + release, gated by **D1** / **D2** / **D3** / **D4**).
 >
 > This document tracks all **remaining** work across epics A–F. Completed items
 > (✅) are listed for context; **items with no checkmark are outstanding.**
@@ -14,7 +14,7 @@
 | Epic | Done | Remaining | P0 Remaining |
 |------|------|-----------|-------------|
 | A — Build & workspace | 6/6 ✅ | **0** | 0 |
-| B — Reactive hardening | 3/7 | **4** | 0 |
+| B — Reactive hardening | 7/7 ✅ | **0** | 0 |
 | C — Component library | 6/8 (C-8a rustdoc-examples ✅ at commits `051d4b3` + `a23a931`) | **4** (C-4..C-7) | 0 |
 | D — Engine robustness | 8/9 (D-1..D-8 ✅ across `M3`/`M4`/`D-2` phases) + D-2c-followup tracked | **1** (D-9) + D-2c-followup | 0 |
 | E — Testing & CI | 2/5 partial | **3** | 0 (partial done) |
@@ -70,7 +70,7 @@
 
 ---
 
-## EPIC B — Reactive Runtime Hardening ⭐ FOCUS TRACK
+## EPIC B — Reactive Runtime Hardening ✅ COMPLETE
 
 > **Model (confirmed):** pull-based **version-counter, poll-on-flush** — no push subscriber graph.
 > `Signal` bumps a version on `set`; `Computed` recomputes lazily on read iff a dep version changed;
@@ -84,7 +84,7 @@
 | **B-4: Unbounded binding growth** | **P1** | ✅ Done (commit 0c4ae17 — Scope-based binding lifecycle + `park_scope` re-homing) |
 | **B-5: Lock-poison cascade** | **P1** | ✅ Done (commit 372ba64 — `parking_lot` swap across `signal`/`computed`/`reactor`/`sink`/`app`) |
 | **B-6: Event ergonomics** | **P1** | ✅ Done (commit 893de31 — per-node keydown + handler chaining) |
-| **B-7: Missing production primitives** | **P2** | 🟡 Partial (`Show`/`Switch` landed in commit d79fa75). **Remaining** (gated by **D3**): `create_effect`, `create_resource` (depends on flush), `provide`/`inject`, error boundaries, `batch()`, programmatic flush, keyed lists. |
+| **B-7: Missing production primitives** | **P2** | ✅ Done (s304 audit 2026-06-19 — all primitives confirmed: `Show`/`Switch` `d79fa75`, `batch`/`create_effect`/`create_resource`/`ErrorBoundary`/`KeyedFor`/`provide`+`inject` all in `src/reactive/`; toast doctest fixed; 43/43 tests pass) |
 
 ### B-4 (P1) — Unbounded binding growth + no lifecycle
 

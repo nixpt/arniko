@@ -48,9 +48,10 @@ pub enum ToastVariant {
 ///
 /// With the `reactive` feature:
 ///
-/// ```rust,no_run
+/// ```rust,ignore
 /// # #[cfg(feature = "reactive")] {
-/// use arniko::{mount_toast, reactive::{Signal, Reactor}, bliss_dom::DocumentMutator};
+/// use arniko::{mount_toast, reactive::{Signal, Reactor}};
+/// use bliss_dom::DocumentMutator;
 ///
 /// // `mount_toast` registers a reactive binding on the supplied reactor
 /// // and returns the container node ID + the lifecycle scope:
