@@ -1,0 +1,22 @@
+.arniko-table-wrap { overflow-x: auto; width: 100%; }
+.arniko-table {
+  width: 100%; border-collapse: collapse;
+  font-size: 13px; color: var(--arniko-text-body);
+}
+.arniko-table th {
+  text-align: left; padding: 8px 12px;
+  background: var(--arniko-bg-subtle);
+  color: var(--arniko-text-secondary);
+  font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--arniko-border);
+  white-space: nowrap;
+}
+.arniko-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--arniko-border);
+  color: var(--arniko-text-body);
+}
+.arniko-table-striped tbody tr:nth-child(even) td { background: var(--arniko-bg-subtle); }
+.arniko-table-compact th, .arniko-table-compact td { padding: 4px 8px; }
+.arniko-table tbody tr:hover td { background: var(--arniko-bg-hover); }
+.arniko-table-empty { padding: 24px; text-align: center; color: var(--arniko-text-muted); font-size: 13px; }

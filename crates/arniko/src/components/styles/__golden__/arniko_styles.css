@@ -1054,6 +1054,55 @@
   outline: none; box-shadow: var(--arniko-focus-ring); border-radius: 2px;
 }
 .arniko-panel-body { padding: 16px; font-size: 0.875rem; color: var(--arniko-text-body); }
+.arniko-table-wrap { overflow-x: auto; width: 100%; }
+.arniko-table {
+  width: 100%; border-collapse: collapse;
+  font-size: 13px; color: var(--arniko-text-body);
+}
+.arniko-table th {
+  text-align: left; padding: 8px 12px;
+  background: var(--arniko-bg-subtle);
+  color: var(--arniko-text-secondary);
+  font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--arniko-border);
+  white-space: nowrap;
+}
+.arniko-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--arniko-border);
+  color: var(--arniko-text-body);
+}
+.arniko-table-striped tbody tr:nth-child(even) td { background: var(--arniko-bg-subtle); }
+.arniko-table-compact th, .arniko-table-compact td { padding: 4px 8px; }
+.arniko-table tbody tr:hover td { background: var(--arniko-bg-hover); }
+.arniko-table-empty { padding: 24px; text-align: center; color: var(--arniko-text-muted); font-size: 13px; }
+.arniko-tabs {}
+.arniko-tabs-bar {
+  display: flex; border-bottom: 1px solid var(--arniko-border);
+  gap: 0; overflow-x: auto;
+}
+.arniko-tab-btn {
+  padding: 8px 16px; background: none; border: none; outline: none;
+  color: var(--arniko-text-muted); cursor: pointer;
+  font-size: 13px; font-weight: 500; white-space: nowrap;
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+  transition: color 0.15s, border-color 0.15s;
+}
+.arniko-tab-btn:hover { color: var(--arniko-text-body); }
+.arniko-tab-btn[aria-selected="true"] {
+  color: var(--arniko-accent); border-bottom-color: var(--arniko-accent);
+}
+.arniko-tab-panel { padding: 12px 0; }
+.arniko-tag {
+  display: inline-flex; align-items: center;
+  padding: 2px 10px; border-radius: 999px;
+  font-size: 11px; font-weight: 500; white-space: nowrap;
+}
+.arniko-tag-default { background: var(--arniko-bg-subtle); color: var(--arniko-text-secondary); border: 1px solid var(--arniko-border); }
+.arniko-tag-success { background: var(--arniko-success-bg); color: var(--arniko-success); border: 1px solid var(--arniko-success-border); }
+.arniko-tag-warning { background: var(--arniko-warning-bg); color: var(--arniko-warning); border: 1px solid var(--arniko-warning-border); }
+.arniko-tag-error   { background: var(--arniko-error-bg);   color: var(--arniko-error);   border: 1px solid var(--arniko-error-border); }
+.arniko-tag-info    { background: var(--arniko-info-bg);    color: var(--arniko-info);    border: 1px solid var(--arniko-info-border); }
 /* ── Reduced Motion ──────────────────────────
    Disables all CSS animations, transitions, and smooth scrolling
    when the user has prefers-reduced-motion: reduce enabled.

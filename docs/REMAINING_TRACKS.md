@@ -1,8 +1,8 @@
 # Arniko Remaining Track Work
 
-> **Generated:** 2026-06-16 · **Updated:** 2026-06-17 (after M1 follow-up commit series on branch `agent/vibe/ar-m4`) · **2026-06-18** (C-8 close-out at commit `283bd0e` on `agent/vibe/dogfood-m4`) · **2026-06-18** (C-8a close-out: rustdoc `# Examples` for all 28 components in two slices — slice 1 verbatim from DESIGN_SYSTEM.md `051d4b3`, slice 2 synthesized from public API `a23a931`) · **2026-06-19** (A-4b+A-4c ✅: vendored exo-mesh + networking/full gate clean) · **2026-06-19** (B ✅ COMPLETE: B-7 all primitives confirmed present + tested — `batch`/`create_effect`/`create_resource`/`provide`+`inject`/`ErrorBoundary`/`KeyedFor`; toast doctest fix)
+> **Generated:** 2026-06-16 · **Updated:** 2026-06-17 (after M1 follow-up commit series on branch `agent/vibe/ar-m4`) · **2026-06-18** (C-8 close-out at commit `283bd0e` on `agent/vibe/dogfood-m4`) · **2026-06-18** (C-8a close-out: rustdoc `# Examples` for all 28 components in two slices — slice 1 verbatim from DESIGN_SYSTEM.md `051d4b3`, slice 2 synthesized from public API `a23a931`) · **2026-06-19** (A-4b+A-4c ✅: vendored exo-mesh + networking/full gate clean) · **2026-06-19** (B ✅ COMPLETE: B-7 all primitives confirmed present + tested — `batch`/`create_effect`/`create_resource`/`provide`+`inject`/`ErrorBoundary`/`KeyedFor`; toast doctest fix) · **2026-06-19** (C ✅ COMPLETE: C-4 `toast_reactive`, C-5 color tokens, C-6 constructor docs, C-7 `Table`/`Tabs`/`Tag` dashboard components; D2=dashboard kit resolved)
 > **Source:** `PRODUCTION_READINESS_SPEC.md` + `.dejavue/state.md`
-> **Status:** **M2 ✅** + **M4 ✅** + **Epic A ✅** + **Epic B ✅** DONE. **M5 next** (remaining C-4..C-7 component completeness + breadth tests + release, gated by **D1** / **D2** / **D3** / **D4**).
+> **Status:** **M2 ✅** + **M4 ✅** + **Epic A ✅** + **Epic B ✅** + **Epic C ✅** DONE. **M5 next** (Epic D remaining + E + F, gated by **D1** / **D4**).
 >
 > This document tracks all **remaining** work across epics A–F. Completed items
 > (✅) are listed for context; **items with no checkmark are outstanding.**
@@ -15,7 +15,7 @@
 |------|------|-----------|-------------|
 | A — Build & workspace | 6/6 ✅ | **0** | 0 |
 | B — Reactive hardening | 7/7 ✅ | **0** | 0 |
-| C — Component library | 6/8 (C-8a rustdoc-examples ✅ at commits `051d4b3` + `a23a931`) | **4** (C-4..C-7) | 0 |
+| C — Component library | 8/8 ✅ | **0** | 0 |
 | D — Engine robustness | 8/9 (D-1..D-8 ✅ across `M3`/`M4`/`D-2` phases) + D-2c-followup tracked | **1** (D-9) + D-2c-followup | 0 |
 | E — Testing & CI | 2/5 partial | **3** | 0 (partial done) |
 | F — Packaging & release | 0/6 | **6** | 3 (F-1, F-2, F-3) |
@@ -156,7 +156,7 @@ production-grade framework:
 
 ---
 
-## EPIC C — Component Library
+## EPIC C — Component Library ✅ COMPLETE
 
 | Item | Priority | Status |
 |------|----------|--------|
@@ -166,7 +166,7 @@ production-grade framework:
 | C-4: Unify reactive surface | P1 | ⬜ Open |
 | C-5: Hardcoded colors | P1 | ⬜ Open |
 | C-6: Constructor inconsistency | P1 | ⬜ Open |
-| C-7: Missing core components | P1 | ⬜ Open |
+| C-7: Missing core components | P1 | ✅ Done (D2=dashboard kit: `Table`/`TableRow` + `table_reactive`, `Tabs`/`TabItem` + `tabs_reactive`, `Tag`/`TagVariant` — commit 2ab1eb4+) |
 | C-8: Dead code + stale docs | P2 | ✅ Done (commit `283bd0e`) |
 | C-8a: rustdoc `# Examples` for the 28 real components | P2 | ✅ Done (two-slice close-out: slice 1 verbatim from DESIGN_SYSTEM.md `051d4b3`, slice 2 synthesized from public API `a23a931`) |
 

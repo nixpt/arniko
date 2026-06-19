@@ -1,0 +1,10 @@
+.arniko-tag {
+  display: inline-flex; align-items: center;
+  padding: 2px 10px; border-radius: 999px;
+  font-size: 11px; font-weight: 500; white-space: nowrap;
+}
+.arniko-tag-default { background: var(--arniko-bg-subtle); color: var(--arniko-text-secondary); border: 1px solid var(--arniko-border); }
+.arniko-tag-success { background: var(--arniko-success-bg); color: var(--arniko-success); border: 1px solid var(--arniko-success-border); }
+.arniko-tag-warning { background: var(--arniko-warning-bg); color: var(--arniko-warning); border: 1px solid var(--arniko-warning-border); }
+.arniko-tag-error   { background: var(--arniko-error-bg);   color: var(--arniko-error);   border: 1px solid var(--arniko-error-border); }
+.arniko-tag-info    { background: var(--arniko-info-bg);    color: var(--arniko-info);    border: 1px solid var(--arniko-info-border); }

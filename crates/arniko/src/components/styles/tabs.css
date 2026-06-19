@@ -1,0 +1,17 @@
+.arniko-tabs {}
+.arniko-tabs-bar {
+  display: flex; border-bottom: 1px solid var(--arniko-border);
+  gap: 0; overflow-x: auto;
+}
+.arniko-tab-btn {
+  padding: 8px 16px; background: none; border: none; outline: none;
+  color: var(--arniko-text-muted); cursor: pointer;
+  font-size: 13px; font-weight: 500; white-space: nowrap;
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+  transition: color 0.15s, border-color 0.15s;
+}
+.arniko-tab-btn:hover { color: var(--arniko-text-body); }
+.arniko-tab-btn[aria-selected="true"] {
+  color: var(--arniko-accent); border-bottom-color: var(--arniko-accent);
+}
+.arniko-tab-panel { padding: 12px 0; }

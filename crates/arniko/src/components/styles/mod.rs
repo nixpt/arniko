@@ -46,6 +46,9 @@ pub const ARNIKO_STYLES: &str = concat!(
     include_str!("file_tree.css"),
     include_str!("empty_state.css"),
     include_str!("panel.css"),
+    include_str!("table.css"),
+    include_str!("tabs.css"),
+    include_str!("tag.css"),
     include_str!("accessibility.css"),
 );
 
