@@ -148,6 +148,9 @@ jobs:
       - name: cargo test (mustang)
         run: cargo test -p mustang --lib
 
+      - name: cargo test (stylo_taffy)
+        run: cargo test -p stylo_taffy --lib
+
       - name: Checkout exosphere sibling (exo-bliss-net + exo-shell-client)
         uses: actions/checkout@v4
         with:
@@ -180,21 +183,22 @@ jobs:
 
       - name: Checkout crush-ast (pinned to known-good ref)
         uses: actions/checkout@v4
+        with:
+          repository: nixpt/crush-ast
+          ref: ${{ env.CRUSH_AST_REF }}
+          path: projects/crush-ast
 
       - name: Checkout exosphere sibling (projects layout)
         uses: actions/checkout@v4
         with:
           repository: nixpt/exosphere
           path: projects/exosphere
+
       - name: Checkout khukuri sibling (projects layout)
         uses: actions/checkout@v4
         with:
           repository: nixpt/khukuri
           path: projects/khukuri
-        with:
-          repository: nixpt/crush-ast
-          ref: ${{ env.CRUSH_AST_REF }}
-          path: projects/crush-ast
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@1.85.0
@@ -217,3 +221,81 @@ jobs:
       - name: cargo fmt --check (arniko-crush)
         working-directory: projects/arniko
         run: cargo fmt --package arniko-crush --check
+
+  workspace-check:
+    name: check --workspace (E-4)
+    runs-on: ubuntu-latest
+    needs: fmt-and-lint
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain (MSRV 1.85)
+        uses: dtolnay/rust-toolchain@1.85.0
+        with:
+          components: clippy
+
+      - name: Cache cargo registry & target
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-ws-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-ws-
+
+      - name: Checkout exosphere sibling
+        uses: actions/checkout@v4
+        with:
+          repository: nixpt/exosphere
+          path: ../exosphere
+
+      - name: Checkout khukuri sibling
+        uses: actions/checkout@v4
+        with:
+          repository: nixpt/khukuri
+          path: ../khukuri
+
+      - name: cargo check --workspace
+        run: cargo check --workspace
+
+      - name: cargo test --workspace --lib
+        run: cargo test --workspace --lib
+
+  platform-matrix:
+    name: check (${{ matrix.os }}) (E-4)
+    runs-on: ${{ matrix.os }}
+    needs: fmt-and-lint
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain (MSRV 1.85)
+        uses: dtolnay/rust-toolchain@1.85.0
+
+      - name: Cache cargo registry & target
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      # Platform check: exercises accesskit_xplat Win32/AppKit paths and
+      # platform-specific clipboard/shell backends (cfg-gated per target_os).
+      - name: cargo check -p arniko (platform-gated paths)
+        run: cargo check -p arniko
+
+      - name: cargo check -p accesskit_xplat
+        run: cargo check -p accesskit_xplat

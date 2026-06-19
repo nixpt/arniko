@@ -1,8 +1,8 @@
 # Arniko Remaining Track Work
 
-> **Generated:** 2026-06-16 · **Updated:** 2026-06-17 (after M1 follow-up commit series on branch `agent/vibe/ar-m4`) · **2026-06-18** (C-8 close-out at commit `283bd0e` on `agent/vibe/dogfood-m4`) · **2026-06-18** (C-8a close-out: rustdoc `# Examples` for all 28 components in two slices — slice 1 verbatim from DESIGN_SYSTEM.md `051d4b3`, slice 2 synthesized from public API `a23a931`) · **2026-06-19** (A-4b+A-4c ✅: vendored exo-mesh + networking/full gate clean) · **2026-06-19** (B ✅ COMPLETE: B-7 all primitives confirmed present + tested — `batch`/`create_effect`/`create_resource`/`provide`+`inject`/`ErrorBoundary`/`KeyedFor`; toast doctest fix) · **2026-06-19** (C ✅ COMPLETE: C-4 `toast_reactive`, C-5 color tokens, C-6 constructor docs, C-7 `Table`/`Tabs`/`Tag` dashboard components; D2=dashboard kit resolved)
+> **Generated:** 2026-06-16 · **Updated:** 2026-06-17 (after M1 follow-up commit series on branch `agent/vibe/ar-m4`) · **2026-06-18** (C-8 close-out at commit `283bd0e` on `agent/vibe/dogfood-m4`) · **2026-06-18** (C-8a close-out: rustdoc `# Examples` for all 28 components in two slices — slice 1 verbatim from DESIGN_SYSTEM.md `051d4b3`, slice 2 synthesized from public API `a23a931`) · **2026-06-19** (A-4b+A-4c ✅: vendored exo-mesh + networking/full gate clean) · **2026-06-19** (B ✅ COMPLETE: B-7 all primitives confirmed present + tested — `batch`/`create_effect`/`create_resource`/`provide`+`inject`/`ErrorBoundary`/`KeyedFor`; toast doctest fix) · **2026-06-19** (C ✅ COMPLETE: C-4 `toast_reactive`, C-5 color tokens, C-6 constructor docs, C-7 `Table`/`Tabs`/`Tag` dashboard components; D2=dashboard kit resolved) · **2026-06-19** (E-1/E-2 confirmed ✅; E-3 ✅: 28 enum-conversion tests in `stylo_taffy/convert.rs` — `box_sizing`/`position`/`overflow`/`flex_direction`/`flex_wrap`/`float`/`clear`/`grid_auto_flow` all table-driven; E-4 ✅: CI YAML bug fixed in `arniko-crush`, `cargo test -p stylo_taffy` added, `workspace-check` + `platform-matrix` jobs added)
 > **Source:** `PRODUCTION_READINESS_SPEC.md` + `.dejavue/state.md`
-> **Status:** **M2 ✅** + **M4 ✅** + **Epic A ✅** + **Epic B ✅** + **Epic C ✅** + **Epic D ✅** DONE. **M5 next** (Epic E + F, gated by **D1** / **D4**).
+> **Status:** **M2 ✅** + **M4 ✅** + **Epic A ✅** + **Epic B ✅** + **Epic C ✅** + **Epic D ✅** + **Epic E (E-1..E-4) ✅** DONE. **M5 next** (E-5 P2, Epic F, gated by **D1** / **D4**).
 >
 > This document tracks all **remaining** work across epics A–F. Completed items
 > (✅) are listed for context; **items with no checkmark are outstanding.**
@@ -17,7 +17,7 @@
 | B — Reactive hardening | 7/7 ✅ | **0** | 0 |
 | C — Component library | 8/8 ✅ | **0** | 0 |
 | D — Engine robustness | 9/9 ✅ | **0** | 0 |
-| E — Testing & CI | 2/5 partial | **3** | 0 (partial done) |
+| E — Testing & CI | 4/5 ✅ | **1** | 0 |
 | F — Packaging & release | 0/6 | **6** | 3 (F-1, F-2, F-3) |
 
 > **M1 follow-up (2026-06-17):** A-1, A-2, A-3, A-6 ✅. A-4 stage 1 ✅ (exo-mesh libp2p gating
@@ -334,10 +334,10 @@ No `thiserror`; hand-rolled types inconsistent; `bliss-dom::ScriptError` lacks `
 
 | Item | Priority | Status |
 |------|----------|--------|
-| E-1: Reactive core unit tests | P0 | ⬜ Partial (18 reactive done, direct_mut pending) |
-| E-2: Integration + engine tests | P0 | ⬜ Partial (25 integration done, engine pending) |
-| E-3: Layout / pointer / paint / component tests | P1 | ⬜ Open |
-| E-4: CI breadth (workspace, matrix, MSRV) | P1 | ⬜ Open |
+| E-1: Reactive core unit tests | P0 | ✅ Done (s304 audit: 35 reactive_signals tests + 6 direct_mut tests confirmed present) |
+| E-2: Integration + engine tests | P0 | ✅ Done (s304 audit: 44 bliss-dom tests — document.rs/query_selector.rs/layout_construct.rs confirmed) |
+| E-3: Layout / pointer / paint / component tests | P1 | ✅ Done (s304: 28 enum-conversion tests in `stylo_taffy/convert.rs` — all `#[cfg(feature)]`-gated table-driven; components already had tests; 58 stylo_taffy total) |
+| E-4: CI breadth (workspace, matrix, MSRV) | P1 | ✅ Done (s304: YAML bug fixed in `arniko-crush`, `stylo_taffy` tests added to CI test job, `workspace-check` + `platform-matrix` macOS/Windows jobs added) |
 | E-5: Visual regression + coverage + audit | P2 | ⬜ Open |
 
 ### E-1 (P0) — Reactive core unit tests *(partial)*

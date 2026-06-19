@@ -848,3 +848,218 @@ pub fn to_taffy_style(style: &stylo::ComputedValues) -> taffy::Style<Atom> {
         },
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use super::stylo;
+
+    // ── box_sizing ──────────────────────────────────────────────────────────
+
+    #[test]
+    fn box_sizing_border_box() {
+        assert_eq!(box_sizing(stylo::BoxSizing::BorderBox), taffy::BoxSizing::BorderBox);
+    }
+
+    #[test]
+    fn box_sizing_content_box() {
+        assert_eq!(box_sizing(stylo::BoxSizing::ContentBox), taffy::BoxSizing::ContentBox);
+    }
+
+    // ── position ────────────────────────────────────────────────────────────
+
+    #[test]
+    fn position_relative() {
+        assert_eq!(position(stylo::Position::Relative), taffy::Position::Relative);
+    }
+
+    #[test]
+    fn position_absolute() {
+        assert_eq!(position(stylo::Position::Absolute), taffy::Position::Absolute);
+    }
+
+    #[test]
+    fn position_static_falls_back_to_relative() {
+        assert_eq!(position(stylo::Position::Static), taffy::Position::Relative);
+    }
+
+    #[test]
+    fn position_fixed_falls_back_to_absolute() {
+        assert_eq!(position(stylo::Position::Fixed), taffy::Position::Absolute);
+    }
+
+    #[test]
+    fn position_sticky_falls_back_to_relative() {
+        assert_eq!(position(stylo::Position::Sticky), taffy::Position::Relative);
+    }
+
+    // ── overflow ────────────────────────────────────────────────────────────
+
+    #[test]
+    fn overflow_visible() {
+        assert_eq!(overflow(stylo::Overflow::Visible), taffy::Overflow::Visible);
+    }
+
+    #[test]
+    fn overflow_clip() {
+        assert_eq!(overflow(stylo::Overflow::Clip), taffy::Overflow::Clip);
+    }
+
+    #[test]
+    fn overflow_hidden() {
+        assert_eq!(overflow(stylo::Overflow::Hidden), taffy::Overflow::Hidden);
+    }
+
+    #[test]
+    fn overflow_scroll() {
+        assert_eq!(overflow(stylo::Overflow::Scroll), taffy::Overflow::Scroll);
+    }
+
+    #[test]
+    fn overflow_auto_falls_back_to_scroll() {
+        assert_eq!(overflow(stylo::Overflow::Auto), taffy::Overflow::Scroll);
+    }
+
+    // ── flex_direction ──────────────────────────────────────────────────────
+
+    #[cfg(feature = "flexbox")]
+    #[test]
+    fn flex_direction_row() {
+        assert_eq!(flex_direction(stylo::FlexDirection::Row), taffy::FlexDirection::Row);
+    }
+
+    #[cfg(feature = "flexbox")]
+    #[test]
+    fn flex_direction_column() {
+        assert_eq!(flex_direction(stylo::FlexDirection::Column), taffy::FlexDirection::Column);
+    }
+
+    #[cfg(feature = "flexbox")]
+    #[test]
+    fn flex_direction_row_reverse() {
+        assert_eq!(flex_direction(stylo::FlexDirection::RowReverse), taffy::FlexDirection::RowReverse);
+    }
+
+    #[cfg(feature = "flexbox")]
+    #[test]
+    fn flex_direction_column_reverse() {
+        assert_eq!(flex_direction(stylo::FlexDirection::ColumnReverse), taffy::FlexDirection::ColumnReverse);
+    }
+
+    // ── flex_wrap ───────────────────────────────────────────────────────────
+
+    #[cfg(feature = "flexbox")]
+    #[test]
+    fn flex_wrap_wrap() {
+        assert_eq!(flex_wrap(stylo::FlexWrap::Wrap), taffy::FlexWrap::Wrap);
+    }
+
+    #[cfg(feature = "flexbox")]
+    #[test]
+    fn flex_wrap_nowrap() {
+        assert_eq!(flex_wrap(stylo::FlexWrap::Nowrap), taffy::FlexWrap::NoWrap);
+    }
+
+    #[cfg(feature = "flexbox")]
+    #[test]
+    fn flex_wrap_wrap_reverse() {
+        assert_eq!(flex_wrap(stylo::FlexWrap::WrapReverse), taffy::FlexWrap::WrapReverse);
+    }
+
+    // ── float ───────────────────────────────────────────────────────────────
+
+    #[cfg(feature = "floats")]
+    #[test]
+    fn float_left() {
+        assert_eq!(float(stylo::Float::Left), taffy::Float::Left);
+    }
+
+    #[cfg(feature = "floats")]
+    #[test]
+    fn float_right() {
+        assert_eq!(float(stylo::Float::Right), taffy::Float::Right);
+    }
+
+    #[cfg(feature = "floats")]
+    #[test]
+    fn float_none() {
+        assert_eq!(float(stylo::Float::None), taffy::Float::None);
+    }
+
+    #[cfg(feature = "floats")]
+    #[test]
+    fn float_inline_start_maps_to_left() {
+        assert_eq!(float(stylo::Float::InlineStart), taffy::Float::Left);
+    }
+
+    #[cfg(feature = "floats")]
+    #[test]
+    fn float_inline_end_maps_to_right() {
+        assert_eq!(float(stylo::Float::InlineEnd), taffy::Float::Right);
+    }
+
+    // ── clear ───────────────────────────────────────────────────────────────
+
+    #[cfg(feature = "floats")]
+    #[test]
+    fn clear_left() {
+        assert_eq!(clear(stylo::Clear::Left), taffy::Clear::Left);
+    }
+
+    #[cfg(feature = "floats")]
+    #[test]
+    fn clear_right() {
+        assert_eq!(clear(stylo::Clear::Right), taffy::Clear::Right);
+    }
+
+    #[cfg(feature = "floats")]
+    #[test]
+    fn clear_both() {
+        assert_eq!(clear(stylo::Clear::Both), taffy::Clear::Both);
+    }
+
+    #[cfg(feature = "floats")]
+    #[test]
+    fn clear_none() {
+        assert_eq!(clear(stylo::Clear::None), taffy::Clear::None);
+    }
+
+    #[cfg(feature = "floats")]
+    #[test]
+    fn clear_inline_start_maps_to_left() {
+        assert_eq!(clear(stylo::Clear::InlineStart), taffy::Clear::Left);
+    }
+
+    #[cfg(feature = "floats")]
+    #[test]
+    fn clear_inline_end_maps_to_right() {
+        assert_eq!(clear(stylo::Clear::InlineEnd), taffy::Clear::Right);
+    }
+
+    // ── grid_auto_flow ──────────────────────────────────────────────────────
+
+    #[cfg(feature = "grid")]
+    #[test]
+    fn grid_auto_flow_row() {
+        assert_eq!(grid_auto_flow(stylo::GridAutoFlow::ROW), taffy::GridAutoFlow::Row);
+    }
+
+    #[cfg(feature = "grid")]
+    #[test]
+    fn grid_auto_flow_column() {
+        assert_eq!(grid_auto_flow(stylo::GridAutoFlow::empty()), taffy::GridAutoFlow::Column);
+    }
+
+    #[cfg(feature = "grid")]
+    #[test]
+    fn grid_auto_flow_row_dense() {
+        let flags = stylo::GridAutoFlow::ROW | stylo::GridAutoFlow::DENSE;
+        assert_eq!(grid_auto_flow(flags), taffy::GridAutoFlow::RowDense);
+    }
+
+    #[cfg(feature = "grid")]
+    #[test]
+    fn grid_auto_flow_column_dense() {
+        assert_eq!(grid_auto_flow(stylo::GridAutoFlow::DENSE), taffy::GridAutoFlow::ColumnDense);
+    }
+}
