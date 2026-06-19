@@ -9,7 +9,7 @@ use crate::components::escape_html;
 use crate::{Component, ComponentMetadata};
 
 #[cfg(feature = "reactive")]
-use crate::reactive::{Div, Reactor, Scope, Signal, Text, View};
+use crate::reactive::{Div, ReactiveHtml, Reactor, Scope, Signal, Text, View};
 #[cfg(feature = "reactive")]
 use bliss_dom::DocumentMutator;
 
@@ -130,6 +130,32 @@ impl Component for Toast {
     }
 }
 
+// ── Reactive View ────────────────────────────────────────────────────────────
+
+/// Reactive toast following the `*_reactive(signal) -> Box<dyn View>` pattern.
+///
+/// Renders the toast inline — callers must position the container (e.g. a
+/// fixed-overlay `<div>`). When `message_signal` is `None` the view renders
+/// empty. For full programmatic control (fixed positioning + lifecycle scope)
+/// use [`mount_toast`] instead.
+#[cfg(feature = "reactive")]
+pub fn toast_reactive(message_signal: Signal<Option<String>>) -> Box<dyn View> {
+    toast_reactive_with_variant(message_signal, ToastVariant::Info)
+}
+
+/// Reactive toast with explicit variant styling.
+#[cfg(feature = "reactive")]
+pub fn toast_reactive_with_variant(
+    message_signal: Signal<Option<String>>,
+    variant: ToastVariant,
+) -> Box<dyn View> {
+    let html = message_signal.derive(move |msg| match msg {
+        Some(text) => Toast::new(&text).variant(variant).render(),
+        None => String::new(),
+    });
+    Box::new(ReactiveHtml::new(html))
+}
+
 // ── Reactive Mount ───────────────────────────────────────────────────────────
 
 /// Mount a reactive toast notification at the top-center of the screen.
@@ -170,7 +196,7 @@ pub fn mount_toast_with_variant(
         ToastVariant::Error => "var(--arniko-error)",
     };
     let inner_style = format!(
-        "padding:10px 20px; border-radius:6px; background:{}; color:var(--arniko-white); font-size:13px; font-weight:600; box-shadow:0 4px 12px rgba(0,0,0,0.3); white-space:nowrap;",
+        "padding:10px 20px; border-radius:6px; background:{}; color:var(--arniko-white); font-size:13px; font-weight:600; box-shadow:0 4px 12px var(--arniko-shadow-overlay); white-space:nowrap;",
         bg_color
     );
     let toast_container = Div::styled(

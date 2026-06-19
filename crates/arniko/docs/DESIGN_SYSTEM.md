@@ -548,6 +548,32 @@ All Arniko CSS classes are prefixed with `arniko-` to avoid collisions.
 
 ---
 
+## Constructor Conventions (C-6)
+
+Arniko components follow two intentional patterns based on component type:
+
+**Collection containers** — `::new()` then `.add(item)` builder chain. Use when the component renders a variable-length list of typed entries.
+
+| Component | Pattern |
+|-----------|---------|
+| `Feed` | `Feed::new().add(FeedEntry::new(...))` |
+| `AlertPanel` | `AlertPanel::new().add(AlertEntry::new(...))` |
+| `BarChart` | `BarChart::new().add(BarEntry::new(...))` |
+| `StatusGrid` | `StatusGrid::new().add(StatusIndicator::new(...))` |
+
+**Single-data components** — `::new(data)` with the primary data as constructor argument. Use when the component renders one logical value or a single-series dataset.
+
+| Component | Pattern |
+|-----------|---------|
+| `Sparkline` | `Sparkline::new(vec![...]).color("...")` |
+| `SplashScreen` | `SplashScreen::new(SplashConfig { ... })` |
+| `MetricCard` | `MetricCard::new("label", "value")` |
+| `Separator` | `Separator::new()` *(no data — all config via builder)* |
+
+Both patterns use chained builder methods for optional configuration (`.class()`, `.title()`, `.variant()`, etc.). The distinction is in the primary constructor argument — collection vs. single-value.
+
+---
+
 ## Composition Patterns
 
 ### Dashboard Panel

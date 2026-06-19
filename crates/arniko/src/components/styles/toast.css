@@ -2,7 +2,7 @@
   position: fixed; left: 50%; transform: translateX(-50%);
   z-index: 9999; padding: 10px 20px; border-radius: 6px;
   font-size: 13px; font-weight: 600;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3); white-space: nowrap;
+  box-shadow: 0 4px 12px var(--arniko-shadow-overlay); white-space: nowrap;
 }
 .arniko-toast-info { background: var(--arniko-info); color: var(--arniko-white); }
 .arniko-toast-success { background: var(--arniko-success); color: var(--arniko-white); }

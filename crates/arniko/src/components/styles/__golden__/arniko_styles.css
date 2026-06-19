@@ -66,6 +66,9 @@
   /* ── Splash Screen ── */
   --arniko-splash-bg: #06090e;
 
+  /* ── Shadows ── */
+  --arniko-shadow-overlay: rgba(0, 0, 0, 0.3);
+
   /* ── Focus / Keyboard Navigation ── */
   --arniko-focus-ring: 0 0 0 2px var(--arniko-bg-surface), 0 0 0 4px var(--arniko-accent);
 }
@@ -182,6 +185,8 @@
   --arniko-info-border: #bfdbfe;
 
   --arniko-splash-bg: #f8f8f8;
+
+  --arniko-shadow-overlay: rgba(0, 0, 0, 0.15);
 }
 /* ═══════════════════════════════════════
    Arniko Frosted Theme Overrides
@@ -589,7 +594,7 @@
   position: fixed; left: 50%; transform: translateX(-50%);
   z-index: 9999; padding: 10px 20px; border-radius: 6px;
   font-size: 13px; font-weight: 600;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3); white-space: nowrap;
+  box-shadow: 0 4px 12px var(--arniko-shadow-overlay); white-space: nowrap;
 }
 .arniko-toast-info { background: var(--arniko-info); color: var(--arniko-white); }
 .arniko-toast-success { background: var(--arniko-success); color: var(--arniko-white); }

@@ -218,7 +218,7 @@ impl SvgLineChart {
         for i in 0..=self.grid_lines {
             let y = self.padding + graph_h - (i as f64 / self.grid_lines as f64) * graph_h;
             grid_svg.push_str(&format!(
-                r#"<line x1="{p}" y1="{y:.1}" x2="{x2}" y2="{y:.1}" stroke="rgba(0,242,255,0.06)" stroke-width="1"/>"#,
+                r#"<line x1="{p}" y1="{y:.1}" x2="{x2}" y2="{y:.1}" stroke="var(--arniko-border-light)" stroke-width="1"/>"#,
                 p = self.padding,
                 y = y,
                 x2 = self.width - self.padding,
@@ -231,7 +231,7 @@ impl SvgLineChart {
             let y = self.padding + graph_h - (i as f64 / self.grid_lines as f64) * graph_h;
             let val = (i as f64 / self.grid_lines as f64 * max_y).round() as usize;
             y_labels_svg.push_str(&format!(
-                r##"<text x="{x:.1}" y="{y:.1}" text-anchor="end" font-size="9" fill="#4a6b82" font-family="JetBrains Mono,monospace" dominant-baseline="middle">{val}</text>"##,
+                r##"<text x="{x:.1}" y="{y:.1}" text-anchor="end" font-size="9" fill="var(--arniko-text-muted)" font-family="JetBrains Mono,monospace" dominant-baseline="middle">{val}</text>"##,
                 x = self.padding - 6.0,
                 y = y + 3.0,
                 val = val,
@@ -246,7 +246,7 @@ impl SvgLineChart {
                 let x = self.padding + i as f64 * step_x;
                 let label = self.x_labels.get(i).map(|s| s.as_str()).unwrap_or("");
                 x_labels_svg.push_str(&format!(
-                    r##"<text x="{x:.1}" y="{y:.1}" text-anchor="middle" font-size="9" fill="#4a6b82" font-family="JetBrains Mono,monospace">{label}</text>"##,
+                    r##"<text x="{x:.1}" y="{y:.1}" text-anchor="middle" font-size="9" fill="var(--arniko-text-muted)" font-family="JetBrains Mono,monospace">{label}</text>"##,
                     x = x,
                     y = self.height - 10.0,
                     label = escape_html(label),
@@ -329,7 +329,7 @@ impl SvgLineChart {
                 let ly = (si / 3) as f64 * 14.0;
                 legend_svg.push_str(&format!(
                     r##"<rect x="{x:.1}" y="{y:.1}" width="10" height="3" fill="{color}" rx="1"/>
-                        <text x="{tx:.1}" y="{ty:.1}" font-size="10" fill="#8ba3b8" font-family="JetBrains Mono,monospace">{name}</text>"##,
+                        <text x="{tx:.1}" y="{ty:.1}" font-size="10" fill="var(--arniko-text-secondary)" font-family="JetBrains Mono,monospace">{name}</text>"##,
                     x = lx,
                     y = ly,                        color = s.color,
                         tx = lx + 16.0,
