@@ -69,6 +69,7 @@ optional = true
 # Native window launch (optional)
 [dependencies.bliss]
 path = "../bliss"
+version = "0.2.99"
 package = "arniko-bliss"
 optional = true
 
