@@ -37,8 +37,9 @@ pub use animation::{
 pub use compositor::region::Region;
 pub use config::{MustangConfig, MustangMode};
 
-#[cfg(feature = "animation")]
-pub use animation::js_binding::JsAnimationRuntime;
+// js_binding deferred: boa_engine 0.21 icu_normalizer ~2.0.0 conflicts with parley icu ^2.1.1
+// #[cfg(feature = "animation")]
+// pub use animation::js_binding::JsAnimationRuntime;
 
 #[cfg(feature = "gpu")]
 pub use renderer::{
