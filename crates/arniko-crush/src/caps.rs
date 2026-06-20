@@ -34,7 +34,9 @@ fn text_arg(v: &Value) -> String {
         Value::Int(i) => i.to_string(),
         Value::Float(f) => f.to_string(),
         Value::Str(s) => s.clone(),
+        Value::Bool(b) => b.to_string(),
         Value::Array(a) => a.iter().map(text_arg).collect::<Vec<_>>().join(", "),
+        Value::Map(_) | Value::Error(_) | Value::Bytes(_) => String::new(),
     }
 }
 

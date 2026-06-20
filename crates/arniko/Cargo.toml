@@ -15,15 +15,7 @@ default = ["html", "components"]
 html = []                    # HTML string generation
 components = ["html"]        # UI components
 gpu = ["mustang/gpu"]        # GPU acceleration via Mustang
-# A-4 + A-4b cfg-gate: `networking` enables `exo-mesh/p2p` only (Stage 1).
-# `exo-bliss-net` was declared here but never imported in arniko src — dropped
-# in A-4c to eliminate the upstream exo-mesh 0.1.0 (pulled by exo-bliss-net)
-# from the graph. That upstream copy had an unconditional `use libp2p::Multiaddr`
-# in node.rs, which failed (E0432) when compiled with only the `local` feature
-# (as exo-bliss-net requests). Removing exo-bliss-net collapses the graph to a
-# single exo-mesh entry (the vendored 0.2.99-a4b). Re-add exo-bliss-net only
-# when arniko genuinely imports from it.
-networking = ["exo-mesh/p2p"]    # Exosphere networking (vendored exo-mesh only)
+networking = ["exo-mesh/p2p", "dep:exo-bliss-net"]    # Mesh networking (vendored exo-mesh + in-repo exo-bliss-net)
 # A-4b cfg-gate: opt-in to libp2p's `quic` + `relay` features via the
 # vendored exo-mesh sub-features. DEFAULT OFF. Activating either (or both)
 # re-introduces rcgen 0.13.2's blanket-impl E0119 conflict with newer `time`
@@ -93,7 +85,7 @@ optional = true
 
 # Networking dependencies (optional)
 [dependencies.exo-bliss-net]
-path = "../../../exosphere/crates/platform/sdk/exo-bliss-net"
+path = "../exo-bliss-net"
 optional = true
 
 # A-4b cfg-gate: exo-mesh is vendored under `crates/_vendored/exo-mesh/`

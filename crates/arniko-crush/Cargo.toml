@@ -1,16 +1,17 @@
 [package]
 name = "arniko-crush"
-version = "0.1.0"
+version.workspace = true
 authors = ["The Exosphere Authors"]
-edition = "2024"
+edition.workspace = true
 description = "Arniko UI components as importable host capabilities for CRUSH capsules"
-license = "MIT OR Apache-2.0"
-repository = "https://github.com/nixpt/arniko"
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
 
 [features]
 default = []
 
 [dependencies]
 arniko = { workspace = true, features = ["html", "components"] }
-crush-lang-sdk = { path = "../../../crush-ast/crates/crush-lang-sdk", default-features = false }
+crush-lang-sdk = { version = "0.2.0", default-features = false }
 serde_json = "1"

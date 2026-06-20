@@ -1,0 +1,44 @@
+[package]
+name = "exo-bliss-net"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Exosphere-native NetProvider for Bliss - routes capsule://, data://, file://, http(s):// schemes"
+homepage.workspace = true
+repository.workspace = true
+
+[features]
+default = ["capsule", "http-fallback"]
+# capsule:// routing via the vendored exo-mesh (local IPC)
+capsule = ["dep:exo-mesh"]
+# http/https fallback via reqwest
+http-fallback = ["dep:reqwest"]
+# exo:// and mycelium:// features are not included here — they still depend on
+# xip/mycelium from the exosphere tree. Re-add when those are extracted or published.
+
+[dependencies]
+bliss-traits = { workspace = true }
+tokio = { version = "1.0", features = ["rt", "sync", "time"] }
+tracing = "0.1"
+url = "2"
+bytes = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+anyhow = "1"
+
+[dev-dependencies]
+tokio = { version = "1.0", features = ["rt", "macros"] }
+
+# capsule feature: vendored exo-mesh (local IPC only; no libp2p pulled)
+[dependencies.exo-mesh]
+path = "../_vendored/exo-mesh"
+default-features = false
+features = ["local"]
+optional = true
+
+# http-fallback feature
+[dependencies.reqwest]
+version = "0.12"
+default-features = false
+features = ["rustls-tls"]
+optional = true
