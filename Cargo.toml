@@ -15,8 +15,6 @@ members = [
     "crates/accesskit_xplat",
 
     "crates/tui-shell",
-    # Mustang GPU compositor
-    "crates/mustang",
     # Arniko SDK
     "crates/arniko",
     # Networking
@@ -37,7 +35,6 @@ rust-version = "1.85.0"
 # ── patch: redirect crates-io bliss-* + exo-mesh to in-repo / vendored ───────
 [patch.crates-io]
 arniko-bliss  = { path = "crates/bliss" }
-arniko-mustang = { path = "crates/mustang" }
 bliss-dom     = { path = "crates/bliss-dom" }
 bliss-html    = { path = "crates/bliss-html" }
 bliss-net     = { path = "crates/bliss-net" }
@@ -73,7 +70,7 @@ bliss-traits  = { path = "crates/bliss-traits", version = "0.2.99", default-feat
 stylo_taffy   = { path = "crates/stylo_taffy",  version = "0.2.99", package = "bliss-stylo-taffy", default-features = false }
 debug_timer   = { path = "crates/debug_timer",  version = "0.1.3" }
 accesskit_xplat = { path = "crates/accesskit_xplat", version = "0.1", default-features = false }
-mustang       = { path = "crates/mustang",      version = "0.2.99", package = "arniko-mustang" }
+mustang       = { version = "0.2.99", package = "arniko-mustang" }
 arniko        = { path = "crates/arniko",       version = "0.2.99" }
 exo-bliss-net = { path = "crates/exo-bliss-net", version = "0.2.99" }
 arniko-crush  = { path = "crates/arniko-crush", version = "0.1.0" }
