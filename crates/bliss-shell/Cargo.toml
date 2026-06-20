@@ -18,14 +18,14 @@ file_dialog = ["dep:rfd"]
 accessibility = ["dep:accesskit", "dep:accesskit_xplat", "bliss-dom/accessibility"]
 # Enables a data-uri-only NetProvider. Only needed if you aren't using the regular NetProvider
 data-uri = ["dep:data-url"]
-# Enable ExoShell integration (optional registration with the Exosphere root shell)
-exoshell = ["dep:exo-shell-client", "dep:tokio", "tracing"]
+# ExoShell integration — monorepo-only; dep removed for crates.io publish (exo-shell-client not on registry)
+exoshell = []
 
 [dependencies]
 # Bliss dependencies
-bliss-traits = { path = "../bliss-traits" }
-bliss-dom = { path = "../bliss-dom" }
-bliss-paint = { path = "../bliss-paint" }
+bliss-traits = { path = "../bliss-traits", version = "0.2.99" }
+bliss-dom = { path = "../bliss-dom", version = "0.2.99" }
+bliss-paint = { path = "../bliss-paint", version = "0.2.99" }
 anyrender = "0.7"
 anyrender_vello = "0.7"
 
@@ -40,8 +40,7 @@ tracing = { version = "0.1.40", optional = true }
 futures-util = "0.3.30"
 data-url = { version = "0.3.1", optional = true }
 
-# ExoShell integration (optional)
-exo-shell-client = { path = "../../../exosphere/crates/exo/shell-client", optional = true }
+# exo-shell-client removed for crates.io publish (not on registry; monorepo-only path dep)
 tokio = { version = "1.0", features = ["net", "io-util", "rt"], optional = true }
 
 [target.'cfg(target_os = "android")'.dependencies]

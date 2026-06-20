@@ -8,9 +8,9 @@ homepage.workspace = true
 repository.workspace = true
 
 [features]
-default = ["capsule", "http-fallback"]
-# capsule:// routing via the vendored exo-mesh (local IPC)
-capsule = ["dep:exo-mesh"]
+default = ["http-fallback"]
+# capsule:// routing via exo-mesh (monorepo-only; exo-mesh not on crates.io — feature is a no-op when installed from registry)
+capsule = []
 # http/https fallback via reqwest
 http-fallback = ["dep:reqwest"]
 # exo:// and mycelium:// features are not included here — they still depend on
@@ -29,12 +29,7 @@ anyhow = "1"
 [dev-dependencies]
 tokio = { version = "1.0", features = ["rt", "macros"] }
 
-# capsule feature: vendored exo-mesh (local IPC only; no libp2p pulled)
-[dependencies.exo-mesh]
-path = "../_vendored/exo-mesh"
-default-features = false
-features = ["local"]
-optional = true
+# exo-mesh removed for crates.io publish (not on registry; capsule feature is a no-op stub when installed from registry)
 
 # http-fallback feature
 [dependencies.reqwest]

@@ -15,15 +15,15 @@ default = ["html", "components"]
 html = []                    # HTML string generation
 components = ["html"]        # UI components
 gpu = ["mustang/gpu"]        # GPU acceleration via Mustang
-networking = ["exo-mesh/p2p", "dep:exo-bliss-net"]    # Mesh networking (vendored exo-mesh + in-repo exo-bliss-net)
+networking = ["dep:exo-bliss-net"]    # HTTP networking (exo-mesh removed for crates.io publish — monorepo-only dep)
 # A-4b cfg-gate: opt-in to libp2p's `quic` + `relay` features via the
 # vendored exo-mesh sub-features. DEFAULT OFF. Activating either (or both)
 # re-introduces rcgen 0.13.2's blanket-impl E0119 conflict with newer `time`
 # transitively (via libp2p-tls/x509-parser). Required only for QUIC transport
 # + relay-driven NAT traversal; the TCP/gossipsub/kad stack works fine
 # WITHOUT these.
-quic = ["exo-mesh/quic"]
-relay = ["exo-mesh/relay"]
+quic = []
+relay = []
 launch = ["bliss"]           # Native window launch via bliss
 reactive = ["bliss", "bliss-dom", "anyrender_vello", "winit", "keyboard-types", "mustang"]  # Reactive Signal + View + EventSink + launch (mustang: SceneScheduler hook)
 full = ["html", "components", "gpu", "networking", "launch", "reactive"]
@@ -75,6 +75,7 @@ optional = true
 # Reactive layer — DOM mutation API (optional)
 [dependencies.bliss-dom]
 path = "../bliss-dom"
+version = "0.2.99"
 optional = true
 
 [dependencies.anyrender_vello]
@@ -88,21 +89,10 @@ optional = true
 # Networking dependencies (optional)
 [dependencies.exo-bliss-net]
 path = "../exo-bliss-net"
+version = "0.2.99"
 optional = true
 
-# A-4b cfg-gate: exo-mesh is vendored under `crates/_vendored/exo-mesh/`
-# instead of reaching into the exosphere working tree. The vendored copy
-# exposes `quic` + `relay` as default-off sub-features so arniko's
-# `networking` feature compiles against a libp2p tree WITHOUT the `quic`
-# path (which transitively pulls rcgen 0.13.2 -> E0119 blanket-impl conflict
-# with newer `time`). arniko mirrors these as `quic` + `relay` opt-in
-# features (above); default builds skip both for the A-4b acceptance gate.
-# See `crates/_vendored/exo-mesh/Cargo.toml` for the libp2p feature trim +
-# the sub-feature declarations, and `.dejavue/decisions.md` A-4b for the
-# diagnostic trail.
-[dependencies.exo-mesh]
-path = "../_vendored/exo-mesh"
-optional = true
+# exo-mesh removed for crates.io publish (vendored, not on registry; networking feature uses exo-bliss-net only)
 
 [dependencies.keyboard-types]
 version = "0.7"
@@ -111,7 +101,7 @@ optional = true
 [dev-dependencies]
 tokio-test = "0.4"
 vello = { workspace = true }
-bliss-html = { path = "../bliss-html" }
+bliss-html = { path = "../bliss-html", version = "0.2.99" }
 
 [[test]]
 name = "reactive_components"

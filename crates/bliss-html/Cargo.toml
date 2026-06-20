@@ -11,8 +11,8 @@ repository.workspace = true
 categories.workspace = true
 
 [dependencies]
-bliss-dom = { path = "../bliss-dom" }
-bliss-traits = { path = "../bliss-traits" }
+bliss-dom = { path = "../bliss-dom", version = "0.2.99" }
+bliss-traits = { path = "../bliss-traits", version = "0.2.99" }
 
 # Servo dependencies
 html5ever = "0.37.0"

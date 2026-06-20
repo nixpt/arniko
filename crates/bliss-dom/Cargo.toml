@@ -31,9 +31,9 @@ log_phase_times = ["debug_timer/enable"]
 
 [dependencies]
 # Bliss dependencies
-bliss-traits = { path = "../bliss-traits" }
-stylo_taffy = { path = "../stylo_taffy", features = ["default"] }
-debug_timer = { path = "../debug_timer" }
+bliss-traits = { path = "../bliss-traits", version = "0.2.99" }
+stylo_taffy = { path = "../stylo_taffy", version = "0.2.99", features = ["default"] }
+debug_timer = { path = "../debug_timer", version = "0.1.3" }
 
 # Servo dependencies
 style = { version = "0.11.0", package = "stylo" }

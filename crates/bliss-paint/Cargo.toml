@@ -19,8 +19,8 @@ svg = ["dep:anyrender_svg", "dep:usvg", "bliss-dom/svg"]
 # Bliss dependencies
 anyrender = "0.7"
 anyrender_svg = { version = "0.8", optional = true }
-bliss-traits = { path = "../bliss-traits" }
-bliss-dom = { path = "../bliss-dom" }
+bliss-traits = { path = "../bliss-traits", version = "0.2.99" }
+bliss-dom = { path = "../bliss-dom", version = "0.2.99" }
 
 # Servo dependencies
 style = { version = "0.11.0", package = "stylo" }

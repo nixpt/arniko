@@ -21,12 +21,12 @@ tracing = ["bliss-shell/tracing"]
 [dependencies]
 # Bliss dependencies
 anyrender_vello = "0.7"
-bliss-traits = { path = "../bliss-traits" }
-bliss-dom = { path = "../bliss-dom" }
-bliss-html = { path = "../bliss-html" }
-bliss-shell = { path = "../bliss-shell" }
-bliss-paint = { path = "../bliss-paint" }
-bliss-net = { path = "../bliss-net", optional = true }
+bliss-traits = { path = "../bliss-traits", version = "0.2.99" }
+bliss-dom = { path = "../bliss-dom", version = "0.2.99" }
+bliss-html = { path = "../bliss-html", version = "0.2.99" }
+bliss-shell = { path = "../bliss-shell", version = "0.2.99" }
+bliss-paint = { path = "../bliss-paint", version = "0.2.99" }
+bliss-net = { path = "../bliss-net", version = "0.2.99", optional = true }
 
 # IO & Networking
 url = { version = "2.5.0", features = ["serde"], optional = true }

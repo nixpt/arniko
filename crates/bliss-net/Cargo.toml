@@ -19,7 +19,7 @@ cache = ["dep:reqwest-middleware", "dep:http-cache-reqwest", "dep:directories"]
 debug_log = []
 
 [dependencies]
-bliss-traits = { path = "../bliss-traits" }
+bliss-traits = { path = "../bliss-traits", version = "0.2.99" }
 tokio = { version = "1.42", features = ["rt", "sync"] }
 reqwest = { version = "0.12", default-features = false, features = ["charset", "rustls-tls"] }
 data-url = "0.3.1"
