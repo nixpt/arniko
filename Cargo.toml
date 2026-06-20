@@ -44,7 +44,7 @@ bliss-net     = { path = "crates/bliss-net" }
 bliss-paint   = { path = "crates/bliss-paint" }
 bliss-shell   = { path = "crates/bliss-shell" }
 bliss-traits  = { path = "crates/bliss-traits" }
-stylo_taffy   = { path = "crates/stylo_taffy" }
+bliss-stylo-taffy = { path = "crates/stylo_taffy" }
 
 
 # A-4b cfg-gate: redirect all `exo-mesh` resolution sources (the one arniko's
@@ -70,7 +70,7 @@ bliss-net     = { path = "crates/bliss-net",    version = "0.2.99", default-feat
 bliss-paint   = { path = "crates/bliss-paint",  version = "0.2.99", default-features = false }
 bliss-shell   = { path = "crates/bliss-shell",  version = "0.2.99", default-features = false }
 bliss-traits  = { path = "crates/bliss-traits", version = "0.2.99", default-features = false }
-stylo_taffy   = { path = "crates/stylo_taffy",  version = "0.2.99", default-features = false }
+stylo_taffy   = { path = "crates/stylo_taffy",  version = "0.2.99", package = "bliss-stylo-taffy", default-features = false }
 debug_timer   = { path = "crates/debug_timer",  version = "0.1.3" }
 accesskit_xplat = { path = "crates/accesskit_xplat", version = "0.1", default-features = false }
 mustang       = { path = "crates/mustang",      version = "0.2.99", package = "arniko-mustang" }
