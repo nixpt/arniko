@@ -2,8 +2,7 @@ use std::sync::{Arc, Mutex};
 
 use crate::stylo_to_parley;
 use app_units::Au;
-use parley::FontContext;
-use parley::swash::Setting;
+use parley::{FontContext, FontVariation};
 use skrifa::MetadataProvider as _;
 use skrifa::{Tag, charmap::Charmap};
 use style::properties::style_structs::Font as FontStyles;
@@ -95,14 +94,14 @@ impl FontMetricsProvider for BlissFontMetricsProvider {
             query: &mut Query,
             ch: char,
             font_size: Size,
-            variations: &[Setting<f32>],
+            variations: &[FontVariation],
         ) -> Option<f32> {
             let font = find_font_for(query, ch)?;
             let font_ref = skrifa::FontRef::from_index(font.blob.as_ref(), font.index).ok()?;
             let location = font_ref.axes().location(
                 variations
                     .iter()
-                    .map(|v| (Tag::new(&v.tag.to_le_bytes()), v.value)),
+                    .map(|v| (Tag::new(&v.tag.to_bytes()), v.value)),
             );
             let location_ref = LocationRef::from(&location);
             let glyph_metrics = GlyphMetrics::new(&font_ref, font_size, location_ref);
@@ -115,14 +114,14 @@ impl FontMetricsProvider for BlissFontMetricsProvider {
             query: &mut Query,
             ch: char,
             font_size: Size,
-            variations: &[Setting<f32>],
+            variations: &[FontVariation],
         ) -> Option<(f32, Option<f32>, Option<f32>)> {
             let font = find_font_for(query, ch)?;
             let font_ref = skrifa::FontRef::from_index(font.blob.as_ref(), font.index).ok()?;
             let location = font_ref.axes().location(
                 variations
                     .iter()
-                    .map(|v| (Tag::new(&v.tag.to_le_bytes()), v.value)),
+                    .map(|v| (Tag::new(&v.tag.to_bytes()), v.value)),
             );
             let location_ref = LocationRef::from(&location);
             let metrics = Metrics::new(&font_ref, font_size, location_ref);

@@ -1,5 +1,5 @@
 [package]
-name = "mustang"
+name = "arniko-mustang"
 version.workspace = true
 authors = ["The Exosphere Authors"]
 edition.workspace = true
@@ -10,10 +10,14 @@ homepage.workspace = true
 repository.workspace = true
 categories.workspace = true
 
+[lib]
+name = "mustang"
+
 [features]
 default = []
-gpu = ["dep:anyrender", "dep:anyrender_vello", "dep:wgpu", "dep:kurbo", "dep:peniko"]
-animation = ["dep:boa_engine"]
+gpu = ["dep:anyrender", "dep:anyrender_vello", "dep:wgpu", "dep:kurbo", "dep:peniko", "dep:vello"]
+# animation = easing + engine (no JS runtime; boa_engine removed — icu_normalizer ~2.0.0 conflicts with parley ^0.10 ^2.1.1)
+animation = []
 full = ["gpu", "animation"]
 
 [dependencies]
@@ -21,15 +25,16 @@ full = ["gpu", "animation"]
 anyhow = "1.0"
 tracing = "0.1"
 
-# Animation dependencies (optional)
-boa_engine = { version = "0.21", optional = true }
-
 # GPU dependencies (optional)
 [dependencies.anyrender]
 version = "0.7"
 optional = true
 
 [dependencies.anyrender_vello]
+version = "0.7"
+optional = true
+
+[dependencies.vello]
 version = "0.7"
 optional = true
 

@@ -2,8 +2,6 @@
 //!
 //! Provides HTTP/HTTPS fetching as a fallback when no other scheme handler matches.
 
-use std::sync::Arc;
-
 use bliss_traits::net::{NetHandler, Request};
 use bytes::Bytes;
 use tokio::runtime::Handle;

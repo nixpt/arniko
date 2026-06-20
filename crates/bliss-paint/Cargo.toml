@@ -27,18 +27,10 @@ style = { version = "0.11.0", package = "stylo" }
 euclid = "0.22"
 
 # DioxusLabs dependencies
-taffy = { git = "https://github.com/DioxusLabs/taffy", rev = "25759dad44d8350743a4e866fee54962f996895a", default-features = false, features = [
-  "std",
-  "flexbox",
-  "grid",
-  "block_layout",
-  "content_size",
-  "calc",
-  "detailed_layout_info",
-] }
+taffy = { workspace = true }
 
 # Linebender + WGPU dependencies
-parley = { git = "https://github.com/linebender/parley", rev = "4f1bedf08c9d98a646975806adccc6ca41a08841", default-features = false, features = ["std"] }
+parley = { workspace = true }
 color = "0.3.2"
 peniko = "0.6.0"
 kurbo = "0.13"

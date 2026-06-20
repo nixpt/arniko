@@ -49,19 +49,12 @@ markup5ever = "0.37.0"
 smallvec = "1"
 
 # DioxusLabs dependencies
-taffy = { git = "https://github.com/DioxusLabs/taffy", rev = "25759dad44d8350743a4e866fee54962f996895a", default-features = false, features = [
-  "std",
-  "flexbox",
-  "grid",
-  "block_layout",
-  "content_size",
-  "calc",
-  "detailed_layout_info",
-] }
+taffy = { workspace = true }
 
 # Linebender/Fontations dependencies
 accesskit = { version = "0.24", optional = true }
-parley = { git = "https://github.com/linebender/parley", rev = "4f1bedf08c9d98a646975806adccc6ca41a08841", default-features = false, features = ["std"] }
+parley = { workspace = true }
+parlance = "0.1"
 skrifa = { version = "0.40", default-features = false, features = ["std"] }
 linebender_resource_handle = "0.1"
 color = "0.3.2"

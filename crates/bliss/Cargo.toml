@@ -1,5 +1,5 @@
 [package]
-name = "bliss"
+name = "arniko-bliss"
 version.workspace = true
 description = "High-level APIs for rendering HTML with Bliss"
 documentation = "https://docs.rs/bliss"
@@ -9,6 +9,9 @@ rust-version.workspace = true
 homepage.workspace = true
 repository.workspace = true
 categories.workspace = true
+
+[lib]
+name = "bliss"
 
 [features]
 default = ["net"]

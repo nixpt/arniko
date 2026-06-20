@@ -11,7 +11,7 @@
 
 use crate::effect::{ApplyEffect, Effect};
 use anyrender::PaintScene;
-use anyrender_vello::vello::Scene;
+use vello::Scene;
 use std::sync::Arc;
 
 /// Extension trait for PaintScene to add Mustang effect support

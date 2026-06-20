@@ -13,7 +13,7 @@ members = [
     "crates/stylo_taffy",
     "crates/debug_timer",
     "crates/accesskit_xplat",
-    "crates/anyrender_vello",
+
     "crates/tui-shell",
     # Mustang GPU compositor
     "crates/mustang",
@@ -36,7 +36,8 @@ rust-version = "1.85.0"
 
 # ── patch: redirect crates-io bliss-* + exo-mesh to in-repo / vendored ───────
 [patch.crates-io]
-bliss         = { path = "crates/bliss" }
+arniko-bliss  = { path = "crates/bliss" }
+arniko-mustang = { path = "crates/mustang" }
 bliss-dom     = { path = "crates/bliss-dom" }
 bliss-html    = { path = "crates/bliss-html" }
 bliss-net     = { path = "crates/bliss-net" }
@@ -44,7 +45,7 @@ bliss-paint   = { path = "crates/bliss-paint" }
 bliss-shell   = { path = "crates/bliss-shell" }
 bliss-traits  = { path = "crates/bliss-traits" }
 stylo_taffy   = { path = "crates/stylo_taffy" }
-anyrender_vello = { path = "crates/anyrender_vello" }
+
 
 # A-4b cfg-gate: redirect all `exo-mesh` resolution sources (the one arniko's
 # `[dependencies.exo-mesh]` declares path-deps, AND the one exo-bliss-net pulls
@@ -62,7 +63,7 @@ exo-mesh      = { path = "crates/_vendored/exo-mesh" }
 # ── workspace.dependencies ────────────────────────────────────────────────────
 [workspace.dependencies]
 # Arniko stack (in-repo)
-bliss         = { path = "crates/bliss",        version = "0.2.99" }
+bliss         = { path = "crates/bliss",        version = "0.2.99", package = "arniko-bliss" }
 bliss-dom     = { path = "crates/bliss-dom",    version = "0.2.99", default-features = false }
 bliss-html    = { path = "crates/bliss-html",   version = "0.2.99", default-features = false }
 bliss-net     = { path = "crates/bliss-net",    version = "0.2.99", default-features = false }
@@ -72,7 +73,7 @@ bliss-traits  = { path = "crates/bliss-traits", version = "0.2.99", default-feat
 stylo_taffy   = { path = "crates/stylo_taffy",  version = "0.2.99", default-features = false }
 debug_timer   = { path = "crates/debug_timer",  version = "0.1.3" }
 accesskit_xplat = { path = "crates/accesskit_xplat", version = "0.1", default-features = false }
-mustang       = { path = "crates/mustang",      version = "0.2.99" }
+mustang       = { path = "crates/mustang",      version = "0.2.99", package = "arniko-mustang" }
 arniko        = { path = "crates/arniko",       version = "0.2.99" }
 exo-bliss-net = { path = "crates/exo-bliss-net", version = "0.2.99" }
 arniko-crush  = { path = "crates/arniko-crush", version = "0.1.0" }
@@ -93,17 +94,17 @@ atomic_refcell = "0.1.13"
 app_units     = "0.7.5"
 smallvec      = "1"
 
-# DioxusLabs Taffy (git pin — must stay in sync with bliss-dom/bliss-paint)
-taffy = { git = "https://github.com/DioxusLabs/taffy", rev = "25759dad44d8350743a4e866fee54962f996895a", default-features = false, features = [
+# DioxusLabs Taffy
+taffy = { version = "0.11", default-features = false, features = [
     "std", "flexbox", "grid", "block_layout", "content_size", "calc", "detailed_layout_info",
 ] }
 
-# Linebender Parley (git pin — must stay in sync with bliss-dom/bliss-paint)
-parley = { git = "https://github.com/linebender/parley", rev = "4f1bedf08c9d98a646975806adccc6ca41a08841", default-features = false, features = ["std"] }
+# Linebender Parley
+parley = { version = "0.10", default-features = false, features = ["std"] }
 
 # GPU / rendering
 anyrender       = "0.7"
-anyrender_vello = { path = "crates/anyrender_vello", version = "0.7" }
+anyrender_vello = { version = "0.7" }
 anyrender_svg   = "0.8"
 wgpu            = "27"
 vello           = { version = "0.7", features = ["wgpu"] }

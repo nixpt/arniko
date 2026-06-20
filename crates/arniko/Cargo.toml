@@ -39,6 +39,7 @@ parking_lot = "0.12"
 # Mustang GPU compositor (optional)
 [dependencies.mustang]
 path = "../mustang"
+package = "arniko-mustang"
 optional = true
 
 # Component dependencies (minimal for HTML-only mode)
@@ -68,6 +69,7 @@ optional = true
 # Native window launch (optional)
 [dependencies.bliss]
 path = "../bliss"
+package = "arniko-bliss"
 optional = true
 
 # Reactive layer — DOM mutation API (optional)
@@ -76,7 +78,7 @@ path = "../bliss-dom"
 optional = true
 
 [dependencies.anyrender_vello]
-path = "../anyrender_vello"
+workspace = true
 optional = true
 
 [dependencies.winit]
