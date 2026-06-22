@@ -70,6 +70,17 @@ bliss-traits  = { path = "crates/bliss-traits", version = "0.2.99", default-feat
 stylo_taffy   = { path = "crates/stylo_taffy",  version = "0.2.99", package = "bliss-stylo-taffy", default-features = false }
 debug_timer   = { path = "crates/debug_timer",  version = "0.1.3" }
 accesskit_xplat = { path = "crates/accesskit_xplat", version = "0.1", default-features = false }
+# s305-extract rationale: mustang is a standalone repo (`projects/mustang/`,
+# published `arniko-mustang v0.2.99` to crates.io via s305 commit `25f898c`).
+# Consumed from crates.io here — unlike bliss-*, mustang is NOT a workspace
+# member and NOT patched in-repo; this is intentional (see foreman-memory
+# `arniko-mustang-bliss-surfer-architecture.md`).
+#
+# Do NOT add `arniko-mustang = { path = "../mustang" }` to `[patch.crates-io]`
+# under normal use: a cross-workspace redirect breaks fresh `cargo check -p
+# arniko` if `projects/mustang/` isn't cloned alongside arniko. Use a transient
+# (uncommitted) `[patch.crates-io]` override only when iterating mustang+arniko
+# in lock-step.
 mustang       = { version = "0.2.99", package = "arniko-mustang" }
 arniko        = { path = "crates/arniko",       version = "0.2.99" }
 exo-bliss-net = { path = "crates/exo-bliss-net", version = "0.2.99" }
