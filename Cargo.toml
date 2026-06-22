@@ -43,20 +43,6 @@ bliss-shell   = { path = "crates/bliss-shell" }
 bliss-traits  = { path = "crates/bliss-traits" }
 bliss-stylo-taffy = { path = "crates/stylo_taffy" }
 
-
-# A-4b cfg-gate: redirect all `exo-mesh` resolution sources (the one arniko's
-# `[dependencies.exo-mesh]` declares path-deps, AND the one exo-bliss-net pulls
-# transitively from exosphere's tree) to the vendored copy under
-# `crates/_vendored/exo-mesh/`. Without this, cargo's lockfile can't decide
-# between the two `exo-mesh v0.1.0` candidates ("only one can be written to
-# lockfile unambiguously"). Side-effect benefit: the vendored exo-mesh's
-# cfg-gated libp2p feature list (no `quic`/`relay` in the libp2p dep line;
-# `quic` and `relay` available only as exo-mesh's own default-off
-# sub-features) is the canonical source now, and the rcgen/E0119 conflict
-# can't surface unless a downstream consumer opts in via
-# `arniko --features networking,quic,relay`.
-exo-mesh      = { path = "crates/_vendored/exo-mesh" }
-
 # ── workspace.dependencies ────────────────────────────────────────────────────
 [workspace.dependencies]
 # Arniko stack (in-repo)
