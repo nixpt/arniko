@@ -25,6 +25,7 @@ use bliss_traits::net::{DummyNetProvider, NetProvider, Request};
 use bliss_traits::shell::{ColorScheme, DummyShellProvider, ShellProvider, Viewport};
 use cursor_icon::CursorIcon;
 use linebender_resource_handle::Blob;
+use downcast_rs::{Downcast, impl_downcast};
 use markup5ever::local_name;
 use parley::{FontContext, PlainEditorDriver};
 use selectors::{Element, matching::QuirksMode};
@@ -119,7 +120,16 @@ impl DerefMut for DocGuardMut<'_> {
 
 /// Abstraction over wrappers around [`BaseDocument`] to allow for them all to
 /// be driven by [`bliss-shell`](https://docs.rs/bliss-shell)
-pub trait Document: Any + 'static {
+///
+/// Carries `Downcast` (not just `Any`) as a real supertrait so `dyn Document`
+/// gets its own vtable entry for it (see `impl_downcast!` below). `Any`
+/// alone isn't enough: `downcast_rs::Downcast`'s blanket impl only covers
+/// `Sized` types, so a bare `Box<dyn Document>` picks up the impl on the
+/// OUTER `Box` (itself `Sized + Any + 'static`) rather than on the inner
+/// trait object — a caller calling `.as_any_mut()` on the box gets an `Any`
+/// wrapping the `Box` itself, and `downcast_mut::<ConcreteDoc>()` on that
+/// always fails, unconditionally, regardless of what's actually inside.
+pub trait Document: Downcast + 'static {
     fn inner(&self) -> DocGuard<'_>;
     fn inner_mut(&mut self) -> DocGuardMut<'_>;
 
@@ -154,6 +164,7 @@ pub trait Document: Any + 'static {
         self.inner().id
     }
 }
+impl_downcast!(Document);
 
 pub struct PlainDocument(pub BaseDocument);
 impl Document for PlainDocument {
