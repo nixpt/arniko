@@ -854,7 +854,7 @@ impl BaseDocument {
                 self.drop_node_ignoring_parent(new_node_id);
                 return usize::MAX;
             }
-            new_children.push(child_id);
+            new_children.push(cloned);
         }
 
         // Wire parent + children. By construction every id here was just
