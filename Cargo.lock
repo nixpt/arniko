@@ -391,6 +391,7 @@ dependencies = [
  "vello",
  "wgpu",
  "wgpu_context",
+ "winit",
 ]
 
 [[package]]

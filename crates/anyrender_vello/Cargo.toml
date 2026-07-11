@@ -61,3 +61,12 @@ version = "27"
 
 [dependencies.wgpu_context]
 version = "0.3"
+
+# SHELL-SPLIT-0-1: dev-only, for examples/overlay_coexistence.rs (proves
+# SceneOverlay + TextureOverlay coexist in one render() call). Not a runtime
+# dependency of the library itself.
+[dev-dependencies.winit]
+version = "=0.31.0-beta.2"
+
+[[example]]
+name = "overlay_coexistence"
