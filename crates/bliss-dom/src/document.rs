@@ -1056,6 +1056,15 @@ impl BaseDocument {
         DocumentStyleSheet(ServoArc::new(data))
     }
 
+    /// Re-parse a `<style>` node's current text content and swap it into the
+    /// Stylist, for live theme/stylesheet updates after the initial parse
+    /// (unlike [`Self::process_style_element`], which only runs once per
+    /// `<style>` node via the mutator's insertion hook — see mutator.rs's
+    /// `style_nodes` set). Since arbitrary new rules can affect any element,
+    /// not just ones already marked dirty, this also marks the document root
+    /// for a full-subtree restyle — swapping a stylesheet without that would
+    /// leave every already-styled element showing its stale computed style
+    /// until something else happened to touch it.
     pub fn upsert_stylesheet_for_node(&mut self, node_id: usize) {
         let Some(node) = self.get_node(node_id) else {
             return;
@@ -1063,6 +1072,12 @@ impl BaseDocument {
         let raw_styles = node.text_content();
         let sheet = self.make_stylesheet(raw_styles, Origin::Author);
         self.add_stylesheet_for_node(sheet, node_id);
+
+        if let Some(root) = self.root_element() {
+            root.set_restyle_hint(
+                style::invalidation::element::restyle_hints::RestyleHint::restyle_subtree(),
+            );
+        }
     }
 
     pub fn add_stylesheet_for_node(&mut self, stylesheet: DocumentStyleSheet, node_id: usize) {
