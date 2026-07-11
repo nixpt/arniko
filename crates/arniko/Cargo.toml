@@ -102,6 +102,8 @@ optional = true
 [dev-dependencies]
 tokio-test = "0.4"
 vello = { workspace = true }
+peniko = { workspace = true }
+kurbo = { workspace = true }
 bliss-html = { path = "../bliss-html", version = "0.2.99" }
 
 [[test]]
@@ -149,6 +151,13 @@ required-features = ["reactive", "gpu"]
 
 [[example]]
 name = "dogfood_m4"
+required-features = ["reactive"]
+
+# SHELL-SPLIT-0-1 Phase 0 spike — proves the offscreen-texture-as-image-fill
+# primitive (register_texture) end-to-end via the existing <canvas>/CustomPaintSource
+# mechanism, before any anyrender_vello API changes. See file header for details.
+[[example]]
+name = "texture_overlay_spike"
 required-features = ["reactive"]
 
 # `tests/dogfood_m4.rs` exercises the full reactive surface to validate the

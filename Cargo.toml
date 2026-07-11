@@ -13,6 +13,12 @@ members = [
     "crates/stylo_taffy",
     "crates/debug_timer",
     "crates/accesskit_xplat",
+    # Vello rendering backend (in-repo fork: SceneOverlay/set_scene_effects
+    # mustang hooks — see SHELL-SPLIT-0-1). Was previously unwired (consumed
+    # from crates.io instead), which left the in-tree copy dead code and
+    # `--features "reactive gpu"` examples (blur_panel, phase5_demo) broken
+    # against the published crate. Patched below to fix that.
+    "crates/anyrender_vello",
 
     "crates/tui-shell",
     # Arniko SDK
@@ -42,6 +48,7 @@ bliss-paint   = { path = "crates/bliss-paint" }
 bliss-shell   = { path = "crates/bliss-shell" }
 bliss-traits  = { path = "crates/bliss-traits" }
 bliss-stylo-taffy = { path = "crates/stylo_taffy" }
+anyrender_vello = { path = "crates/anyrender_vello" }
 
 # ── workspace.dependencies ────────────────────────────────────────────────────
 [workspace.dependencies]
@@ -98,7 +105,7 @@ parley = { version = "0.10", default-features = false, features = ["std"] }
 
 # GPU / rendering
 anyrender       = "0.7"
-anyrender_vello = { version = "0.7" }
+anyrender_vello = { path = "crates/anyrender_vello", version = "0.7" }
 anyrender_svg   = "0.8"
 wgpu            = "27"
 vello           = { version = "0.7", features = ["wgpu"] }

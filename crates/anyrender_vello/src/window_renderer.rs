@@ -1,7 +1,7 @@
 use anyrender::{WindowHandle, WindowRenderer};
 use debug_timer::debug_timer;
 use kurbo::{Affine, Rect};
-use peniko::{Color, Fill};
+use peniko::{Color, Fill, ImageBrush, ImageData};
 use rustc_hash::FxHashMap;
 use std::sync::{
     atomic::{self, AtomicU64},
@@ -11,7 +11,7 @@ use vello::{
     AaConfig, AaSupport, RenderParams, Renderer as VelloRenderer, RendererOptions,
     Scene as VelloScene,
 };
-use wgpu::{Features, Limits, PresentMode, TextureFormat, TextureUsages};
+use wgpu::{Features, Limits, PresentMode, Texture, TextureFormat, TextureUsages};
 use wgpu_context::{
     DeviceHandle, SurfaceRenderer, SurfaceRendererConfiguration, TextureConfiguration, WGPUContext,
 };
@@ -23,6 +23,26 @@ use crate::{CustomPaintSource, VelloScenePainter, DEFAULT_THREADS};
 pub struct SceneOverlay {
     /// The Vello scene to overlay (Arc for zero-copy sharing)
     pub scene: Arc<VelloScene>,
+    /// Transform to position the overlay in the shell's coordinate space
+    pub transform: Affine,
+    /// Optional clip rectangle (in shell coordinates) to constrain the overlay
+    pub clip: Option<Rect>,
+}
+
+/// A texture-backed overlay to composite on top of the shell scene during rendering.
+///
+/// Unlike [`SceneOverlay`] (which merges vector paint ops into the shell's own
+/// scene via [`VelloScene::append`]), this composites an already-rasterized
+/// `wgpu::Texture` — e.g. content rendered to its own GPU texture on a separate
+/// render pipeline — as a single image fill. That's a real blit, not a scene
+/// merge: it decouples the cost of the overlay's own rendering from the shell's
+/// frame time, at the expense of only being able to sample a flat rectangle of
+/// pixels (no further vector compositing of the overlay's contents).
+pub struct TextureOverlay {
+    /// The already-rendered texture to sample as an image fill. Must be
+    /// [`TextureFormat::Rgba8Unorm`] with [`TextureUsages::COPY_SRC`] set
+    /// (required by [`vello::Renderer::register_texture`]).
+    pub texture: Texture,
     /// Transform to position the overlay in the shell's coordinate space
     pub transform: Affine,
     /// Optional clip rectangle (in shell coordinates) to constrain the overlay
@@ -87,6 +107,20 @@ pub struct VelloWindowRenderer {
     /// Overlay scenes to composite on top of the main scene (e.g. web content)
     overlay_scenes: Vec<SceneOverlay>,
 
+    /// Texture overlays to composite on top of the main scene (e.g. content rendered
+    /// to its own GPU texture on a separate pipeline — see [`TextureOverlay`]).
+    overlay_textures: Vec<TextureOverlay>,
+
+    /// Cache of the last texture registered with the active `vello::Renderer`'s image
+    /// atlas via [`VelloRenderer::register_texture`], keyed by the `wgpu::Texture`
+    /// handle it was registered from. `register_texture` allocates a fresh atlas slot
+    /// on every call (there is no way to look one up by texture identity), so without
+    /// this cache re-registering the same unchanged texture every frame would leak an
+    /// `image_overrides` entry per frame. Cleared on suspend/resume, since a new
+    /// `vello::Renderer` is created on resume and `ImageData` handles are only valid
+    /// for the renderer that produced them.
+    registered_overlay_texture: Option<(Texture, ImageData)>,
+
     /// Optional post-paint effect hook — called after all draw commands and overlays are
     /// composited, immediately before the scene is submitted to wgpu. Use this to apply
     /// GPU effects (e.g. blur via mustang) without coupling this crate to a specific
@@ -116,6 +150,8 @@ impl VelloWindowRenderer {
             scene: VelloScene::new(),
             custom_paint_sources: FxHashMap::default(),
             overlay_scenes: Vec::new(),
+            overlay_textures: Vec::new(),
+            registered_overlay_texture: None,
             scene_effects: None,
         }
     }
@@ -182,6 +218,23 @@ impl VelloWindowRenderer {
     pub fn clear_overlay_scenes(&mut self) {
         self.overlay_scenes.clear();
     }
+
+    /// Set a single texture overlay to composite on top of the shell scene.
+    /// Replaces any existing texture overlays. Independent of [`Self::set_overlay_scene`]
+    /// — both kinds of overlay can be active at the same time.
+    pub fn set_overlay_texture(&mut self, texture: Texture, transform: Affine, clip: Option<Rect>) {
+        self.overlay_textures.clear();
+        self.overlay_textures.push(TextureOverlay {
+            texture,
+            transform,
+            clip,
+        });
+    }
+
+    /// Remove all texture overlays.
+    pub fn clear_overlay_textures(&mut self) {
+        self.overlay_textures.clear();
+    }
 }
 
 impl WindowRenderer for VelloWindowRenderer {
@@ -233,6 +286,11 @@ impl WindowRenderer for VelloWindowRenderer {
             source.resume(device_handle)
         }
 
+        // A fresh `vello::Renderer` was just created above — any `ImageData` cached
+        // from a previous renderer's `register_texture` call is no longer valid
+        // (`ImageData` handles only work with the renderer that produced them).
+        self.registered_overlay_texture = None;
+
         // Set state to Active
         self.window_handle = Some(window_handle);
         self.render_state = RenderState::Active(ActiveRenderState {
@@ -246,6 +304,9 @@ impl WindowRenderer for VelloWindowRenderer {
         for source in self.custom_paint_sources.values_mut() {
             source.suspend()
         }
+
+        // The renderer that produced this cached `ImageData` is about to be dropped.
+        self.registered_overlay_texture = None;
 
         // Set state to Suspended
         self.render_state = RenderState::Suspended;
@@ -287,6 +348,53 @@ impl WindowRenderer for VelloWindowRenderer {
                 self.scene.pop_layer();
             } else {
                 self.scene.append(&overlay.scene, Some(overlay.transform));
+            }
+        }
+        // Composite texture overlays (e.g. content rendered to its own GPU texture on
+        // a separate pipeline) on top of the shell scene. Unlike scene overlays, this
+        // registers the already-rasterized texture with Vello's image atlas and draws
+        // it as a single image fill — a real blit, not a scene merge. `overlay_textures`
+        // holds at most one entry (mirroring `set_overlay_scene`'s single-overlay-
+        // replace behaviour), so the single-slot registration cache below is sufficient.
+        for overlay in &self.overlay_textures {
+            let image_data = match &self.registered_overlay_texture {
+                Some((cached_texture, cached_image)) if *cached_texture == overlay.texture => {
+                    cached_image.clone()
+                }
+                _ => {
+                    if let Some((_, old_image)) = self.registered_overlay_texture.take() {
+                        state.renderer.unregister_texture(old_image);
+                    }
+                    let image_data = state.renderer.register_texture(overlay.texture.clone());
+                    self.registered_overlay_texture =
+                        Some((overlay.texture.clone(), image_data.clone()));
+                    image_data
+                }
+            };
+
+            let image_brush = ImageBrush::new(image_data);
+            let bounds = Rect::from_origin_size(
+                (0.0, 0.0),
+                (
+                    overlay.texture.width() as f64,
+                    overlay.texture.height() as f64,
+                ),
+            );
+
+            if let Some(clip_rect) = &overlay.clip {
+                self.scene.push_layer(
+                    Fill::NonZero,
+                    peniko::BlendMode::default(),
+                    1.0,
+                    Affine::IDENTITY,
+                    clip_rect,
+                );
+                self.scene
+                    .fill(Fill::NonZero, overlay.transform, &image_brush, None, &bounds);
+                self.scene.pop_layer();
+            } else {
+                self.scene
+                    .fill(Fill::NonZero, overlay.transform, &image_brush, None, &bounds);
             }
         }
         timer.record_time("cmd");
