@@ -18,6 +18,7 @@ use crate::{Component, ComponentMetadata};
 pub struct Card {
     title: Option<String>,
     body: Option<String>,
+    body_raw: Option<String>,
     class: String,
 }
 
@@ -26,6 +27,7 @@ impl Card {
         Self {
             title: None,
             body: None,
+            body_raw: None,
             class: String::new(),
         }
     }
@@ -35,8 +37,19 @@ impl Card {
         self
     }
 
+    /// Plain-text body content — HTML-escaped on render. Use this for any
+    /// body content that isn't already trusted, pre-built markup.
     pub fn body(mut self, b: &str) -> Self {
         self.body = Some(b.to_string());
+        self
+    }
+
+    /// Pre-built HTML body content, inserted verbatim (NOT escaped). Only
+    /// pass markup the caller fully controls (e.g. other components'
+    /// `.render()` output, static app-internal templates) — never
+    /// user-controlled text, which would be an XSS injection point.
+    pub fn body_html(mut self, b: &str) -> Self {
+        self.body_raw = Some(b.to_string());
         self
     }
 
@@ -53,9 +66,14 @@ impl Card {
             .unwrap_or_default();
 
         let body_html = self
-            .body
+            .body_raw
             .as_ref()
-            .map(|b| format!(r#"<div class="arniko-card-body">{}</div>"#, escape_html(b)))
+            .map(|b| format!(r#"<div class="arniko-card-body">{}</div>"#, b))
+            .or_else(|| {
+                self.body
+                    .as_ref()
+                    .map(|b| format!(r#"<div class="arniko-card-body">{}</div>"#, escape_html(b)))
+            })
             .unwrap_or_default();
 
         format!(
@@ -174,5 +192,16 @@ mod tests {
         let html = card.render();
         assert!(html.contains("HTML &lt;em&gt;Content&lt;/em&gt;"));
         assert!(html.contains("Body with &lt;strong&gt;bold&lt;/strong&gt; text"));
+    }
+
+    #[test]
+    fn test_card_body_html_not_escaped() {
+        let card = Card::new()
+            .title("Settings")
+            .body_html(r#"<p style="color:#71717a;">Pre-built markup</p>"#);
+
+        let html = card.render();
+        assert!(html.contains(r#"<p style="color:#71717a;">Pre-built markup</p>"#));
+        assert!(!html.contains("&lt;p"));
     }
 }
