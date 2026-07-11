@@ -210,3 +210,17 @@ Original sequence (thinker-recommended 2026-06-17) was: merge `crush-ast` PR #2 
 - A-5 (strip 18 component warnings) still open (P2).
 - dogfood-m4 arc active on `agent/vibe/dogfood-m4` at `977c489`.
 
+
+## 2026-07-10T23:05:27-05:00 — [TACTICAL] [ADOPTED] [ARCHITECTURAL] SURF-SERVO-PORT-1: Servo audit — ported Element.matches()/closest() via existing Stylo dom_apis, mustang gap deferred (wrong repo)
+
+Reason:
+Compared bliss-dom/stylo_taffy/mustang against Servo's layout, script/dom, and compositing for portable techniques. Layout (Taffy bridge): no concrete visible-output bug found; only a lower-confidence note that bliss-dom routes both flex+grid through Taffy (stylo_taffy/convert.rs) while Servo itself only trusts Taffy for grid and hand-rolls flexbox internally (servo components/layout/formatting_contexts.rs, flexbox/). DOM surface: bliss-dom already has event dispatch, getBoundingClientRect, and querySelector — real gaps were classList/dataset/matches()/closest()/MutationObserver vs servo components/script/dom/*. GPU compositing: mustang's SceneScheduler (now living in the standalone nixpt/mustang repo, not arniko) is a single monotonic dirty counter that re-runs all effects on any DOM change (scheduler.rs self-documents this as 'a follow-up'); Servo's paint/painter.rs RepaintReason bitflags + display_list.rs invalidate_cached_transforms show a small, portable per-reason/per-node dirty pattern mustang's own already-implemented but unused Region::union could adopt.
+
+Artifacts: crates/bliss-dom/src/query_selector.rs
+
+Rejected alternatives:
+- **port the mustang damage-tracking fix**: arniko/crates/mustang is vestigial (extracted to standalone nixpt/mustang repo at s305 2026-06-19, no longer a cargo workspace member, doesn't build) — porting it would mean editing a repo other than arniko, violating this ticket's single-repo constraint. Written up as a follow-up for whoever owns nixpt/mustang instead.
+
+Outcome:
+Ported style::dom_apis::element_matches/element_closest (Servo/Stylo's own DOM .matches()/.closest() spec impl, already vendored) into bliss-dom's BaseDocument as matches()/matches_raw()/closest()/closest_raw() in crates/bliss-dom/src/query_selector.rs. BlissNode already implements selectors::Element so this was a ~50-line wrapper, not new engine work. 5 new tests added; baseline 44 passed/2 ignored -> 47 passed/2 ignored, 0 failed, 0 regressions.
+

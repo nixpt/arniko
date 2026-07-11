@@ -244,3 +244,58 @@ fn test_get_element_by_id() {
     let result3 = doc.get_element_by_id("does-not-exist");
     assert_eq!(result3, None);
 }
+
+// ── matches / closest Tests ─────────────────────────────────────────────────
+
+#[test]
+fn test_matches_by_tag_and_class() {
+    let mut doc = setup_doc();
+    let mut mutator = doc.mutate();
+
+    let div = mutator.create_element(qual_name!("div"), vec![]);
+    let span = mutator.create_element(qual_name!("span"), vec![]);
+    mutator.set_attribute(div, qual_name!("class"), "active");
+
+    mutator.append_children(0, &[div, span]);
+    drop(mutator);
+
+    assert_eq!(doc.matches(div, "div").unwrap(), true);
+    assert_eq!(doc.matches(div, ".active").unwrap(), true);
+    assert_eq!(doc.matches(div, "span").unwrap(), false);
+    assert_eq!(doc.matches(span, ".active").unwrap(), false);
+}
+
+#[test]
+fn test_matches_nonexistent_node() {
+    let doc = setup_doc();
+    assert_eq!(doc.matches(9999, "div").unwrap(), false);
+}
+
+#[test]
+fn test_closest_walks_ancestors() {
+    let mut doc = setup_doc();
+    let mut mutator = doc.mutate();
+
+    let container = mutator.create_element(qual_name!("div"), vec![]);
+    let inner = mutator.create_element(qual_name!("div"), vec![]);
+    let child_span = mutator.create_element(qual_name!("span"), vec![]);
+    mutator.set_attribute(container, qual_name!("class"), "container");
+
+    // Build tree: root -> container -> inner -> child_span
+    mutator.append_children(0, &[container]);
+    mutator.append_children(container, &[inner]);
+    mutator.append_children(inner, &[child_span]);
+    drop(mutator);
+
+    // Nearest ancestor (inclusive) matching ".container" from a deeply nested node
+    let result = doc.closest(child_span, ".container").unwrap();
+    assert_eq!(result, Some(container));
+
+    // Matches itself first, without walking further up
+    let result2 = doc.closest(container, ".container").unwrap();
+    assert_eq!(result2, Some(container));
+
+    // No ancestor matches
+    let result3 = doc.closest(child_span, "#does-not-exist").unwrap();
+    assert_eq!(result3, None);
+}
