@@ -1,6 +1,6 @@
 //! Tests for document.rs - mutation round-trips
 
-use crate::{BaseDocument, DocumentConfig, DocumentMutator, local_name, qual_name};
+use crate::{Attribute, BaseDocument, DocumentConfig, DocumentMutator, local_name, qual_name};
 
 fn setup_doc() -> BaseDocument {
     let config = DocumentConfig::default();
@@ -302,6 +302,249 @@ fn test_complex_document_round_trip() {
     
     assert!(mutator.doc.nodes.get(text1).is_some());
     assert!(mutator.doc.nodes.get(text2).is_some());
+    drop(mutator);
+}
+
+// ── ElementData::id refresh on post-construction set_attribute ──────────────
+//
+// The second `assert_eq!` in this test (`ElementData::id == Some("renamed")`
+// after `set_attribute(elem, "id", "renamed")`) is the load-bearing one — it's
+// the post-construction mutator path that was the historically-failed case in
+// older refactors. Any future refactor that regresses this assertion fails CI.
+//
+// Locks in the `ElementData::id` orphan-field invariant: `ElementData.id`
+// must stay in sync with `node.attr(local_name!("id"))` across construction,
+// `DocumentMutator::set_attribute`, and `DocumentMutator::clear_attribute`.
+//
+// mutator.rs::DocumentMutator::set_attribute handles the id-name case by
+// snapshotting the node and writing `element.id = Some(Atom::from(value))`
+// when the attribute's local name is `id`. clear_attribute analogously
+// resets `element.id = None` for the id case. Without those guards,
+// `ElementData::id` would diverge from `node.attr("id")` — the orphan-field
+// hazard this test exists to prevent.
+//
+// If a future change regresses this, the test fails at the second assertion
+// while the first still passes (proving the divergence).
+#[test]
+fn test_elementdata_id_field_tracks_set_attribute() {
+    let mut doc = setup_doc();
+    let mut mutator = doc.mutate();
+
+    // 1) construct with id at creation time — both accessors must agree.
+    let elem = mutator.create_element(
+        qual_name!("div"),
+        vec![Attribute {
+            name: qual_name!("id"),
+            value: "initial".to_string(),
+        }],
+    );
+
+    if let Some(node) = mutator.doc.nodes.get(elem) {
+        assert_eq!(
+            node.attr(local_name!("id")),
+            Some("initial"),
+            "attr() round-trip on construction-time id"
+        );
+        if let Some(el_data) = node.element_data() {
+            assert_eq!(
+                el_data.id.as_deref(),
+                Some("initial"),
+                "ElementData::id reads back 'initial' at construction"
+            );
+        } else {
+            panic!("Element at {elem} has no element_data");
+        }
+    } else {
+        panic!("Element not found after construction");
+    }
+
+    // 2) post-construction set_attribute("id", "renamed") — both accessors
+    //    must agree on the new value.
+    mutator.set_attribute(elem, qual_name!("id"), "renamed");
+
+    if let Some(node) = mutator.doc.nodes.get(elem) {
+        assert_eq!(
+            node.attr(local_name!("id")),
+            Some("renamed"),
+            "attr() round-trip after set_attribute"
+        );
+        if let Some(el_data) = node.element_data() {
+            assert_eq!(
+                el_data.id.as_deref(),
+                Some("renamed"),
+                "ElementData::id reads back 'renamed' after set_attribute"
+            );
+        } else {
+            panic!("Element at {elem} lost element_data after set_attribute");
+        }
+    } else {
+        panic!("Element not found after set_attribute");
+    }
+
+    // 3) post-construction clear_attribute("id") — both accessors must
+    //    reflect the absence.
+    mutator.clear_attribute(elem, qual_name!("id"));
+
+    if let Some(node) = mutator.doc.nodes.get(elem) {
+        assert_eq!(
+            node.attr(local_name!("id")),
+            None,
+            "attr() round-trip after clear_attribute"
+        );
+        if let Some(el_data) = node.element_data() {
+            assert_eq!(
+                el_data.id, None,
+                "ElementData::id becomes None after clear_attribute"
+            );
+        } else {
+            panic!("Element at {elem} lost element_data after clear_attribute");
+        }
+    } else {
+        panic!("Element not found after clear_attribute");
+    }
+
+    // 4) Empty-string id → `ElementData::id` must round-trip as Some("")
+    //    (not silently coerced to None). Regression target: a future
+    //    refactor that special-cases empty-string-as-None would pass
+    //    sub-blocks 2/3 above while silently dropping empty ids here.
+    mutator.set_attribute(elem, qual_name!("id"), "");
+
+    if let Some(node) = mutator.doc.nodes.get(elem) {
+        assert_eq!(
+            node.attr(local_name!("id")),
+            Some(""),
+            "attr() round-trip after set_attribute(\"\")"
+        );
+        if let Some(el_data) = node.element_data() {
+            assert_eq!(
+                el_data.id.as_deref(),
+                Some(""),
+                "ElementData::id round-trips empty string"
+            );
+        } else {
+            panic!("Element at {elem} lost element_data after set_attribute(\"\")");
+        }
+    } else {
+        panic!("Element not found after set_attribute(\"\")");
+    }
+    drop(mutator);
+}
+
+// Companion negative test: `clear_attribute("class")` (or any non-id attr)
+// MUST NOT touch `ElementData::id`. This guards against a regression where
+// someone broadens the clear path to reset `element.id = None` regardless
+// of attr name. Without it, the positive test above could pass while still
+// regressing the negative contract.
+#[test]
+fn test_clear_attribute_does_not_reset_id_for_non_id_attrs() {
+    let mut doc = setup_doc();
+    let mut mutator = doc.mutate();
+
+    let elem = mutator.create_element(
+        qual_name!("div"),
+        vec![Attribute {
+            name: qual_name!("id"),
+            value: "survivor".to_string(),
+        }],
+    );
+
+    // Pre-condition: ElementData::id == attr(id) == "survivor".
+    if let Some(node) = mutator.doc.nodes.get(elem) {
+        assert_eq!(node.attr(local_name!("id")), Some("survivor"));
+        if let Some(el_data) = node.element_data() {
+            assert_eq!(el_data.id.as_deref(), Some("survivor"));
+        } else {
+            panic!("Element at {elem} has no element_data");
+        }
+    }
+
+    // Action: clear the class attribute (not id).
+    mutator.clear_attribute(elem, qual_name!("class"));
+
+    // Post-condition: ElementData::id is STILL "survivor".
+    if let Some(node) = mutator.doc.nodes.get(elem) {
+        if let Some(el_data) = node.element_data() {
+            assert_eq!(
+                el_data.id.as_deref(),
+                Some("survivor"),
+                "ElementData::id must NOT be reset when clearing a non-id attribute"
+            );
+        } else {
+            panic!("Element at {elem} lost element_data after clear_attribute(\"class\")");
+        }
+    } else {
+        panic!("Element not found after clear_attribute(\"class\")");
+    }
+    drop(mutator);
+}
+
+// Companion test: lifecycle where the element is constructed WITHOUT an id
+// attribute — `ElementData.id` starts as None at construction time and is
+// first populated by a subsequent `DocumentMutator::set_attribute(elem, "id", ...)`
+// call. This exercises a meaningfully different code path inside set_attribute:
+// the snapshot must transition `element.id` from None → Some, not just
+// refresh an already-populated field. Without this test, a regression that
+// only handles "replace existing id with another id" would still pass the
+// positive test above while breaking first-id-set-after-construction.
+#[test]
+fn test_elementdata_id_first_set_after_no_id_construction() {
+    let mut doc = setup_doc();
+    let mut mutator = doc.mutate();
+
+    // Construct with NO id attribute.
+    let elem = mutator.create_element(qual_name!("div"), vec![]);
+
+    // Pre-condition: ElementData::id == attr(id) == None.
+    if let Some(node) = mutator.doc.nodes.get(elem) {
+        assert_eq!(node.attr(local_name!("id")), None);
+        if let Some(el_data) = node.element_data() {
+            assert_eq!(
+                el_data.id, None,
+                "freshly created element has ElementData::id == None"
+            );
+        } else {
+            panic!("Element at {elem} has no element_data");
+        }
+    } else {
+        panic!("Element not found after construction");
+    }
+
+    // Action: first-ever id set after construction.
+    mutator.set_attribute(elem, qual_name!("id"), "first-id");
+
+    // Post-condition: both accessors agree on "first-id".
+    if let Some(node) = mutator.doc.nodes.get(elem) {
+        assert_eq!(node.attr(local_name!("id")), Some("first-id"));
+        if let Some(el_data) = node.element_data() {
+            assert_eq!(
+                el_data.id.as_deref(),
+                Some("first-id"),
+                "ElementData::id transitions None → Some on first set_attribute(\"id\", ...)"
+            );
+        } else {
+            panic!("Element at {elem} lost element_data after first set_attribute(\"id\", ...)");
+        }
+    } else {
+        panic!("Element not found after first set_attribute(\"id\", ...)");
+    }
+
+    // Action: clear the id we just set.
+    mutator.clear_attribute(elem, qual_name!("id"));
+
+    // Post-condition: both accessors agree on None again.
+    if let Some(node) = mutator.doc.nodes.get(elem) {
+        assert_eq!(node.attr(local_name!("id")), None);
+        if let Some(el_data) = node.element_data() {
+            assert_eq!(
+                el_data.id, None,
+                "ElementData::id transitions back to None on clear_attribute(\"id\", ...)"
+            );
+        } else {
+            panic!("Element at {elem} lost element_data after clear_attribute");
+        }
+    } else {
+        panic!("Element not found after clear_attribute");
+    }
     drop(mutator);
 }
 

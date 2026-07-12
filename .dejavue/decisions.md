@@ -223,4 +223,33 @@ Rejected alternatives:
 
 Outcome:
 Ported style::dom_apis::element_matches/element_closest (Servo/Stylo's own DOM .matches()/.closest() spec impl, already vendored) into bliss-dom's BaseDocument as matches()/matches_raw()/closest()/closest_raw() in crates/bliss-dom/src/query_selector.rs. BlissNode already implements selectors::Element so this was a ~50-line wrapper, not new engine work. 5 new tests added; baseline 44 passed/2 ignored -> 47 passed/2 ignored, 0 failed, 0 regressions.
+## 2026-06-21T18:00:00-05:00 — [TACTICAL] [AUDIT-CORRECTION] `ElementData::id` orphan-field hazard does NOT exist in current `mutator.rs`; regression tests added upstream to lock in the correct existing behavior.
+
+Reason:
+A prior audit claim held that `ElementData::id` would silently diverge from `node.attr(local_name!("id"))` after a post-construction `DocumentMutator::set_attribute(elem, "id", ...)` call. Per the prospective-fix path that the user originally proposed ("either patch `ElementData::new` to re-extract on set_attribute, or document the trap with a SAFETY comment in `ElementData::id`"), the test was supposed to be added first to expose the failure.
+
+**The test was added first; the failure did not reproduce.** The audit claim is superseded.
+
+Evidence against the orphan-field claim (verified in `crates/bliss-dom/src/mutator.rs::DocumentMutator::set_attribute` and `DocumentMutator::clear_attribute`):
+- `set_attribute` snapshots the node, then for the id-name case explicitly assigns `element.id = Some(Atom::from(value))`. Without this guard, `ElementData::id` would diverge from `node.attr("id")` — the very hazard the audit flagged.
+- `clear_attribute` analogously assigns `element.id = None` for the id-name case.
+- Neither path is guarded by a feature gate, cfg, or debug-only branch — both refresh `element.id` unconditionally on the id-name case in the current main branch.
+
+**Three regression tests added to `crates/bliss-dom/src/tests/document.rs` to lock in the invariant** (must keep passing as the codebase evolves):
+1. `test_elementdata_id_field_tracks_set_attribute` — 4 sub-blocks covering constructor-time id, post-construction `set_attribute("id", "renamed")`, post-construction `clear_attribute("id")`, AND set-attribute-to-empty-string round-trip (catches a future refactor that special-cases `""` as None). Doc-comment cites function names only (no line numbers — they would rot).
+2. `test_clear_attribute_does_not_reset_id_for_non_id_attrs` — negative companion: `clear_attribute("class")` must NOT touch `element.id`. Without this test, a refactor that broadens the clear path to `element.id = None` unconditionally would still pass the positive test while regressing the negative contract.
+3. `test_elementdata_id_first_set_after_no_id_construction` — lifecycle: construct WITHOUT id (so `ElementData.id` starts None), `set_attribute("id", "first-id")`, then `clear_attribute("id")`. Exercises a meaningfully different code path inside `set_attribute` (None → Some snapshot transition) versus the positive test's "replace existing id" path. Catches a regression that only handles the latter.
+
+`cargo test -p bliss-dom --lib --offline` after the change returns `47 passed; 0 failed; 2 ignored`. Pre-existing 44 tests + 3 new = 47 confirmed. The 2 ignored tests are the inner-html tests requiring an HTML parser provider — pre-existing, unrelated.
+
+Rejected approaches:
+- **SAFETY comment in `ElementData::id` field** — not added. The invariant is already enforced at the mutator layer; a SAFETY comment at the field would suggest the field itself is the load-bearing point, which it is not. The invariant's load-bearing site is `DocumentMutator::set_attribute`'s snapshot guard, not `ElementData::id`. A SAFETY comment at the wrong level would be cargo-cult guidance.
+- **Patching `ElementData::new` to re-extract id from attributes on every `set_attribute`** — not added. The mutator already does the right thing; adding redundant re-extraction would mask future regressions in the mutator guard (the regression tests would still pass even if the guard broke, defeating the tests' purpose).
+
+Cross-invariant linkage (relevance for any future agent context-boot via `dejavue context`):
+- The audit-claim that this entry supersedes is NOT cross-documented in projects/arniko/.dejavue/{invariants,handoff,patterns,state}.md at time of writing; it was carried as a verbal / user-prompt claim rather than a structured dejavue note. A future boot packet searching for "orphan-field" or "ElementData::id bug" will be served by this entry as the primary refutation — entry should appear near the top of FTS5 search results.
+- The D-2 / D-2b / D-2c / D-2c-followup aftermath (graceful-handle panic surfaces) is the most recent related EPIC in this file; D-3 graceful-handle closure leaves the engine in the same state in which the regression tests pass.
+- The cece-code cutover (separate repo, projects/cece-code/.dejavue/decisions.md) does not import this repo's mutator.rs directly; downstream effects are not at risk from this correction.
+
+Net state: orphan-field audit-claim **closed** as a false positive. 3 regression tests locked in. Future changes to `mutator.rs::set_attribute` / `clear_attribute` that break the id-refresh invariant will fail one of the 3 new tests with a precise assertion message.
 
