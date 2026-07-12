@@ -455,6 +455,7 @@ dependencies = [
  "bliss-paint",
  "bliss-shell",
  "bliss-traits",
+ "keyboard-types 0.7.0",
  "tokio",
  "url",
 ]

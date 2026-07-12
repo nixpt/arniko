@@ -41,6 +41,58 @@ pub use bliss_shell as shell;
 /// Re-export of [`bliss_traits`](https://docs.rs/bliss-traits). Base types and traits for interoperability between modules
 pub use bliss_traits as traits;
 
+// ---------------------------------------------------------------------------
+// Convenience re-exports used by cece-code and other downstream consumers
+// ---------------------------------------------------------------------------
+
+pub mod style;
+pub mod element;
+
+/// Keyboard key identifier.
+pub use keyboard_types::Key;
+/// Keyboard modifier flags.
+pub use keyboard_types::Modifiers;
+
+/// A colour value for use with [`style::Style`] and inline CSS.
+///
+/// Supports sRGB colours via the [`Rgb`] and [`Rgba`] variants.  When
+/// serialised to CSS, opaque colours produce `#rrggbb` hex and colours with
+/// alpha produce `rgba(r,g,b,a)`.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum Color {
+    /// RGB colour with all channels 0–255, alpha = 255.
+    Rgb(u8, u8, u8),
+    /// RGBA colour with all channels 0–255.
+    Rgba(u8, u8, u8, u8),
+}
+
+impl Color {
+    /// Create an opaque colour from its red, green and blue components (each 0–255).
+    pub const fn rgb(r: u8, g: u8, b: u8) -> Self {
+        Color::Rgb(r, g, b)
+    }
+
+    /// Create a colour with an alpha (transparency) channel from components (each 0–255).
+    pub const fn rgba(r: u8, g: u8, b: u8, a: u8) -> Self {
+        Color::Rgba(r, g, b, a)
+    }
+
+    /// Serialise to a CSS colour string.
+    pub fn to_css(&self) -> String {
+        match self {
+            Color::Rgb(r, g, b) | Color::Rgba(r, g, b, 255) => {
+                format!("#{:02x}{:02x}{:02x}", r, g, b)
+            }
+            Color::Rgba(r, g, b, a) => {
+                format!("rgba({},{},{},{:.3})", r, g, b, *a as f32 / 255.0)
+            }
+        }
+    }
+}
+
+// Re-export the builder types at the crate root for ergonomic access.
+pub use element::{Element, Window};
+
 #[cfg(feature = "net")]
 pub fn launch_url(url: &str) {
     let url = url.to_owned();

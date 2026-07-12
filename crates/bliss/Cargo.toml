@@ -32,6 +32,9 @@ bliss-net = { path = "../bliss-net", version = "0.2.99", optional = true }
 url = { version = "2.5.0", features = ["serde"], optional = true }
 tokio = { version = "1.42", features = ["rt-multi-thread"], optional = true }
 
+# Keyboard input
+keyboard-types = "0.7"
+
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
