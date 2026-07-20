@@ -28,7 +28,6 @@ members = [
     # StatefulWidget vendoring precedent — BOTH trait impls vendored
     # (no carve-out like round-6 Tabs). See
     # `crates/tornado-list/src/lib.rs` for the E0034 carve-out pattern.
-    "crates/tornado-list",
     # Round 12-14: vendored popup, big-text, and tree widgets — now
     # migrated to upstream crates (tui-popup, tui-tree-widget) or still
     # vendored (big-text blocked on ratatui 0.29 update). See
@@ -207,11 +206,7 @@ tui-tree-widget = "0.24"
 tui-scrollview  = "0.6"
 hyperrat        = "0.1"
 
-# Round 11: vendored List + StatefulWidget for List + ListState from
-# ratatui 0.30 itself (dual MIT/Apache-2.0). Gated behind the
-# umbrella's `list` feature. See `crates/tornado-list/src/lib.rs`
-# for the E0034 carve-out pattern documentation.
-tornado-list = { path = "crates/tornado-list", version = "0.2.99" }
+
 # Round 12: vendored Popup widget from joshka/tui-popup (MIT).
 # A simple popup with bordered box, title, body text, and optional
 # drag-repositioning. Gated behind the umbrella's `popup` feature.

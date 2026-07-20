@@ -6023,7 +6023,6 @@ dependencies = [
  "ratatui",
  "ratatui-cheese",
  "tornado-big-text",
- "tornado-list",
  "tornado-styles",
  "tornado-wrap",
  "tracing",
@@ -6038,14 +6037,6 @@ version = "0.2.99"
 dependencies = [
  "font8x8",
  "ratatui",
-]
-
-[[package]]
-name = "tornado-list"
-version = "0.2.99"
-dependencies = [
- "ratatui",
- "unicode-width 0.1.14",
 ]
 
 [[package]]
