@@ -26,6 +26,9 @@ members = [
     "crates/tornado-hyperlink",
     "crates/tornado-spinner",
     "crates/tornado-scrollview",
+    # End-to-end example wiring every borrow-debris sibling into one TuiApp
+    # (round 7 of the awesome-ratatui adoption series).
+    "examples/scroll-log",
     # Arniko SDK
     "crates/arniko",
     # Networking
