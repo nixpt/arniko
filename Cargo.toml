@@ -32,10 +32,20 @@ members = [
     # Arniko SDK
     "crates/arniko",
     # Networking
-    "crates/exo-bliss-net",
-    # Arniko Crush capsule bindings
+    "crates/exo-bliss-net",    # Arniko Crush capsule bindings
     "crates/arniko-crush",
-]
+    # Round 8 example: multi-tab log consumer composing the round-9
+    # `TabLog` helper under a tab-navigation surface.
+    #   D1 — top-level example crate (per the round-8 design memo).
+    #   D2 — one `TabLog` per tab (Vec<TabLog> over the 5 streams).
+    #   D5 — 4-region layout (Title/TabNav/Body/Status).
+    #   D9 — Path B: ratatui::widgets::Tabs directly (round-6 vendoring
+    #        of `ratatui-widgets::Tabs` as `crates/tornado-tabs` has
+    #        not landed; bypass the umbrella for tabs in this example
+    #        only). Future Round 6 catch-up PR can funnel this
+    #        through the umbrella.
+    "examples/multi-tab-log",
+] 
 
 [workspace.package]
 version      = "0.2.99"
