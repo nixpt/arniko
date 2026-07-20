@@ -15,6 +15,9 @@ pub use tornado_hyperlink as hyperlink;
 #[cfg(feature = "spinner")]
 pub use tornado_spinner as spinner;
 
+#[cfg(feature = "scroller")]
+pub use tornado_scrollview as scroller;
+
 use ratatui::Frame;
 use std::time::Duration;
 

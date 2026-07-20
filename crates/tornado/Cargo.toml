@@ -30,6 +30,13 @@ tornado-hyperlink = { workspace = true, optional = true }
 # `run_app` loop iteration (the `tick_rate`) and advances frames at the
 # cadence defined by `SpinnerType::interval`.
 tornado-spinner = { workspace = true, optional = true }
+# Optional — stateful scrolling view for ratatui, vendored from
+# tui-scrollview v0.6.7 (Josh McKinney, dual MIT/Apache-2.0). Gated
+# behind the `scroller` feature. Renders a buffer larger than the
+# viewport, lets the user scroll offset / page, and renders the visible
+# slice with optional scrollbars. See crates/tornado-scrollview/NOTICE
+# for the upstream -> arniko path migration.
+tornado-scrollview = { workspace = true, optional = true }
 
 [features]
 default = []
@@ -37,23 +44,29 @@ styles = ["dep:tornado-styles"]
 wrap = ["dep:tornado-wrap"]
 hyperlink = ["dep:tornado-hyperlink"]
 spinner = ["dep:tornado-spinner"]
+scroller = ["dep:tornado-scrollview"]
 
-# Integration test that exercises the tornado-styles bridge end-to-end.
-# Gated on the `styles` feature so it doesn't pull `anstyle` into consumers
-# who don't enable that feature.
+# Integration tests — each gated on the feature it exercises, so
+# consumers who don't enable that feature don't pay for the test
+# (and the test's dependencies).
+
+# tornado-styles: round-1 anstyle -> ratatui roundtrip.
 [[test]]
 name = "styles_integration"
 required-features = ["styles"]
 
-# Integration test that exercises the tornado-hyperlink Link widget
-# end-to-end (OSC 8 encoding + cell-skip behavior). Gated on `hyperlink`.
+# tornado-hyperlink: OSC 8 encoding reach-through (cell 0 prefix).
 [[test]]
 name = "hyperlink_integration"
 required-features = ["hyperlink"]
 
-# Integration test that exercises the tornado-spinner Spinner widget
-# end-to-end (frame advance via tick + StatefulWidget render path).
-# Gated on `spinner`.
+# tornado-spinner: frame advance via tick + StatefulWidget render path.
 [[test]]
 name = "spinner_integration"
 required-features = ["spinner"]
+
+# tornado-scrollview: offset advance + scrollbar visibility policy +
+# viewport slicing through `tornado::scroller` re-export.
+[[test]]
+name = "scrollview_integration"
+required-features = ["scroller"]

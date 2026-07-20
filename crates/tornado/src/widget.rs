@@ -9,6 +9,8 @@ pub use crate::styles::{
 pub use crate::hyperlink::Link;
 #[cfg(feature = "spinner")]
 pub use crate::spinner::Spinner;
+#[cfg(feature = "scroller")]
+pub use crate::scroller::ScrollView;
 #[cfg(feature = "styles")]
 use crate::styles::Style as AnsiStyle;
 

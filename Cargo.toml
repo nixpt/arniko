@@ -25,6 +25,7 @@ members = [
     "crates/tornado-wrap",
     "crates/tornado-hyperlink",
     "crates/tornado-spinner",
+    "crates/tornado-scrollview",
     # Arniko SDK
     "crates/arniko",
     # Networking
@@ -157,6 +158,13 @@ tornado-styles   = { path = "crates/tornado-styles",   version = "0.2.99" }
 tornado-wrap     = { path = "crates/tornado-wrap",     version = "0.2.99" }
 tornado-hyperlink = { path = "crates/tornado-hyperlink", version = "0.2.99" }
 tornado-spinner = { path = "crates/tornado-spinner", version = "0.2.99" }
+# Stateful scrolling view widget for ratatui. Vendored from
+# `tui-scrollview` v0.6.7 (Josh McKinney, dual MIT/Apache-2.0). The
+# upstream source declared deps on `ratatui-core`/`ratatui-widgets`
+# (unstable 0.29-era subcrates); all imports were rewritten to point
+# at the merged `ratatui` 0.30 in this fork. See crate NOTICE for the
+# exact line-by-line diff.
+tornado-scrollview = { path = "crates/tornado-scrollview", version = "0.2.99" }
 wuff           = "0.2"
 smol_str       = "0.3"
 rayon          = "1"
