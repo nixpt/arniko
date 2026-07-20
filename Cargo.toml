@@ -52,6 +52,8 @@ members = [
     #        only). Future Round 6 catch-up PR can funnel this
     #        through the umbrella.
     "examples/multi-tab-log",
+    # Comprehensive visual demo exercising every tornado widget.
+    "examples/tornado-showcase",
 ] 
 
 [workspace.package]
