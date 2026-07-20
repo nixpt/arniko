@@ -5918,9 +5918,18 @@ version = "0.1.0"
 dependencies = [
  "crossterm 0.28.1",
  "ratatui",
+ "tornado-hyperlink",
  "tornado-styles",
  "tornado-wrap",
  "tracing",
+]
+
+[[package]]
+name = "tornado-hyperlink"
+version = "0.2.99"
+dependencies = [
+ "ratatui",
+ "textwrap",
 ]
 
 [[package]]

@@ -16,16 +16,19 @@ tracing = "0.1"
 # Optional — small ANSI/ratatui bridge helpers + HyperlinkTarget type,
 # borrowed from xai-grok-markdown. Only added when the `styles` feature
 # is enabled, so consumers that don't need them don't pay for them.
-tornado-styles = { workspace = true, optional = true }
-# Optional — textwrap word-wrap helpers over ratatui Line/Span,
+tornado-styles = { workspace = true, optional = true }# Optional — textwrap word-wrap helpers over ratatui Line/Span,
 # borrowed from xai-ratatui-textarea. Gated behind the `wrap` feature
 # (and pulls in `textwrap` transitively).
 tornado-wrap = { workspace = true, optional = true }
+# Optional — OSC 8 hyperlink widget for ratatui, vendored from hyperrat
+# (dual MIT/Unlicense). Gated behind the `hyperlink` feature.
+tornado-hyperlink = { workspace = true, optional = true }
 
 [features]
 default = []
 styles = ["dep:tornado-styles"]
 wrap = ["dep:tornado-wrap"]
+hyperlink = ["dep:tornado-hyperlink"]
 
 # Integration test that exercises the tornado-styles bridge end-to-end.
 # Gated on the `styles` feature so it doesn't pull `anstyle` into consumers
@@ -33,3 +36,10 @@ wrap = ["dep:tornado-wrap"]
 [[test]]
 name = "styles_integration"
 required-features = ["styles"]
+
+# Integration test that exercises the tornado-hyperlink Link widget
+# end-to-end (OSC 8 encoding + cell-skip behavior). Gated on `hyperlink`.
+[[test]]
+name = "hyperlink_integration"
+required-features = ["hyperlink"]
+

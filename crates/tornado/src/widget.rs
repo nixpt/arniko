@@ -5,6 +5,8 @@ pub use crate::styles::{
     HyperlinkTarget as AnsiHyperlinkTarget, anstyle_to_ratatui_color as ansi_color,
     style_into_ratatui as ansi_to_style,
 };
+#[cfg(feature = "hyperlink")]
+pub use crate::hyperlink::Link;
 #[cfg(feature = "styles")]
 use crate::styles::Style as AnsiStyle;
 

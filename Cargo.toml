@@ -23,6 +23,7 @@ members = [
     "crates/tornado",
     "crates/tornado-styles",
     "crates/tornado-wrap",
+    "crates/tornado-hyperlink",
     # Arniko SDK
     "crates/arniko",
     # Networking
@@ -150,9 +151,10 @@ anstyle        = "1"
 # Word wrapping engine (used by tornado-wrap).
 textwrap       = "0.16"
 # Sibling crates
-tornado        = { path = "crates/tornado",        version = "0.2.99" }
-tornado-styles = { path = "crates/tornado-styles", version = "0.2.99" }
-tornado-wrap   = { path = "crates/tornado-wrap",   version = "0.2.99" }
+tornado          = { path = "crates/tornado",          version = "0.2.99" }
+tornado-styles   = { path = "crates/tornado-styles",   version = "0.2.99" }
+tornado-wrap     = { path = "crates/tornado-wrap",     version = "0.2.99" }
+tornado-hyperlink= { path = "crates/tornado-hyperlink",version = "0.2.99" }
 wuff           = "0.2"
 smol_str       = "0.3"
 rayon          = "1"

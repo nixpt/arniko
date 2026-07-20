@@ -9,6 +9,9 @@ pub use tornado_styles as styles;
 #[cfg(feature = "wrap")]
 pub use tornado_wrap as wrap;
 
+#[cfg(feature = "hyperlink")]
+pub use tornado_hyperlink as hyperlink;
+
 use ratatui::Frame;
 use std::time::Duration;
 
