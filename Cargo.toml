@@ -22,6 +22,7 @@ members = [
 
     "crates/tornado",
     "crates/tornado-tabs",
+    "crates/tornado-sparkline",
     "crates/tornado-styles",
     "crates/tornado-wrap",
     "crates/tornado-hyperlink",
@@ -35,6 +36,14 @@ members = [
     # Networking
     "crates/exo-bliss-net",    # Arniko Crush capsule bindings
     "crates/arniko-crush",
+    # Round 10 example delta: same `examples/multi-tab-log` example,
+    # mutated to slot a 12-col Sparkline into the right flank of the
+    # 2-row status_bar footer (per design-memo D5/D9). No new
+    # example crate — the round-8 example remains the single
+    # end-to-end consumer composing all eight vendored siblings
+    # (styles, wrap, hyperlink, spinner, scrollview, tabs, sparkline,
+    # plus log_view helper).
+    #
     # Round 8 example: multi-tab log consumer composing the round-9
     # `TabLog` helper under a tab-navigation surface.
     #   D1 — top-level example crate (per the round-8 design memo).
@@ -190,6 +199,17 @@ tornado-scrollview = { path = "crates/tornado-scrollview", version = "0.2.99" }
 # See `crates/tornado-tabs/NOTICE` for the license-mirror
 # attribution. Gated behind the umbrella's `tabs` feature.
 tornado-tabs = { path = "crates/tornado-tabs", version = "0.2.99" }
+# Round 10: Sparkline + SparklineBar widget vendored from
+# ratatui 0.30 itself (dual MIT/Apache-2.0). The widget is
+# fully **stateless** — only the `Widget` impl is vendored
+# (no `SparklineState` upstream either). Composition with
+# the existing `status_bar` (`tornado::widget::status_bar`)
+# is the headlining use case (round-10 example slots a
+# 12-col rolling-c sparkline into the right flank of the
+# existing 2-row footer). Gated behind the `sparkline`
+# feature. See `crates/tornado-sparkline/NOTICE` for the
+# license-mirror attribution.
+tornado-sparkline = { path = "crates/tornado-sparkline", version = "0.2.99" }
 wuff           = "0.2"
 smol_str       = "0.3"
 rayon          = "1"

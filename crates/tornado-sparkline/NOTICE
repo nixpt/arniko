@@ -1,0 +1,62 @@
+tornado-sparkline
+================
+
+Vendored source — license-mirror attribution
+----------------------------------------------
+
+This crate carries a verbatim mirror of the public `Sparkline` +
+`SparklineBar` widget source code from the `ratatui` project, version
+`ratatui-v0.30.0`, located at:
+
+  https://github.com/ratatui/ratatui/blob/ratatui-v0.30.0/src/widgets/sparkline.rs
+
+The `ratatui` project is dual-licensed under either of:
+
+  • Apache License, Version 2.0
+    (see LICENSE-APACHE for the verbatim text)
+  • MIT License
+    (see LICENSE-MIT for the verbatim text)
+
+Copyright (c) the `ratatui` contributors — including but not limited to
+the project maintainers listed at <https://github.com/ratatui/ratatui>.
+
+The vendored source was vendored by the arniko project to make the
+widget available through the arniko umbrella's `tornado` crate under
+the `sparkline` feature flag. The arniko project chose this vendoring
+arrangement to keep the consumer contract small and to avoid taking a
+direct path-dependency on the upstream `ratatui` crate for callers
+that only need the `Sparkline` widget.
+
+Modifications from upstream
+---------------------------
+
+The vendored source is verbatim from
+`ratatui-v0.30.0/src/widgets/sparkline.rs`. No functionally-significant
+changes were made. The source was vendored into a single-file
+`src/lib.rs` for ease of vendoring; upstream's module split was not
+realized in this vendoring because the upstream `Sparkline` source is
+a single file with no internal submodules.
+
+The upstream `Sparkline` widget has only a `Widget` impl. There is no
+`StatefulWidget for Sparkline` and no `SparklineState` upstream; this
+crate's public surface matches that contract.
+
+Upstream import-path note
+-------------------------
+
+Upstream 0.30 imports ratatui via a single merged crate (the
+unstable 0.29-era subcrate split `ratatui-widgets::widgets::*` was
+reverted in 0.30). The vendored `src/lib.rs` therefore uses the
+single-crate `use ratatui::widgets::Widget;` path. No path rewrite
+was needed.
+
+License disclaimer
+------------------
+
+The arniko project is not affiliated with the `ratatui` project. The
+vendoring of `Sparkline` does not transfer copyright; the upstream
+copyright holders retain all rights to the vendored source under the
+MIT and Apache-2.0 license terms described above. Consumers of this
+crate downstream inherit the dual-license grant from the upstream
+`ratatui` project's LICENSE-MIT / LICENSE-APACHE terms and may
+exercise their rights under either license.
