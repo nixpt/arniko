@@ -23,13 +23,8 @@ members = [
     "crates/tornado",
     "crates/tornado-styles",
     "crates/tornado-wrap",
-    # Round 11: vendored List + StatefulWidget for List + ListState from
-    # ratatui 0.30 itself (dual MIT/Apache-2.0). The canonical
-    # StatefulWidget vendoring precedent — BOTH trait impls vendored
-    # (no carve-out like round-6 Tabs). See
-    # `crates/tornado-list/src/lib.rs` for the E0034 carve-out pattern.
-    # Round 12-14: big-text — now migrated to upstream tui-big-text.
-    # All vendored crates have been replaced with upstream deps.
+    # All vendored widget crates have been replaced with upstream deps.
+    # Remaining in-house crates: tornado-styles, tornado-wrap.
     # End-to-end example wiring every borrow-debris sibling into one TuiApp
     # (round 7 of the awesome-ratatui adoption series).
     "examples/scroll-log",
@@ -187,12 +182,7 @@ ratatui-widgets = "0.3"
 anstyle        = "1"
 # Word wrapping engine (used by tornado-wrap).
 textwrap       = "0.16"
-# Unicode-width calculation crate (used by tornado-tabs and any
-# downstream vendored widget that needs to call `.width()` on
-# `String` / `&str`). Same dep is reachable to vendored siblings via
-# `workspace = true` so the vendoring pattern matches the rest of
-# the TUI vendoring siblings.
-unicode-width  = "0.1"
+
 # Sibling crates
 tornado          = { path = "crates/tornado",          version = "0.2.99" }
 tornado-styles   = { path = "crates/tornado-styles",   version = "0.2.99" }
@@ -202,15 +192,8 @@ tui-popup       = "0.7"
 tui-tree-widget = "0.24"
 tui-scrollview  = "0.6"
 hyperrat        = "0.1"
-
-
-# Round 12: vendored Popup widget from joshka/tui-popup (MIT).
-# A simple popup with bordered box, title, body text, and optional
-# drag-repositioning. Gated behind the umbrella's `popup` feature.
-# See `crates/tornado-popup/NOTICE` for the license-mirror attribution.
-# BigText widget from tui-big-text (MIT/Apache-2.0). Renders large
-# pixel text using font8x8 glyphs. Replaces the vendored
-# `tornado-big-text`.
+# BigText widget from tui-big-text (MIT/Apache-2.0). Replaces the
+# vendored `tornado-big-text`.
 tui-big-text = "0.8"
 wuff           = "0.2"
 smol_str       = "0.3"
