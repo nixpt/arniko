@@ -1,0 +1,34 @@
+tornado-list
+
+Vendored mirror of `List` + `StatefulWidget` widget from `ratatui` 0.30.
+Original source: https://github.com/ratatui/ratatui/blob/ratatui-v0.30.0/src/widgets/list.rs
+
+The original `ratatui` crate is dual-licensed under MIT OR Apache-2.0.
+See LICENSE-MIT and LICENSE-APACHE for the full license texts at the
+root of this crate.
+
+Round-11 vendoring note (per .dejavue/timeline.jsonl):
+
+The vendored crate ships BOTH `Widget for List` AND `StatefulWidget for List`
+together with `ListState` as the canonical selection carrier. This is a
+deliberate divergence from round-6 Tabs (which shipped Widget-only +
+carved-out StatefulWidget due to E0034 ambiguity).
+
+The module-level `//!` doc-comment in `src/lib.rs` documents the E0034
+carve-out pattern:
+
+  Pattern A - fully-qualified trait-method call:
+    <List as StatefulWidget>::render(list, area, buf, &mut state);
+
+  Pattern B - submodule namespace isolation:
+    stateful::render(&list, area, buf, &mut state);
+
+That disambiguates the call site when both trait impls are in scope.
+The integration test `e0034_fully_qualified_resolve` proves Pattern A
+compiles + paints at the fully-qualified call site - this is the
+round-11 differentiator.
+
+Vendoring provenance:
+  Upstream: ratatui-v0.30.0/src/widgets/list.rs
+  Vendored source extracted verbatim, dual-license attribution complete,
+  rust-version 1.85 aligned with workspace, ratatui 0.30 import paths used.

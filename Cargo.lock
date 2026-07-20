@@ -1987,6 +1987,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "font8x8"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "875488b8711a968268c7cf5d139578713097ca4635a76044e8fe8eedf831d07e"
+
+[[package]]
 name = "fontconfig-parser"
 version = "0.5.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5983,14 +5989,26 @@ version = "0.2.99"
 dependencies = [
  "crossterm 0.28.1",
  "ratatui",
+ "tornado-big-text",
  "tornado-hyperlink",
+ "tornado-list",
+ "tornado-popup",
  "tornado-scrollview",
  "tornado-sparkline",
  "tornado-spinner",
  "tornado-styles",
  "tornado-tabs",
+ "tornado-tree-widget",
  "tornado-wrap",
  "tracing",
+]
+
+[[package]]
+name = "tornado-big-text"
+version = "0.2.99"
+dependencies = [
+ "font8x8",
+ "ratatui",
 ]
 
 [[package]]
@@ -5999,6 +6017,21 @@ version = "0.2.99"
 dependencies = [
  "ratatui",
  "textwrap",
+]
+
+[[package]]
+name = "tornado-list"
+version = "0.2.99"
+dependencies = [
+ "ratatui",
+ "unicode-width 0.1.14",
+]
+
+[[package]]
+name = "tornado-popup"
+version = "0.2.99"
+dependencies = [
+ "ratatui",
 ]
 
 [[package]]
@@ -6033,6 +6066,14 @@ dependencies = [
 
 [[package]]
 name = "tornado-tabs"
+version = "0.2.99"
+dependencies = [
+ "ratatui",
+ "unicode-width 0.1.14",
+]
+
+[[package]]
+name = "tornado-tree-widget"
 version = "0.2.99"
 dependencies = [
  "ratatui",

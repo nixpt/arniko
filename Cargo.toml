@@ -28,6 +28,27 @@ members = [
     "crates/tornado-hyperlink",
     "crates/tornado-spinner",
     "crates/tornado-scrollview",
+    # Round 11: vendored List + StatefulWidget for List + ListState from
+    # ratatui 0.30 itself (dual MIT/Apache-2.0). The canonical
+    # StatefulWidget vendoring precedent — BOTH trait impls vendored
+    # (no carve-out like round-6 Tabs). See
+    # `crates/tornado-list/src/lib.rs` for the E0034 carve-out pattern.
+    "crates/tornado-list",
+    # Round 12: vendored Popup widget from joshka/tui-popup (MIT).
+    # A simple popup with bordered box, title, body text, and optional
+    # drag-repositioning. Gated behind the umbrella's `popup` feature.
+    # See `crates/tornado-popup/NOTICE` for the license-mirror attribution.
+    "crates/tornado-popup",
+    # Round 13: vendored BigText widget from joshka/tui-big-text
+    # (MIT/Apache-2.0). Renders large pixel text using font8x8 glyphs.
+    # Gated behind the umbrella's `big-text` feature.
+    # See `crates/tornado-big-text/NOTICE` for the license-mirror attribution.
+    "crates/tornado-big-text",
+    # Round 14: vendored Tree widget from EdJoPaTo/tui-rs-tree-widget (MIT).
+    # A stateful tree widget with selection, folding, and scrollbar support.
+    # Gated behind the umbrella's `tree` feature.
+    # See `crates/tornado-tree-widget/NOTICE` for the license-mirror attribution.
+    "crates/tornado-tree-widget",
     # End-to-end example wiring every borrow-debris sibling into one TuiApp
     # (round 7 of the awesome-ratatui adoption series).
     "examples/scroll-log",
@@ -210,6 +231,26 @@ tornado-tabs = { path = "crates/tornado-tabs", version = "0.2.99" }
 # feature. See `crates/tornado-sparkline/NOTICE` for the
 # license-mirror attribution.
 tornado-sparkline = { path = "crates/tornado-sparkline", version = "0.2.99" }
+# Round 11: vendored List + StatefulWidget for List + ListState from
+# ratatui 0.30 itself (dual MIT/Apache-2.0). Gated behind the
+# umbrella's `list` feature. See `crates/tornado-list/src/lib.rs`
+# for the E0034 carve-out pattern documentation.
+tornado-list = { path = "crates/tornado-list", version = "0.2.99" }
+# Round 12: vendored Popup widget from joshka/tui-popup (MIT).
+# A simple popup with bordered box, title, body text, and optional
+# drag-repositioning. Gated behind the umbrella's `popup` feature.
+# See `crates/tornado-popup/NOTICE` for the license-mirror attribution.
+tornado-popup = { path = "crates/tornado-popup", version = "0.2.99" }
+# Round 13: vendored BigText widget from joshka/tui-big-text
+# (MIT/Apache-2.0). Renders large pixel text using font8x8 glyphs.
+# Gated behind the umbrella's `big-text` feature.
+# See `crates/tornado-big-text/NOTICE` for the license-mirror attribution.
+tornado-big-text = { path = "crates/tornado-big-text", version = "0.2.99" }
+# Round 14: vendored Tree widget from EdJoPaTo/tui-rs-tree-widget (MIT).
+# A stateful tree widget with selection, folding, and scrollbar support.
+# Gated behind the umbrella's `tree` feature.
+# See `crates/tornado-tree-widget/NOTICE` for the license-mirror attribution.
+tornado-tree-widget = { path = "crates/tornado-tree-widget", version = "0.2.99" }
 wuff           = "0.2"
 smol_str       = "0.3"
 rayon          = "1"

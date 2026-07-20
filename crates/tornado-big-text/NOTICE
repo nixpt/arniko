@@ -1,0 +1,5 @@
+This crate contains vendored code from `tui-big-text` (https://github.com/joshka/tui-big-text),
+originally by Josh McKinney (joshka), licensed under MIT OR Apache-2.0.
+
+The MIT License and Apache License 2.0 are reproduced in LICENSE-MIT and
+LICENSE-APACHE at the root of this crate.

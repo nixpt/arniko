@@ -1,0 +1,4 @@
+This crate contains vendored code from `tui-popup` (https://github.com/joshka/tui-popup),
+originally by Josh McKinney (joshka), licensed under the MIT License.
+
+The MIT License is reproduced in LICENSE-MIT at the root of this crate.

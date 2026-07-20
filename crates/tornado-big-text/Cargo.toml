@@ -1,0 +1,15 @@
+[package]
+name = "tornado-big-text"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+description = "A large pixel-text widget for ratatui — vendored from joshka/tui-big-text (MIT/Apache-2.0)"
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+categories = ["command-line-interface"]
+include = ["/LICENSE-MIT", "/LICENSE-APACHE", "/NOTICE"]
+
+[dependencies]
+ratatui = { workspace = true }
+font8x8 = "0.3"

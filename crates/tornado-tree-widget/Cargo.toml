@@ -1,0 +1,15 @@
+[package]
+name = "tornado-tree-widget"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+description = "A tree widget for ratatui — vendored from EdJoPaTo/tui-rs-tree-widget (MIT)"
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+categories = ["command-line-interface"]
+include = ["/LICENSE-MIT", "/NOTICE"]
+
+[dependencies]
+ratatui = { workspace = true }
+unicode-width = { workspace = true }

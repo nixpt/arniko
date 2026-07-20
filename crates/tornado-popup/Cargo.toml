@@ -1,0 +1,14 @@
+[package]
+name = "tornado-popup"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+description = "A simple popup widget for ratatui — vendored from joshka/tui-popup (MIT)"
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+categories = ["command-line-interface"]
+include = ["/LICENSE-MIT", "/NOTICE"]
+
+[dependencies]
+ratatui = { workspace = true }
