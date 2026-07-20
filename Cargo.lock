@@ -4431,6 +4431,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "ratatui-cheese"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e953118268177f5871053b7123a7053c6bafc445d0e9eaa2e43e7ea5994fae7b"
+dependencies = [
+ "ratatui",
+ "unicode-width 0.2.2",
+]
+
+[[package]]
 name = "ratatui-core"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5989,15 +5999,14 @@ version = "0.2.99"
 dependencies = [
  "crossterm 0.28.1",
  "ratatui",
+ "ratatui-cheese",
  "tornado-big-text",
  "tornado-hyperlink",
  "tornado-list",
  "tornado-popup",
  "tornado-scrollview",
  "tornado-sparkline",
- "tornado-spinner",
  "tornado-styles",
- "tornado-tabs",
  "tornado-tree-widget",
  "tornado-wrap",
  "tracing",
@@ -6050,26 +6059,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "tornado-spinner"
-version = "0.2.99"
-dependencies = [
- "ratatui",
-]
-
-[[package]]
 name = "tornado-styles"
 version = "0.2.99"
 dependencies = [
  "anstyle",
  "ratatui",
-]
-
-[[package]]
-name = "tornado-tabs"
-version = "0.2.99"
-dependencies = [
- "ratatui",
- "unicode-width 0.1.14",
 ]
 
 [[package]]

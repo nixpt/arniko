@@ -21,12 +21,10 @@ members = [
     "crates/anyrender_vello",
 
     "crates/tornado",
-    "crates/tornado-tabs",
     "crates/tornado-sparkline",
     "crates/tornado-styles",
     "crates/tornado-wrap",
     "crates/tornado-hyperlink",
-    "crates/tornado-spinner",
     "crates/tornado-scrollview",
     # Round 11: vendored List + StatefulWidget for List + ListState from
     # ratatui 0.30 itself (dual MIT/Apache-2.0). The canonical
@@ -192,6 +190,9 @@ slab           = "0.4.9"
 image          = { version = "0.25", default-features = false }
 # TUI rendering (workspace-wide, used by tornado + tornado-styles).
 ratatui        = "0.30"
+# Bubbletea-inspired spinner widget for ratatui. Replaces the
+# vendored `crates/tornado-spinner` with the upstream crate.
+ratatui-cheese = "0.7"
 # ANSI styling crate (used by tornado-styles to bridge into ratatui styles).
 anstyle        = "1"
 # Word wrapping engine (used by tornado-wrap).
@@ -207,7 +208,6 @@ tornado          = { path = "crates/tornado",          version = "0.2.99" }
 tornado-styles   = { path = "crates/tornado-styles",   version = "0.2.99" }
 tornado-wrap     = { path = "crates/tornado-wrap",     version = "0.2.99" }
 tornado-hyperlink = { path = "crates/tornado-hyperlink", version = "0.2.99" }
-tornado-spinner = { path = "crates/tornado-spinner", version = "0.2.99" }
 # Stateful scrolling view widget for ratatui. Vendored from
 # `tui-scrollview` v0.6.7 (Josh McKinney, dual MIT/Apache-2.0). The
 # upstream source declared deps on `ratatui-core`/`ratatui-widgets`
@@ -215,11 +215,6 @@ tornado-spinner = { path = "crates/tornado-spinner", version = "0.2.99" }
 # at the merged `ratatui` 0.30 in this fork. See crate NOTICE for the
 # exact line-by-line diff.
 tornado-scrollview = { path = "crates/tornado-scrollview", version = "0.2.99" }
-# Round 6: Tabs widget vendored from ratatui 0.30 itself
-# (Florian Dehau + ratatui contributors, dual MIT/Apache-2.0).
-# See `crates/tornado-tabs/NOTICE` for the license-mirror
-# attribution. Gated behind the umbrella's `tabs` feature.
-tornado-tabs = { path = "crates/tornado-tabs", version = "0.2.99" }
 # Round 10: Sparkline + SparklineBar widget vendored from
 # ratatui 0.30 itself (dual MIT/Apache-2.0). The widget is
 # fully **stateless** — only the `Widget` impl is vendored
