@@ -361,3 +361,87 @@ Round-11 design memo D8: cargo wiring is identical to round-10 D8 + round-6 catc
 Reason:
 Round-11 design memo D9: selection-driven ScrollView composition. When items.len() > viewport.height, wrap List body in scroll_view.scroll_offset() + sync ListState::select(idx) -> scroll_state.offset.y. Per-tick ingest = state.select(Some(state.selected.unwrap_or(0).saturating_add(1) % items.len())) - NOTE: the modulo operand is on usize; usize is a stable operator in Rust 1.85.0 MSRV, so is_multiple_of cold-path does NOT apply (carries forward round-8 constitutional hazard #1 solved). The 12-cell ingest-precedent from round-10 D9 (deterministic tick_count ring) is replaced by a deterministic selection-step. Carry forward all three round-8 constitutional hazards: (1) MSRV is_multiple_of cold-path - solved by usize modulus; (2) Path B umbrella-bypass - round 11 plans vendoring + umbrella feature + example in same PR, no Path B debt; (3) Instant::now() test-loop trap - vendoring tests never read wall-clock. Diagnostic: selection-driven scroll composition is the round-11 novel compositional surface - List selection carrier (ListState.selected) projects onto scroll-view offset (scroll_state.offset.y), so the canonical carrier (ListState) drives a derived projection (scroll_state.offset.y). This is the round-11 carry-forward to all future stateful-widget compositions.
 
+
+## 2026-07-20T13:03:24-05:00 — [STRATEGIC] [PROPOSED] [CLAIM] D1 round-12 example location: NEW examples/multi-metric-footer/ (NOT mutating round-11 multi-nav-list/) — the round-11 D1 sub-region rule does not extend when the new widget is a peer to an existing sub-region (Sparkline vs BarChart cannot share 12-col inner width without explicit partitioning); a separate example keeps the round-12 design memo's "Sparkline + BarChart side-by-side" footer composition orthogonal to the round-11 List body.
+
+Reason:
+Examples that compose Sparkline + BarChart side-by-side as the status_bar footer sub-region demonstrates the canonical composition grammar. Round-11's multi-nav-list has a different body-driven shape (List in body, Sparkline in status); mutating it to ALSO host a BarChart in status would change the round-11 layout in ways that defeat the round-11 commitment. The cleaner choice is a new example crate that brings round-12's primary consumer into existence without touching prior work.
+
+
+## 2026-07-20T13:03:24-05:00 — [STRATEGIC] [PROPOSED] [CLAIM] D2 round-12 state model: Widget-only (round-6 Tabs pattern, divergent from round-11 List's BOTH-impls surface) — upstream ratatui BarChart does NOT have a StatefulWidget counterpart and inventing one would fabricate API.
+
+Reason:
+Diverge deliberately from round-11 to demonstrate that the E0034 carve-out pattern only applies when both traits are vendored. Round-12 surfaces the canonical mirror of upstream ratatui barchart (Widget only) and the §3 module doc explicitly notes "MOOT — round-12 BarChart is round-6 Tabs pattern; no E0034 risk" so a future round does not inherit the round-11 contract for the wrong shape.
+
+
+## 2026-07-20T13:03:24-05:00 — [STRATEGIC] [PROPOSED] [CLAIM] D3 round-12 public surface: BarChart builder + BarGroup + Bar + BarSet types + Widget impl — no BarChartState, no StatefulWidget, no .state() / .styled() chained-on pattern. re-export Direction as ratatui::layout::Direction (NOT a custom enum like round-11).
+
+Reason:
+Public surface mirrors upstream ratatui BarChart 1:1 across Bar / BarGroup / BarChart / BarSet. Direction is the upstream ratatui::layout::Direction carried through `pub use ratatui::layout::Direction;` at the crate root. This keeps the vendoring mirror literal-fidelity and avoids the round-11 custom-Direction divergence that emerged from a vendoring-defensive choice (different from round-12's case).
+
+
+## 2026-07-20T13:03:24-05:00 — [STRATEGIC] [PROPOSED] [CLAIM] D4 round-12 keymap: N/A (Widget-only — round-12 follows round-6 Tab's empty-on-keymap precedent). No widget-side keymap. No scroll/navigation on BarChart. Consumer-facing keyboard navigation is out of scope.
+
+Reason:
+A stateless widget that paints metrics-on-inputs owns no selection. Selection-driven composition is round-11's separate contract (§4); round-12 is intentionally stateless and would only fabricate selection by inventing a StatefulWidget. The §3 module doc asserts "Widget only" so a future round does not invent a BarChartState-driven keymap.
+
+
+## 2026-07-20T13:03:24-05:00 — [STRATEGIC] [PROPOSED] [CLAIM] D5 round-12 layout: 3-region — Title 1 + Body (large detailed BarChart) + Status (Sparkline 12-col + BarChart 12-col side-by-side OR with intermediate text). Sparkline + BarChart sub-regions fit the round-11 D1 sub-region rule applied to the StatusBar
+
+Reason:
+StatusBar is the canonical composition. Sparkline (round-10) and BarChart (round-12) compose side-by-side as 24-col sub-region. Title and Body regions are unaffected. This pattern generalizes — round-13+ widgets can extend the StatusBar's right flank.
+
+
+## 2026-07-20T13:03:24-05:00 — [STRATEGIC] [PROPOSED] [CLAIM] D6 round-12 tests: 6 inline + 6 integration. Differentiation tests: bar_chart_direction_arms_yield_distinct_cell_anchors + bar_chart_max_scales_tallest_bar_to_full_height. Inline + integration test layout mirrors round-11 (7 inline + 6 integration) conservatively to 6+6 since round-12 is the cheaper stateless path.
+
+Reason:
+The two differentiator tests close two hazard categories: (a) Direction arm silent no-op (round-11 v3 carry) and (b) max-value vs column-width scaling confusion. Plus 4 conventional inline tests (builder chain, data stored, block wraps, value/label/style apply) and 4 integration tests (TestBackend cell-by-cell, max=N scaling, multi-bar group separation, label rendering).
+
+
+## 2026-07-20T13:03:24-05:00 — [STRATEGIC] [PROPOSED] [CLAIM] D7 round-12 vendoring: Single file mirror of ratatui v0.30.0 src/widgets/barchart.rs (NO sub-crate split — ratatui 0.30 already merged subcrates). NOTICE + LICENSE-MIT/LICENSE-APACHE dual license. File path crates/tornado-barchart/src/lib.rs.
+
+Reason:
+Single-file vendor simpler than rounds 6/10/11. No upstream sub-crate split because ratatui 0.30 unified the subcrates. NOT a particularly long file (~250 lines per ratatui 0.30 source). Round-12 is a smaller surface than rounds 6/10/11.
+
+
+## 2026-07-20T13:03:25-05:00 — [STRATEGIC] [PROPOSED] [CLAIM] D8 round-12 cargo wiring: bar_chart = ["dep:tornado-barchart"] umbrella feature, tornado-barchart = { workspace = true, optional = true } on crates/tornado/Cargo.toml, pub use tornado_barchart as barchart at crates/tornado/src/lib.rs and pub use crate::barchart::{BarChart, Bar, BarGroup} at crates/tornado/src/widget.rs. examples/multi-metric-footer member added.
+
+Reason:
+Mirror round-6/10/11 vendoring pattern exactly. Workspace-pinning at version 0.2.99. Adds crates/tornado-barchart to [workspace.dependencies] and examples/multi-metric-footer to [workspace.members]. Configuratble feature does not collide with existing bar_chart-style names in any of the prior rounds (none used "bar_chart" before).
+
+
+## 2026-07-20T13:03:25-05:00 — [STRATEGIC] [PROPOSED] [CLAIM] D9 round-12 compositional trap: BarChart + Sparkline + List must NEVER compete for status-bar real estate. 12 cols each in the StatusBar's right flank. Per-bar scaling is to `max` (not column width). Bar_groups separation is via `group_gap` not `bar_gap`.
+
+Reason:
+Status-bar Composition Rule: when adding a new metric widget round, allocate a 12-col sub-region in the StatusBar's right flank and DO NOT grow beyond the natural concrete-set of (Sparkline 12, BarChart 12, List in body = 4 tabs in TabNav, status text). bar_set values scale to max, not column width — overflow columns are clipped, not stretched. This rule constrains round-13+'s metric story.
+
+
+## 2026-07-20T13:06:20-05:00 — [CONSTITUTIONAL] [VERIFIED] [CLAIM] round-12 deliberate divergence from round-11 constitutional precedents
+
+Reason:
+Round-12 picks ratatui::widgets::BarChart (stateless, no StatefulWidget counterpart upstream), explicitly diverging from round-11's two constitutional precedents encoded in crates/tornado-list/src/lib.rs: (1) §3 E0034 carve-out pattern — does NOT apply because BarChart has no StatefulWidget impl, only Widget, so fully-qualified trait disambiguation is unnecessary at consumer call sites; (2) §4 selection-driven ScrollView composition contract — does NOT apply because BarChart has no ListState-style selection carrier upstream; bars are pure static data. Without this record, round-13+ inheriting round-11's surface will mistakenly apply E0034 carve-out documentation to a stateless widget and fabricate projection logic for a non-existent state carrier. Round-12 deliberately mirrors round-6 (Tabs)'s Widget-only carving pattern instead. This record anchors the divergence for round-13+.
+
+
+## 2026-07-20T13:08:14-05:00 — [CONSTITUTIONAL] [VERIFIED] [CLAIM] ratatui Buffer::set_line max_width param is u16 not usize (round-11 carry-forward)
+
+Reason:
+Round-11 List default-direction BottomToTop bug surfaced that ratatui::buffer::Buffer::set_line takes a u16 second argument for max_width, NOT a usize. Earlier v17 fix in round-11 integration_01 attempted '.min(u16::MAX as usize) as u16' cast, but the canonical defensive form is: pass line_area.width (already u16 from Rect::width) DIRECTLY to set_line without casting through usize. Re-fixing this in round-12 (tornado-barchart vendoring might touch set_line for axis labels) would re-introduce the round-17 cast chain. Defense: every vendored widget test that renders labels via Buffer::set_line must pass area.width (u16) directly without usize cast. Diagnostic anchor: crates/tornado-list/tests/list_integration.rs line 75+ where the canonical fix lives.
+
+
+## 2026-07-20T13:08:14-05:00 — [CONSTITUTIONAL] [VERIFIED] [CLAIM] ratatui 0.30 Cell::bg is Color field not Option<Color> (round-11 carry-forward)
+
+Reason:
+Round-11 v17/v19 cargo audit surfaced that ratatui 0.30 Cell::bg is a public field of type Color (NOT Option<Color> as a stale Cargo deps search would suggest). The canonical assertion form is assert_eq!(buf[(x, y)].bg, Color::Red) — NEVER Some(Color::Red). Defense: every vendored widget test that asserts a Cell background must compare directly with Color::Red (or the chosen Color variant) WITHOUT wrapping in Some(...). Diagnostic anchor: crates/tornado-list/tests/list_integration.rs line 45+ v19-surviving form buf[(0, 0)].bg == Color::Red (no Some wrapping). RATIONALE FOR CLAIM-NOT-TRAP: dejavue  subcommand does NOT support --durability/--confidence flags; only  carries the constitutional-durability field needed to anchor round-13+ from re-inheriting the wrong shape. The literal 'trap' word in the user's request maps to semantic intent (non-obvious pitfall), not dejavue subcommand name.
+
+
+## 2026-07-20T13:18:59-05:00 — [CONSTITUTIONAL] [VERIFIED] [CLAIM] round-13 two-carrier discipline — TextArea.value drives data subset, ListState.selected drives visual offset
+
+Reason:
+Round-13 design memo composition trap T13 (constitutional): For round-13's CommandPalette example (and any future command-palette composition), the consumer drives TWO INDEPENDENT state carriers simultaneously: (a) the TextArea (or TextAreaState) value drives the FILTER — the unfiltered candidate list gets reduced to substring matches against the typed value, AND (b) the ListState.selected drives the VISUAL OFFSET — which row of the filtered subset is highlighted. The two carriers are INDEPENDENT PROJECTIONS of the same conceptual state (the user is at position X in the filtered list), but they do NOT share a storage slot. Mistaking them for nested carriers (e.g. ListState.selected -> TextArea.value or vice versa) will produce silent staleness on dispatch: the highlighted row will not match the filter, OR the filter will not match the highlighted row, OR both. Defense: every CommandPalette-style consumer must wire the filter pipeline into TextArea.value (NOT ListState.selected), and wire the keyboard navigation into ListState.selected (NOT TextArea.value). Diagnostic anchor: examples/command-palette/src/main.rs (the round-13 example writes the canonical discipline). Cross-references: event_id dfaed35e5ccb (round-12 deliberate divergence) and event_id ec5e60481cb4 (ratatui 0.30 Cell::bg is Color field not Option) sit in the same hazard timeline but DO NOT apply to T13. This record anchors the two-carrier discipline as the canonical CommandPalette-state-machinery precedent for round-14+ command-bar / fuzzy-finder consumers.
+
+
+## 2026-07-20T13:18:59-05:00 — [CONSTITUTIONAL] [VERIFIED] [CLAIM] round-13 deliberate re-inheritance of round-11 E0034 carve-out precedent (vs round-12 deliberate-divergence)
+
+Reason:
+Round-13 design memo constitutional record (extension-not-divergence): Round-12 (BarChart, widget-only stateless vendoring) captured event_id dfaed35e5ccb as a constitutional CLAIM of round-12's DIVERGENCE from round-11's two precedents encoded in crates/tornado-list/src/lib.rs: §3 E0034 carve-out did NOT apply (BarChart is stateless — no StatefulWidget impl upstream, so fully-qualified trait disambiguation is unnecessary) AND §4 selection-driven composition did NOT apply (no selection carrier upstream). Round-13 (Textarea vendoring from xai-ratatui-textarea where upstream TextAreaState is a discrete state type that round-13 re-exports as a separate carrier) DEBERATELY RE-INHERITS BOTH round-11 precedents and explicitly UNDOES round-12's divergence. Said differently: round-12 was the divergence (StatelessWidget precedent extending WITHOUT StatefulWidget), round-13 is the re-inheritance (StatefulWidget precedent extension REVERTING to round-11 shape because Textarea is stateful). This record anchors round-13 as the StatefulWidget-vendoring EXTENSION precedent (not divergence) — future rounds reading only the round-12 divergence claim would mistakenly apply it to a future StatefulWidget round and skip the E0034 carve-out module doc. Defense: round-13 vendoring's §3 module doc MUST explicitly note 'round-13 deliberately re-inherits round-11's E0034 carve-out because Textarea is stateful, overriding any read of round-12's divergence claim that the carve-out is MOOT for vendored widgets'. Diagnostic anchor: crates/tornado-textinput/src/lib.rs will mirror crates/tornado-list/src/lib.rs §3 verbatim with the widget/state name substituted. Cross-references: event_id 6e85a6219d4d (Buffer::set_line u16) and event_id ec5e60481cb4 (Cell::bg Color) are the round-11 carry-forward hazards that round-13's vendoring must defend against synchronously with the E0034 carve-out re-inheritance.
+
