@@ -253,3 +253,57 @@ Cross-invariant linkage (relevance for any future agent context-boot via `dejavu
 
 Net state: orphan-field audit-claim **closed** as a false positive. 3 regression tests locked in. Future changes to `mutator.rs::set_attribute` / `clear_attribute` that break the id-refresh invariant will fail one of the 3 new tests with a precise assertion message.
 
+
+## 2026-07-20T11:42:50-05:00 — [STRATEGIC] [PROPOSED] [CLAIM] D1 round-10 example location: mutate existing round-8 example rather than spawn a new crate
+
+Reason:
+Round-10 design memo D1: chose to mutate `examples/multi-tab-log/` rather than spawn a new example crate. Rationale: the round-8 example was already the single end-to-end consumer composing every vendored sibling + the round-9 TabLog helper; adding round-10 as a new crate would split consumer surface across two crates without a clean contract distinction (a new example would re-render the same four-region layout, the same scroll-back log bodies, the same TabNav — nothing new at the example level except a 12-col widget in the footer). The mutation cost is a single Layout::Horizontal split inside draw() + a 12-cell ring buffer field + a 7th smoke test; the gain is a unified consumer surface. This pattern generalizes: future rounds 11+ that compose a vendored widget into an existing example should mutate the corresponding example rather than spawn a parallel crate. Cross-ref: PR #8 (round-8 vendoring) + PR #5 (round-7 scroll-log) + PR #3 (round-1-6 vendoring wave) all shipped with the same mutate-not-split discipline.
+
+
+## 2026-07-20T11:42:50-05:00 — [STRATEGIC] [PROPOSED] [CLAIM] D2 round-10 state model: Widget-only — the lowest vendoring lift of any ratatui widget
+
+Reason:
+Round-10 design memo D2: chose to vendor `ratatui::widgets::Sparkline` + `SparklineBar` as **Widget-only**, mirroring the upstream surface exactly (no `StatefulWidget for Sparkline` impl + no `SparklineState` structure exists upstream either). Rationale: this is the smallest vendoring lift of any ratatui widget — no carve-out for the StatefulWidget+Widget-on-the-same-type E0034 ambiguity (compare to round-6 catch-up Tabs where both impls had to share a render symbol); no `#[cfg(feature = ...)] parity` switch; no state-carrier plumbing in the umbrella re-export. Diagnostic chain selecting Sparkline over the 6 candidates: Sparkline (Widget-only, lowest lift), Chart (stateful + multi-line metric plot, heaviest), BarChart (mid), Sparkline (selected), Calendar (stateful date grid, specialized), LineGauge (stateful progress bar). Pattern: a future round that needs StatefulWidget should pick a widget where the StatefulWidget impl is unavoidable (Chart, List, Calendar) but should plan an E0034 carve-out pattern in the design memo — the round-6 Tabs precedent at `crates/tornado-tabs/src/lib.rs` is the canonical example for that carve-out.
+
+
+## 2026-07-20T11:42:51-05:00 — [STRATEGIC] [PROPOSED] [CLAIM] D3 round-10 surface: vendor the builder interfaces only (data slice + chunk style), no state carrier
+
+Reason:
+Round-10 design memo D3: chose to vendor ONLY the `Sparkline<a
+
+
+## 2026-07-20T11:43:15-05:00 — [STRATEGIC] [PROPOSED] [CLAIM] D4 round-10 keymap: Sparkline is display-only, no keymap / no focus / no selection
+
+Reason:
+Round-10 design memo D4: chose to vendor Sparkline as **display-only** — no keymap (`q`/`Esc`/digit-range/etc. do nothing on the widget itself), no focus model, no selection cursor. Diagnostic: upstream Sparkline has no `StatefulWidget` impl and no input-handling surface — vendoring a non-existent surface would force us to invent a contract that no consumer can rely on. Round-10 example retains the round-8 multi-tab keymap (Tab/BackTab/1..5/jk↑↓PgUpPgDngG/q), and the Sparkline simply renders whatever data the consumer placed in the ring buffer. Pattern: a future round adopting a stateful widget (Chart, List, Calendar) carries the cost of either a 4th-keymap-region NOR a state-carrier contract — the design memo for that round MUST name which (or both); the round-6 Tabs precedent uses both (state carrier `TornadoState` did not surface because of the E0034 carve-out, but the StatefulWidget pattern is documented for future resume).
+
+
+## 2026-07-20T11:43:16-05:00 — [STRATEGIC] [PROPOSED] [CLAIM] D5 round-10 layout: 12-col Sparkline slotted into the right flank of the existing 2-row status_bar via Layout::Horizontal split
+
+Reason:
+Round-10 design memo D5: chose Layout::Horizontal split inside the footer region `[Min(width-12), Length(12)]` to slot the Sparkline beside the existing text status_bar Paragraph. No top-level layout shift — the same 4-region split (`Title 1 / TabNav 3 / Body Min(3) / Status 2`) is preserved; only an internal horizontal split is added inside status_area. Diagnostic: a body-region slot (charting inside the body) would compete with the TabLog-scroll-view for vertical space; a title-region slot would crowd the brand row. The footer-internal split is the smallest change that opens a new compositional surface without disturbing round 7-8-9 layout investments. Pattern: future round-11 widgets compose with the SHELL by slotting *inside* an existing region, not by adding a sibling 5th region — this keeps the [1, 3, Min(3), 2] layout as the consumer-facing contract. Cross-ref: round-9 TabLog helper consumed many round-7 helper signatures while keeping the same 4-region layout.
+
+
+## 2026-07-20T11:43:16-05:00 — [STRATEGIC] [PROPOSED] [CLAIM] D6 round-10 tests: 6 inline + 6 integration + 7th example-app smoke (deterministic ring-state)
+
+Reason:
+Round-10 design memo D6: chose to ship 6 inline `#[cfg(test)] mod tests` inside `crates/tornado-sparkline/src/lib.rs` + 6 gateway integration tests in `crates/tornado-sparkline/tests/sparkline_integration.rs` + a 7th example-app smoke `smoke_sparkline_metrics_advance_on_tick` that exercises the round-10 D9 deterministic-ingestion contract. The 7th test pins the `Instant::now()` test-loop trap defense: it never calls `update()` (the loop that triggers `self.last_tick.elapsed()`); it calls `push_sparkline_metric` with explicit values instead. The 6 inline tests cover the 5 builder methods + the empty-data no-op; the 6 integration tests exercise the public surface from outside the crate (the same way a downstream consumer would reach the widget). Pattern: every vendored sibling should ship (a) inline unit tests for the builder math, (b) gateway integration tests for the public surface stability, (c) at most 1 example-app smoke that pins a constitutional-hazard defense.
+
+
+## 2026-07-20T11:43:16-05:00 — [STRATEGIC] [PROPOSED] [CLAIM] D7 round-10 vendoring surface: pub use at lib.rs + widget.rs (no semantic alias like Tabs→TabNav)
+
+Reason:
+Round-10 design memo D7: chose to surface the vendored `Sparkline` + `SparklineBar` via `pub use tornado_sparkline as sparkline;` at lib.rs + `pub use crate::sparkline::{Sparkline, SparklineBar};` at widget.rs WITHOUT a semantic rename — no `TabNav`-style alias. Rationale: Sparkline is already the canonical upstream verb and does not need a `TabNav`-style rename (the round-6 catch-up needed the rename because `Tabs` was reserved by upstream *and* by the previous direct import path, creating ambiguity; Sparkline carries no such collision). The mirror is 1:1 with upstream names; consumers reach `tornado::widget::Sparkline` directly. Pattern: the umbrella widget-rename alias is reserved for cases where the upstream name collides with a pre-existing alias or Path B; carry the rename ONLY when the collision exists. Round-6 catch-up is the canonical example requiring the rename; round 10 is the canonical example *not* requiring it.
+
+
+## 2026-07-20T11:43:19-05:00 — [STRATEGIC] [PROPOSED] [CLAIM] D8 round-10 cargo wiring: new crates/tornado-sparkline sibling + sparkline = ["dep:tornado-sparkline"] feature
+
+Reason:
+Round-10 design memo D8: chose to add crates/tornado-sparkline as a NEW sibling member of the workspace (matching the round-6 catch-up template). Workspace entries: root Cargo.toml adds "crates/tornado-sparkline" to the [workspace] members list + tornado-sparkline = { path = "crates/tornado-sparkline", version = "0.2.99" } to [workspace.dependencies]. Umbrella Cargo.toml adds tornado-sparkline = { workspace = true, optional = true } to [dependencies] + sparkline = ["dep:tornado-sparkline"] to [features].
+
+
+## 2026-07-20T11:43:58-05:00 — [STRATEGIC] [PROPOSED] [CLAIM] D9 round-10 ingestion: rolling 12-frame ring + tick_count % TASK_COMPLETE_EVERY == 0 (deterministic + MSRV-portable)
+
+Reason:
+Round-10 design memo D9: chose to ingest metrics via a deterministic 12-cell rolling window Vec<u64> of length SPARKLINE_RING_LEN, advanced by self.push_sparkline_metric(self.tick_count as u64) called from update(). Diagnostic: (a) MSRV portability — <integer>::is_multiple_of is stabilized in Rust 1.87.0 but the workspace pins rust-version = "1.85.0", so the modulo operator count % N == 0 is the only stable form (carries forward the round-8 constitutional hazard #1). (b) Deterministic across CI — tick_count is a u32 field advanced by update() once per loop iteration, so no Instant::now() involvement (carries forward the round-8 constitutional hazard #3). The 12-cell ring fits the footer right-flank 12-col slot exactly so Sparkline::new(&ring) renders one bar per cell. Pattern: update() test loops should tick the underlying state directly with explicit values never relying on wall-clock elapsed (see round-8 smoke_spinner_advances_in_title precedent + round-10 smoke_sparkline_metrics_advance_on_tick).
+

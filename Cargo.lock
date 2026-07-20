@@ -5985,6 +5985,7 @@ dependencies = [
  "ratatui",
  "tornado-hyperlink",
  "tornado-scrollview",
+ "tornado-sparkline",
  "tornado-spinner",
  "tornado-styles",
  "tornado-tabs",
@@ -6006,6 +6007,13 @@ version = "0.2.99"
 dependencies = [
  "ratatui",
  "rstest",
+]
+
+[[package]]
+name = "tornado-sparkline"
+version = "0.2.99"
+dependencies = [
+ "ratatui",
 ]
 
 [[package]]
