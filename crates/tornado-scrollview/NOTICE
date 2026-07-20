@@ -1,0 +1,76 @@
+tornado-scrollview
+
+This crate is a vendored copy of `tui-scrollview` v0.6.7 (a stateful
+scrolling view widget for the `ratatui` ecosystem), with one structural
+migration: the upstream v0.6.7 source declared dependencies on the
+unstable `ratatui-core` and `ratatui-widgets` subcrates (the
+ratatui 0.29-era split that was reverted in the merged `ratatui` 0.30
+release). In this fork, all those imports were rewritten to point at the
+unified `ratatui` 0.30 crate. All behaviour, public API, semantics, and
+tests are unchanged.
+
+Original source:
+  Repository:        https://github.com/ratatui/tui-widgets
+  Sub-crate path:    tui-scrollview/
+  Upstream crate:    tui-scrollview v0.6.7 on crates.io
+  Authors:           Josh McKinney (a.k.a. Joshka)
+  Copyright:         Josh McKinney
+  License:           MIT OR Apache-2.0 (your choice, dual)
+
+Local changes:
+  - Path-migration `ratatui_core::*` -> `ratatui::*`:
+      src/scroll_view.rs imports: 3 lines
+      src/scroll_view.rs tests imports: 1 line
+      src/state.rs imports: 1 line
+  - Path-migration `ratatui_widgets::*` -> `ratatui::*`:
+      src/scroll_view.rs imports: 1 line (Scrollbar, ScrollbarOrientation,
+                                          ScrollbarState from
+                                          ratatui_widgets::scrollbar to
+                                          ratatui::widgets)
+      src/scroll_view.rs tests inline use: 1 line (List, ListState from
+                                                   ratatui_widgets::list
+                                                   to ratatui::widgets)
+  - All `pub` items, `pub(crate)` fields, method bodies, struct layouts,
+    fluent-setter chains, and the entire 30+ unit test surface (using
+    `rstest` for table-driven cases) are unchanged.
+  - Crate renamed to `tornado-scrollview` for arniko workspace cohesion.
+  - Edition inherited from the arniko workspace (`edition = "2024"`).
+
+License faithfulness:
+  - LICENSE-MIT: copied verbatim from upstream
+    https://github.com/ratatui/tui-widgets/blob/main/LICENSE-MIT
+    (Josh McKinney copyright line preserved).
+  - LICENSE-APACHE: canonical Apache License 2.0 text with
+    "Copyright (c) Josh McKinney" line in the appendix, matching the
+    upstream notice format.
+  - Cargo.toml `license = "MIT OR Apache-2.0"` matches upstream's
+    `license.workspace = true` (the umbrella workspace declares both).
+
+Public-path parity with upstream:
+  - `tui_scrollview::ScrollView` -> `tornado_scrollview::ScrollView`
+  - `tui_scrollview::ScrollViewState` -> `tornado_scrollview::ScrollViewState`
+  - `tui_scrollview::ScrollbarVisibility` -> `tornado_scrollview::ScrollbarVisibility`
+  - All public methods (constructor, fluent setters, render* helpers,
+    StatefulWidget impls for both `ScrollView` and `&ScrollView`) are
+    unchanged. The vendored test module exercises the full upstream
+    surface -- the `#[rstest]` table-driven test for
+    `visible_scrollbars_honors_visibility_policy` and all visual symbol
+    assertions match upstream character-for-character.
+
+Test departures from upstream:
+  - None. The vendored `tests` modules (in both `scroll_view.rs` and
+    `state.rs`) compile and pass under `cargo test -p tornado-scrollview`
+    without any modification. The dev-dep `rstest = "0.18"` is preserved
+    so the table-driven tests run with their fixture/rstest macros intact.
+
+Co-composition with tornado's borrow-debris siblings:
+  - `tornado::widget::status_bar`: the foot of a scrolling log view.
+    Apps render the `ScrollView` into the upper area and pass
+    `Rect::new(0, area.height - 1, area.width, 1)` to `status_bar`.
+  - `tornado::styles::HyperlinkTarget`: scroll offsets map onto anchor
+    line indices. The visible viewport (via `state.page_size`) lets the
+    host app validate that an anchor row is in the visible band before
+    calling `frame.render_stateful_widget(&hyperlink_target_anchor, ...)`.
+  - `tornado::spinner::SpinnerState`: independent time-based animation
+    on the same Frame. State advances through `tick(dt)` regardless of
+    whether the user has scrolled.

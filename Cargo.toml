@@ -20,7 +20,12 @@ members = [
     # against the published crate. Patched below to fix that.
     "crates/anyrender_vello",
 
-    "crates/tui-shell",
+    "crates/tornado",
+    "crates/tornado-styles",
+    "crates/tornado-wrap",
+    "crates/tornado-hyperlink",
+    "crates/tornado-spinner",
+    "crates/tornado-scrollview",
     # Arniko SDK
     "crates/arniko",
     # Networking
@@ -141,6 +146,25 @@ futures-util   = "0.3.30"
 bitflags       = "2.8.0"
 slab           = "0.4.9"
 image          = { version = "0.25", default-features = false }
+# TUI rendering (workspace-wide, used by tornado + tornado-styles).
+ratatui        = "0.30"
+# ANSI styling crate (used by tornado-styles to bridge into ratatui styles).
+anstyle        = "1"
+# Word wrapping engine (used by tornado-wrap).
+textwrap       = "0.16"
+# Sibling crates
+tornado          = { path = "crates/tornado",          version = "0.2.99" }
+tornado-styles   = { path = "crates/tornado-styles",   version = "0.2.99" }
+tornado-wrap     = { path = "crates/tornado-wrap",     version = "0.2.99" }
+tornado-hyperlink = { path = "crates/tornado-hyperlink", version = "0.2.99" }
+tornado-spinner = { path = "crates/tornado-spinner", version = "0.2.99" }
+# Stateful scrolling view widget for ratatui. Vendored from
+# `tui-scrollview` v0.6.7 (Josh McKinney, dual MIT/Apache-2.0). The
+# upstream source declared deps on `ratatui-core`/`ratatui-widgets`
+# (unstable 0.29-era subcrates); all imports were rewritten to point
+# at the merged `ratatui` 0.30 in this fork. See crate NOTICE for the
+# exact line-by-line diff.
+tornado-scrollview = { path = "crates/tornado-scrollview", version = "0.2.99" }
 wuff           = "0.2"
 smol_str       = "0.3"
 rayon          = "1"

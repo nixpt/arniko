@@ -1,0 +1,25 @@
+[package]
+name = "tornado-spinner"
+version.workspace = true
+# Override workspace license ("MIT OR Apache-2.0") — the vendored source is
+# MIT (see LICENSE-MIT in this crate, matching upstream ratatui-cheese).
+license = "MIT"
+homepage.workspace = true
+repository.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+description = "Bubbletea-inspired spinner widget for ratatui — vendored from ratatui-cheese (Shashank Tomar, MIT)"
+categories = ["command-line-utilities", "command-line-interface"]
+
+[dependencies]
+# ratatui 0.30 is already pinned by the arniko workspace, so the vendored
+# spinner module compiles against the merged crate (no `ratatui_core`
+# split to migrate around). ratatui-cheese 0.7.0 in turn targets
+# ratatui = 0.30 — the source is already on the version we need.
+ratatui = { workspace = true }
+
+# NOTE: the upstream `SpinnerState` module imports `std::time::Duration`
+# but draws the interval table from a stand-alone `match` block. The
+# module has no `textwrap`/`anstyle`/third-party deps beyond `ratatui`,
+# so this crate does too. Re-running tests under `cargo test -p
+# tornado-spinner` exercises the full upstream test surface (29 tests).

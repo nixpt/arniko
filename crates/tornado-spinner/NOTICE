@@ -1,0 +1,62 @@
+tornado-spinner
+
+This crate is a vendored copy of `ratatui-cheese` v0.7.0 — specifically,
+the `crates/ratatui-cheese/src/spinner.rs` module — which provides a
+Bubbletea-inspired spinner widget for the `ratatui` ecosystem.
+
+Original source:
+  Repository: https://github.com/shashanktomar/ratatui-cheese
+  Sub-crate path: crates/ratatui-cheese (subcrate of a 2-crate workspace)
+  Upstream crate: ratatui-cheese v0.7.0 on crates.io
+  Authors:   Shashank Tomar
+  License:   MIT (declared in upstream Cargo.toml)
+
+Local changes:
+  - Module lifted verbatim into the new `crates/tornado-spinner/src/spinner.rs`
+    file under the arniko workspace. The vendored module has no internal
+    references to other ratatui-cheese widgets or utilities — it depends
+    only on `ratatui::buffer/Buffer`, `ratatui::layout/Rect`,
+    `ratatui::style::{Style, Styled}`, and `ratatui::widgets::{Widget,
+    StatefulWidget}` — so it ports without any rewiring beyond the
+    parent crate rename.
+  - Crate renamed to `tornado-spinner` for arniko workspace cohesion.
+  - Edition inherited from the arniko workspace (`edition = "2024"`).
+  - In the vendored code's inner doctest comments, the path
+    `use ratatui_cheese::spinner::{...}` was rewritten to
+    `use tornado_spinner::spinner::{...}` so the example in the rustdoc
+    links to this crate's actual public path. (The doctest is otherwise
+    valid because the underlying types are re-exported unchanged; the
+    path is the only difference.)
+
+License faithfulness:
+  - The upstream repository declares `license = "MIT"` in
+    `crates/ratatui-cheese/Cargo.toml` but does not ship a separate
+    LICENSE file at the repo root. We reproduce the canonical MIT
+    text here, attributing the copyright to "Shashank Tomar" for
+    2026 (the year the upstream crate was first published). Use of
+    the MIT text under the same terms as upstream is unaffected —
+    the verbatim text in this file is the same MIT template that
+    ships with reference MIT sources.
+
+Co-composition with tornado's event loop:
+  - `tornado::spinner::SpinnerState::tick(dt: Duration)` accepts the
+    elapsed time of one `run_app` loop iteration and advances frames
+    internally regardless of tick rate. The `TuiApp` shell can measure
+    `dt = tick_start.elapsed()` each iteration (see
+    `crates/tornado/src/lib.rs::run_loop`) and forward it to the
+    spinner state once per tick, keeping animation cadence stable
+    under variable host load.
+
+Public path parity with upstream:
+  - `ratatui_cheese::spinner::Spinner` → `tornado_spinner::spinner::Spinner`
+  - `ratatui_cheese::spinner::SpinnerState` → `tornado_spinner::spinner::SpinnerState`
+  - `ratatui_cheese::spinner::SpinnerType` → `tornado_spinner::spinner::SpinnerType`
+  - All public methods, signatures, frame tables, and intervals are
+    unchanged. The vendored test module exercises the full upstream
+    surface — 29 unit tests covering presets, state, tick progression,
+    wrapping, accumulation, and rendering. All pass under tornado's
+    ratatui 0.30 pin.
+
+Test departures from upstream:
+  - None. The vendored `tests` module compiles and passes under
+    `cargo test -p tornado-spinner` without modification.
