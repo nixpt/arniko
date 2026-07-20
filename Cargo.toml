@@ -21,32 +21,19 @@ members = [
     "crates/anyrender_vello",
 
     "crates/tornado",
-    "crates/tornado-sparkline",
     "crates/tornado-styles",
     "crates/tornado-wrap",
-    "crates/tornado-hyperlink",
-    "crates/tornado-scrollview",
     # Round 11: vendored List + StatefulWidget for List + ListState from
     # ratatui 0.30 itself (dual MIT/Apache-2.0). The canonical
     # StatefulWidget vendoring precedent — BOTH trait impls vendored
     # (no carve-out like round-6 Tabs). See
     # `crates/tornado-list/src/lib.rs` for the E0034 carve-out pattern.
     "crates/tornado-list",
-    # Round 12: vendored Popup widget from joshka/tui-popup (MIT).
-    # A simple popup with bordered box, title, body text, and optional
-    # drag-repositioning. Gated behind the umbrella's `popup` feature.
-    # See `crates/tornado-popup/NOTICE` for the license-mirror attribution.
-    "crates/tornado-popup",
-    # Round 13: vendored BigText widget from joshka/tui-big-text
-    # (MIT/Apache-2.0). Renders large pixel text using font8x8 glyphs.
-    # Gated behind the umbrella's `big-text` feature.
-    # See `crates/tornado-big-text/NOTICE` for the license-mirror attribution.
+    # Round 12-14: vendored popup, big-text, and tree widgets — now
+    # migrated to upstream crates (tui-popup, tui-tree-widget) or still
+    # vendored (big-text blocked on ratatui 0.29 update). See
+    # `crates/tornado-big-text/NOTICE` for license-mirror attribution.
     "crates/tornado-big-text",
-    # Round 14: vendored Tree widget from EdJoPaTo/tui-rs-tree-widget (MIT).
-    # A stateful tree widget with selection, folding, and scrollbar support.
-    # Gated behind the umbrella's `tree` feature.
-    # See `crates/tornado-tree-widget/NOTICE` for the license-mirror attribution.
-    "crates/tornado-tree-widget",
     # End-to-end example wiring every borrow-debris sibling into one TuiApp
     # (round 7 of the awesome-ratatui adoption series).
     "examples/scroll-log",
@@ -193,6 +180,13 @@ ratatui        = "0.30"
 # Bubbletea-inspired spinner widget for ratatui. Replaces the
 # vendored `crates/tornado-spinner` with the upstream crate.
 ratatui-cheese = "0.7"
+# ratatui subcrates — re-exported through the main `ratatui` crate.
+# Declared as workspace deps so community crates (tui-popup,
+# tui-tree-widget, tui-scrollview, hyperrat) can depend on them
+# directly instead of vendoring. Already transitive deps of
+# `ratatui = "0.30"` — adding them here is zero-cost.
+ratatui-core    = "0.1"
+ratatui-widgets = "0.3"
 # ANSI styling crate (used by tornado-styles to bridge into ratatui styles).
 anstyle        = "1"
 # Word wrapping engine (used by tornado-wrap).
@@ -207,25 +201,12 @@ unicode-width  = "0.1"
 tornado          = { path = "crates/tornado",          version = "0.2.99" }
 tornado-styles   = { path = "crates/tornado-styles",   version = "0.2.99" }
 tornado-wrap     = { path = "crates/tornado-wrap",     version = "0.2.99" }
-tornado-hyperlink = { path = "crates/tornado-hyperlink", version = "0.2.99" }
-# Stateful scrolling view widget for ratatui. Vendored from
-# `tui-scrollview` v0.6.7 (Josh McKinney, dual MIT/Apache-2.0). The
-# upstream source declared deps on `ratatui-core`/`ratatui-widgets`
-# (unstable 0.29-era subcrates); all imports were rewritten to point
-# at the merged `ratatui` 0.30 in this fork. See crate NOTICE for the
-# exact line-by-line diff.
-tornado-scrollview = { path = "crates/tornado-scrollview", version = "0.2.99" }
-# Round 10: Sparkline + SparklineBar widget vendored from
-# ratatui 0.30 itself (dual MIT/Apache-2.0). The widget is
-# fully **stateless** — only the `Widget` impl is vendored
-# (no `SparklineState` upstream either). Composition with
-# the existing `status_bar` (`tornado::widget::status_bar`)
-# is the headlining use case (round-10 example slots a
-# 12-col rolling-c sparkline into the right flank of the
-# existing 2-row footer). Gated behind the `sparkline`
-# feature. See `crates/tornado-sparkline/NOTICE` for the
-# license-mirror attribution.
-tornado-sparkline = { path = "crates/tornado-sparkline", version = "0.2.99" }
+# Community TUI crates — replace vendored copies with upstream.
+tui-popup       = "0.7"
+tui-tree-widget = "0.24"
+tui-scrollview  = "0.6"
+hyperrat        = "0.1"
+
 # Round 11: vendored List + StatefulWidget for List + ListState from
 # ratatui 0.30 itself (dual MIT/Apache-2.0). Gated behind the
 # umbrella's `list` feature. See `crates/tornado-list/src/lib.rs`
@@ -235,17 +216,11 @@ tornado-list = { path = "crates/tornado-list", version = "0.2.99" }
 # A simple popup with bordered box, title, body text, and optional
 # drag-repositioning. Gated behind the umbrella's `popup` feature.
 # See `crates/tornado-popup/NOTICE` for the license-mirror attribution.
-tornado-popup = { path = "crates/tornado-popup", version = "0.2.99" }
 # Round 13: vendored BigText widget from joshka/tui-big-text
 # (MIT/Apache-2.0). Renders large pixel text using font8x8 glyphs.
-# Gated behind the umbrella's `big-text` feature.
-# See `crates/tornado-big-text/NOTICE` for the license-mirror attribution.
+# Gated behind the umbrella's `big-text` feature. Still vendored
+# because upstream is stuck on ratatui 0.29.
 tornado-big-text = { path = "crates/tornado-big-text", version = "0.2.99" }
-# Round 14: vendored Tree widget from EdJoPaTo/tui-rs-tree-widget (MIT).
-# A stateful tree widget with selection, folding, and scrollbar support.
-# Gated behind the umbrella's `tree` feature.
-# See `crates/tornado-tree-widget/NOTICE` for the license-mirror attribution.
-tornado-tree-widget = { path = "crates/tornado-tree-widget", version = "0.2.99" }
 wuff           = "0.2"
 smol_str       = "0.3"
 rayon          = "1"
