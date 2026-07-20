@@ -24,6 +24,7 @@ members = [
     "crates/tornado-styles",
     "crates/tornado-wrap",
     "crates/tornado-hyperlink",
+    "crates/tornado-spinner",
     # Arniko SDK
     "crates/arniko",
     # Networking
@@ -154,7 +155,8 @@ textwrap       = "0.16"
 tornado          = { path = "crates/tornado",          version = "0.2.99" }
 tornado-styles   = { path = "crates/tornado-styles",   version = "0.2.99" }
 tornado-wrap     = { path = "crates/tornado-wrap",     version = "0.2.99" }
-tornado-hyperlink= { path = "crates/tornado-hyperlink",version = "0.2.99" }
+tornado-hyperlink = { path = "crates/tornado-hyperlink", version = "0.2.99" }
+tornado-spinner = { path = "crates/tornado-spinner", version = "0.2.99" }
 wuff           = "0.2"
 smol_str       = "0.3"
 rayon          = "1"

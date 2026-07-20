@@ -5919,6 +5919,7 @@ dependencies = [
  "crossterm 0.28.1",
  "ratatui",
  "tornado-hyperlink",
+ "tornado-spinner",
  "tornado-styles",
  "tornado-wrap",
  "tracing",
@@ -5930,6 +5931,13 @@ version = "0.2.99"
 dependencies = [
  "ratatui",
  "textwrap",
+]
+
+[[package]]
+name = "tornado-spinner"
+version = "0.2.99"
+dependencies = [
+ "ratatui",
 ]
 
 [[package]]

@@ -7,6 +7,8 @@ pub use crate::styles::{
 };
 #[cfg(feature = "hyperlink")]
 pub use crate::hyperlink::Link;
+#[cfg(feature = "spinner")]
+pub use crate::spinner::Spinner;
 #[cfg(feature = "styles")]
 use crate::styles::Style as AnsiStyle;
 

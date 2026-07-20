@@ -12,6 +12,9 @@ pub use tornado_wrap as wrap;
 #[cfg(feature = "hyperlink")]
 pub use tornado_hyperlink as hyperlink;
 
+#[cfg(feature = "spinner")]
+pub use tornado_spinner as spinner;
+
 use ratatui::Frame;
 use std::time::Duration;
 
