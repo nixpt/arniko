@@ -3337,6 +3337,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "multi-tab-log"
+version = "0.1.0"
+dependencies = [
+ "crossterm 0.28.1",
+ "ratatui",
+ "tornado",
+]
+
+[[package]]
 name = "naga"
 version = "27.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
