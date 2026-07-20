@@ -18,11 +18,11 @@ path = "src/main.rs"
 # This is the first end-to-end consumer that exercises the entire
 # shipped crate set as a single TuiApp.
 #
-# Path-only (no `workspace = true`) to sidestep the version mismatch
-# between tornado's declared `0.1.0` and the workspace's `0.2.99`
-# pin — the same path is resolved, but path-deps do not trigger the
-# workspace SemVer check.
-tornado = { path = "../../crates/tornado", features = [
+# Now uses `workspace = true`: `crates/tornado/Cargo.toml` declares
+# `version.workspace = true`, which inherits the umbrella's `0.2.99`.
+# The previous path-only dep was the round-7 collision #1 workaround
+# (workspace pin vs crates/tornado declared version).
+tornado = { workspace = true, features = [
     "styles",
     "wrap",
     "hyperlink",
