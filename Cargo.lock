@@ -5970,7 +5970,7 @@ dependencies = [
 
 [[package]]
 name = "tornado"
-version = "0.1.0"
+version = "0.2.99"
 dependencies = [
  "crossterm 0.28.1",
  "ratatui",
