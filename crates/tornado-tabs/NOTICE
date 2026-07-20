@@ -1,0 +1,75 @@
+tornado-tabs
+
+This crate is a vendored copy of `tui-tabs` v0.1.1 (a tab navigation
+widget for `ratatui` with individually bordered boxes and rounded
+junction corners), with one structural migration: the upstream
+crate declared dependencies on the unstable `ratatui-core` subcrate
+(the ratatui 0.29-era split), which has been reverted in the merged
+`ratatui` 0.30 release. In this fork, all upstream `ratatui_core::*`
+imports were rewritten to point at the unified `ratatui::*` crate.
+All behaviour, public API, semantics, and tests are unchanged.
+
+Original source:
+  Repository:        https://github.com/jharsono/tui-tabs
+  Crate type:        single-crate repo (no umbrella / sub-crate)
+  Upstream crate:    tui-tabs v0.1.1 on crates.io
+  Authors:           Josh Harsono
+  Copyright:         2026 Josh Harsono
+  License:           MIT OR Apache-2.0 (your choice, dual)
+
+Local changes:
+  - Path-migration `ratatui_core::*` -> `ratatui::*`:
+      src/tabs.rs main `use` block: 1 line (covering
+      buffer::Buffer, layout::Rect, style::{Modifier, Style},
+      symbols, widgets::Widget).
+  - The vendored crate tests in `src/tabs.rs` have a `use
+    ratatui_core::{buffer::Buffer, layout::Rect};` block that was
+    rewritten to `use ratatui::{buffer::Buffer, layout::Rect};`.
+  - All `pub` items, all private fields (`tabs`, `selected`,
+    `style`, `highlight_style`, `highlight_bold`, `border_style`,
+    `indicator`, `border_set`), all constructor and fluent-setter
+    chains, all widget render bytes, and the entire 11-test surface
+    (empty_tabs, insufficient_height, single_tab, inactive_tab,
+    indicator, no_indicator, overflow, square_borders,
+    tab_width, two_active) are unchanged character-for-character.
+  - Crate renamed to `tornado-tabs` for arniko workspace cohesion.
+  - Edition inherited from the arniko workspace (`edition = "2024"`).
+
+License faithfulness:
+  - LICENSE-MIT: copied verbatim from upstream
+    https://github.com/jharsono/tui-tabs/blob/main/LICENSE-MIT
+    (Josh Harsono copyright line + boilerplate preserved).
+  - LICENSE-APACHE: canonical Apache 2.0 text with "Copyright 2026
+    Josh Harsono" in the appendix boilerplate, matching upstream
+    verbatim.
+  - Cargo.toml `license.workspace = true` inherits the arniko
+    workspace `MIT OR Apache-2.0` matching upstream's declared
+    `license = "MIT OR Apache-2.0"`.
+
+Public-path parity with upstream:
+  - `tui_tabs::TabNav` -> `tornado_tabs::TabNav`
+  - All public methods (constructor + 6 fluent setters +
+    &Self/Widget::render) are unchanged. The vendored 11-test
+    surface compiles and passes under `cargo test -p tornado-tabs`
+    without any modification.
+
+Test departures from upstream:
+  - The upstream dev-dep `color-eyre = "0.6"` was used only by the
+    vendored `examples/` (not vendored here), and
+    `ratatui = { version = "0.30", features = ["crossterm"] }` was
+    used as a dev-dep for the examples. Neither is needed by the
+    lib's test surface alone, so both are intentionally omitted
+    from `crates/tornado-tabs/Cargo.toml`'s `[dev-dependencies]`.
+
+Co-composition with tornado's borrow-debris siblings:
+  - `tornado::scroll::ScrollView`: nav-bar tabs stacked above a
+    scrolling log view. `TabNav::select(idx)` and scroll offset
+    are independent state.
+  - `tornado::spinner::SpinnerState`: when on a "loading" tab, the
+    indicator symbol `▸` (or a custom symbol via
+    `TabNav::indicator(symbol)`) coexists with a spinner rendered
+    to the right of the nav bar.
+  - `tornado::hyperlink::Link`: when a tab label is also a link
+    target, apps layer `TabNav` + `Link` on the same area by
+    rendering Tabs first, then rendering the Link on top of the
+    active tab label.

@@ -1,0 +1,23 @@
+[package]
+name = "tornado-tabs"
+version.workspace = true
+# Upstream `tui-tabs` uses dual `MIT OR Apache-2.0` — matches the arniko
+# workspace default. No override needed.
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+description = "Bordered/rounded tab navigation widget for ratatui — vendored from tui-tabs v0.1.1 (Josh Harsono, MIT OR Apache-2.0)"
+categories = ["command-line-utilities", "command-line-interface"]
+
+[dependencies]
+# Upstream v0.1.1 declared `ratatui-core = "0.1.0"` (the unstable 0.29-era
+# subcrate split). Tornado ships merged `ratatui = "0.30"`, so the vendored
+# source is migrated to import from the merged `ratatui::*` surfaces —
+# see crates/tornado-tabs/NOTICE for the line-by-line diff.
+ratatui = { workspace = true }
+
+# Upstream tests don't need dev-deps beyond the lib itself. `color-eyre`
+# and `ratatui`'s `crossterm` feature from the upstream dev-deps were
+# only used by `examples/` (not vendored here).

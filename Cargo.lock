@@ -5969,6 +5969,7 @@ dependencies = [
  "tornado-scrollview",
  "tornado-spinner",
  "tornado-styles",
+ "tornado-tabs",
  "tornado-wrap",
  "tracing",
 ]
@@ -6001,6 +6002,13 @@ name = "tornado-styles"
 version = "0.2.99"
 dependencies = [
  "anstyle",
+ "ratatui",
+]
+
+[[package]]
+name = "tornado-tabs"
+version = "0.2.99"
+dependencies = [
  "ratatui",
 ]
 

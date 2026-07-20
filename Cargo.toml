@@ -26,6 +26,7 @@ members = [
     "crates/tornado-hyperlink",
     "crates/tornado-spinner",
     "crates/tornado-scrollview",
+    "crates/tornado-tabs",
     # Arniko SDK
     "crates/arniko",
     # Networking
@@ -165,6 +166,13 @@ tornado-spinner = { path = "crates/tornado-spinner", version = "0.2.99" }
 # at the merged `ratatui` 0.30 in this fork. See crate NOTICE for the
 # exact line-by-line diff.
 tornado-scrollview = { path = "crates/tornado-scrollview", version = "0.2.99" }
+# Bordered tab navigation widget for ratatui. Vendored from `tui-tabs`
+# v0.1.1 (Josh Harsono, dual MIT/Apache-2.0). Gated behind the
+# `tabs` feature on tornado. Upstream declared deps on the unstable
+# `ratatui-core` 0.29-era subcrate; vendor source was migrated to
+# the merged `ratatui = 0.30` (see crates/tornado-tabs/NOTICE for
+# the line-by-line diff).
+tornado-tabs = { path = "crates/tornado-tabs", version = "0.2.99" }
 wuff           = "0.2"
 smol_str       = "0.3"
 rayon          = "1"

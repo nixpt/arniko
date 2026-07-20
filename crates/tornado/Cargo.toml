@@ -32,11 +32,14 @@ tornado-hyperlink = { workspace = true, optional = true }
 tornado-spinner = { workspace = true, optional = true }
 # Optional — stateful scrolling view for ratatui, vendored from
 # tui-scrollview v0.6.7 (Josh McKinney, dual MIT/Apache-2.0). Gated
-# behind the `scroller` feature. Renders a buffer larger than the
-# viewport, lets the user scroll offset / page, and renders the visible
-# slice with optional scrollbars. See crates/tornado-scrollview/NOTICE
+# behind the `scroller` feature. See crates/tornado-scrollview/NOTICE
 # for the upstream -> arniko path migration.
 tornado-scrollview = { workspace = true, optional = true }
+# Optional — bordered tab navigation widget for ratatui, vendored from
+# tui-tabs v0.1.1 (Josh Harsono, dual MIT/Apache-2.0). Gated behind
+# the `tabs` feature. See crates/tornado-tabs/NOTICE for the
+# upstream -> arniko path migration.
+tornado-tabs = { workspace = true, optional = true }
 
 [features]
 default = []
@@ -45,6 +48,7 @@ wrap = ["dep:tornado-wrap"]
 hyperlink = ["dep:tornado-hyperlink"]
 spinner = ["dep:tornado-spinner"]
 scroller = ["dep:tornado-scrollview"]
+tabs = ["dep:tornado-tabs"]
 
 # Integration tests — each gated on the feature it exercises, so
 # consumers who don't enable that feature don't pay for the test
@@ -70,3 +74,9 @@ required-features = ["spinner"]
 [[test]]
 name = "scrollview_integration"
 required-features = ["scroller"]
+
+# tornado-tabs: tab selection + boundary handling + indicator disable +
+# widget access through the warehouse-side re-export.
+[[test]]
+name = "tabs_integration"
+required-features = ["tabs"]
