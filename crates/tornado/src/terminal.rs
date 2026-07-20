@@ -7,7 +7,7 @@ use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
 use std::io::{self, Stdout};
 
-/// Type alias for the standard Exosphere TUI terminal
+/// Type alias for the standard terminal
 pub type ExoTerminal = Terminal<CrosstermBackend<Stdout>>;
 
 /// Initialize a crossterm terminal with alternate screen and mouse capture.

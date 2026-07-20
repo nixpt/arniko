@@ -22,7 +22,7 @@ and a headless HTML+CSS layout engine extracted from the Servo/Firefox lineage.
 | `debug_timer` | Phase timing instrumentation |
 | `accesskit_xplat` | Cross-platform accessibility (AccessKit) |
 | `anyrender_vello` | Vello-backed anyrender implementation |
-| `tui-shell` | Ratatui/crossterm TUI shell |
+| `tornado` | Ratatui/crossterm TUI shell (replaces `tui-shell`) |
 
 ## Feature Flags
 

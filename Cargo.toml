@@ -20,7 +20,7 @@ members = [
     # against the published crate. Patched below to fix that.
     "crates/anyrender_vello",
 
-    "crates/tui-shell",
+    "crates/tornado",
     # Arniko SDK
     "crates/arniko",
     # Networking
