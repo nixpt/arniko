@@ -3,6 +3,12 @@ pub mod terminal;
 pub mod theme;
 pub mod widget;
 
+#[cfg(feature = "styles")]
+pub use tornado_styles as styles;
+
+#[cfg(feature = "wrap")]
+pub use tornado_wrap as wrap;
+
 use ratatui::Frame;
 use std::time::Duration;
 

@@ -21,6 +21,8 @@ members = [
     "crates/anyrender_vello",
 
     "crates/tornado",
+    "crates/tornado-styles",
+    "crates/tornado-wrap",
     # Arniko SDK
     "crates/arniko",
     # Networking
@@ -141,6 +143,16 @@ futures-util   = "0.3.30"
 bitflags       = "2.8.0"
 slab           = "0.4.9"
 image          = { version = "0.25", default-features = false }
+# TUI rendering (workspace-wide, used by tornado + tornado-styles).
+ratatui        = "0.30"
+# ANSI styling crate (used by tornado-styles to bridge into ratatui styles).
+anstyle        = "1"
+# Word wrapping engine (used by tornado-wrap).
+textwrap       = "0.16"
+# Sibling crates
+tornado        = { path = "crates/tornado",        version = "0.2.99" }
+tornado-styles = { path = "crates/tornado-styles", version = "0.2.99" }
+tornado-wrap   = { path = "crates/tornado-wrap",   version = "0.2.99" }
 wuff           = "0.2"
 smol_str       = "0.3"
 rayon          = "1"

@@ -1,7 +1,17 @@
 #![allow(clippy::manual_is_multiple_of)]
 
+#[cfg(feature = "styles")]
+pub use crate::styles::{
+    HyperlinkTarget as AnsiHyperlinkTarget, anstyle_to_ratatui_color as ansi_color,
+    style_into_ratatui as ansi_to_style,
+};
+#[cfg(feature = "styles")]
+use crate::styles::Style as AnsiStyle;
+
 use ratatui::style::Style;
 use ratatui::text::Line;
+#[cfg(feature = "styles")]
+use ratatui::text::Span;
 use ratatui::widgets::{Block, Borders, Paragraph};
 
 use crate::theme::RatatuiThemeColors;
@@ -58,4 +68,33 @@ pub fn status_bar<'a>(
     Paragraph::new(line)
         .style(bar_style)
         .block(Block::default().borders(Borders::TOP).border_style(Style::default().fg(theme.border)))
+}
+
+// ─── ANSI ↔ ratatui bridge helpers (feature: `styles`) ────────────────────
+//
+// These helpers demonstrate the `tornado-styles` bridge in use inside
+// `tornado::widget`. They produce ready-to-render ratatui primitives from a
+// plain `&str` plus an `anstyle::Style`, which is the typical shape of text
+// that has been styled by an upstream library (markdown, man pages, pipes,
+// etc.) before it reaches the TUI shell.
+
+/// Wrap a single string in an ANSI `Style` and return it as a ratatui `Span`.
+///
+/// Effectively `Span::styled(text, style_into_ratatui(ansi))`. Convenient for
+/// TUI callers that already have an `anstyle::Style` in hand and want to drop
+/// the styled text into a [`Line`] or [`ratatui::widgets::Paragraph`].
+#[cfg(feature = "styles")]
+pub fn styled_span<'a>(text: &'a str, ansi: AnsiStyle) -> Span<'a> {
+    Span::styled(text, crate::styles::style_into_ratatui(ansi))
+}
+
+/// Wrap a single string in an ANSI `Style` and return it as a one-span
+/// ratatui `Line`. Useful when you want to render a single styled phrase in
+/// isolation (e.g. a status-bar capsule, a header chip, an inline indicator).
+#[cfg(feature = "styles")]
+pub fn styled_line<'a>(text: &'a str, ansi: AnsiStyle) -> Line<'a> {
+    Line::from(vec![Span::styled(
+        text,
+        crate::styles::style_into_ratatui(ansi),
+    )])
 }
