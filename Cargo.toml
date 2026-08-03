@@ -23,11 +23,20 @@ members = [
     "crates/tornado",
     "crates/tornado-styles",
     "crates/tornado-wrap",
-    # All vendored widget crates have been replaced with upstream deps.
-    # Remaining in-house crates: tornado-styles, tornado-wrap.
+    # Most vendored widget crates have been replaced with upstream deps.
+    # Remaining in-house crates: tornado-styles, tornado-wrap, plus two
+    # genuinely-vendored widgets with no drop-in upstream equivalent:
+    # tornado-barchart (original, not vendored from elsewhere) and
+    # tornado-textinput (vendored from xai-ratatui-textarea, Apache-2.0 —
+    # ratatui ships no built-in text-area widget).
+    "crates/tornado-barchart",
+    "crates/tornado-textinput",
     # End-to-end example wiring every borrow-debris sibling into one TuiApp
     # (round 7 of the awesome-ratatui adoption series).
     "examples/scroll-log",
+    # command-palette: TextArea filter input + List filtered results,
+    # composing the `textinput` and `list` umbrella features together.
+    "examples/command-palette",
     # Arniko SDK
     "crates/arniko",
     # Networking
@@ -189,6 +198,8 @@ textwrap       = "0.16"
 tornado          = { path = "crates/tornado",          version = "0.2.99" }
 tornado-styles   = { path = "crates/tornado-styles",   version = "0.2.99" }
 tornado-wrap     = { path = "crates/tornado-wrap",     version = "0.2.99" }
+tornado-barchart  = { path = "crates/tornado-barchart",  version = "0.2.99" }
+tornado-textinput = { path = "crates/tornado-textinput", version = "0.2.99" }
 # Community TUI crates — replace vendored copies with upstream.
 tui-popup       = "0.7"
 tui-tree-widget = "0.24"
@@ -197,6 +208,11 @@ hyperrat        = "0.1"
 # BigText widget from tui-big-text (MIT/Apache-2.0). Replaces the
 # vendored `tornado-big-text`.
 tui-big-text = "0.8"
+# Scrollbar widget used by tornado-textinput's vendored TextArea render
+# path (optional scroll indicator).
+tui-scrollbar = "0.2"
+unicode-width = "0.2"
+unicode-segmentation = "1"
 wuff           = "0.2"
 smol_str       = "0.3"
 rayon          = "1"
