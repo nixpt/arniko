@@ -20,3 +20,7 @@
 tcp_loopback.rs.bak
 .newnmv
 command.sh
+
+# Agent worktrees + per-agent session state (zorro precedent).
+# Worktrees are created at .claude/worktrees/<name>/ and must never be committed.
+.claude/
