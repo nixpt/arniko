@@ -17,6 +17,10 @@ setting that ticket's `Status: Done` + a `## Resolution` paragraph (RULES §1).
       `cargo publish` from the current tree does the wrong thing.
 - [ ] **ARNIKO-003** — repo is private, 11 crates (~609 KB of source) are public and
       **irrevocable**. Captain to confirm which was intended.
+- [ ] **ARNIKO-007** — `main` CI is red and has been for 3+ runs (`cargo audit`: 4
+      unfixed advisories; `fmt + clippy`: separate failure). Everything downstream is
+      **skipped**, so `main` has no passing build/test signal — which means red stops
+      carrying information on every PR.
 
 ## P2 — dependency strategy
 
@@ -36,7 +40,8 @@ setting that ticket's `Status: Done` + a `## Resolution` paragraph (RULES §1).
 
 ## Suggested order
 
-`ARNIKO-003` (decision, unblocks nothing but cheap) → `ARNIKO-001` (records the map)
+`ARNIKO-007` (restore a real CI signal — everything else is unverifiable without it)
+→ `ARNIKO-003` (decision, cheap) → `ARNIKO-001` (records the map)
 → `ARNIKO-002` (closes the silent-substitution hazard) → `ARNIKO-004` (fork-vs-upstream
 call) → `ARNIKO-006` (migrate consumers) → `ARNIKO-005` (tidy).
 
