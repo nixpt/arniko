@@ -33,8 +33,8 @@ use ratatui::layout::{Rect, Size};
 use ratatui::text::Line;
 use ratatui::widgets::Paragraph;
 
-use tui_scrollview::{ScrollView, ScrollViewState};
 use tornado_styles::HyperlinkTarget;
+use tui_scrollview::{ScrollView, ScrollViewState};
 
 /// One row in a [`TabLog`]'s virtual buffer.
 ///
@@ -185,9 +185,7 @@ impl TabLog {
     /// `None` while the top row has no URL set.
     pub fn top_anchor(&self) -> Option<&HyperlinkTarget> {
         let y = self.scroll_state.offset().y as usize;
-        self.hyperlinks
-            .iter()
-            .find(|target| target.line_index == y)
+        self.hyperlinks.iter().find(|target| target.line_index == y)
     }
 
     /// Scroll offset to the bottom if the user has not manually
@@ -242,7 +240,12 @@ mod tests {
     fn push_row_and_rebuild_assigns_ids_and_anchors() {
         let mut log = TabLog::new(80, 200);
 
-        log.push_row("t1".into(), "INFO".into(), "first".into(), Some("https://a/1".into()));
+        log.push_row(
+            "t1".into(),
+            "INFO".into(),
+            "first".into(),
+            Some("https://a/1".into()),
+        );
         log.push_row("t2".into(), "INFO".into(), "second".into(), None);
         log.push_row(
             "t3".into(),
@@ -259,15 +262,28 @@ mod tests {
         assert_eq!(anchors[0].id, 1);
         assert_eq!(anchors[0].line_index, 0);
         assert_eq!(anchors[0].url, "https://a/1");
-        assert_eq!(anchors[1].id, 3, "anchor ids are sequential across the whole stream");
+        assert_eq!(
+            anchors[1].id, 3,
+            "anchor ids are sequential across the whole stream"
+        );
         assert_eq!(anchors[1].line_index, 2);
     }
 
     #[test]
     fn top_anchor_calculates_correct_offset() {
         let mut log = TabLog::new(80, 200);
-        log.push_row("t1".into(), "INFO".into(), "row-zero".into(), Some("https://a/0".into()));
-        log.push_row("t1".into(), "INFO".into(), "row-one".into(), Some("https://a/1".into()));
+        log.push_row(
+            "t1".into(),
+            "INFO".into(),
+            "row-zero".into(),
+            Some("https://a/0".into()),
+        );
+        log.push_row(
+            "t1".into(),
+            "INFO".into(),
+            "row-one".into(),
+            Some("https://a/1".into()),
+        );
         log.rebuild_buffer();
 
         // Initial state: offset (0, 0) → anchor at line_index 0.
@@ -276,7 +292,8 @@ mod tests {
         assert_eq!(top.id, 1);
 
         // Scroll down past the populated prefix; no anchor matches line_index=200.
-        log.scroll_state_mut().set_offset(ratatui::layout::Position::new(0, 200));
+        log.scroll_state_mut()
+            .set_offset(ratatui::layout::Position::new(0, 200));
         assert!(log.top_anchor().is_none(), "no anchor at line_index 200");
     }
 

@@ -143,7 +143,10 @@ impl<'a> RtOptions<'a> {
     }
 
     pub fn line_ending(self, line_ending: LineEnding) -> Self {
-        Self { line_ending, ..self }
+        Self {
+            line_ending,
+            ..self
+        }
     }
 
     pub fn width(self, width: usize) -> Self {
@@ -151,27 +154,45 @@ impl<'a> RtOptions<'a> {
     }
 
     pub fn initial_indent(self, initial_indent: Line<'a>) -> Self {
-        Self { initial_indent, ..self }
+        Self {
+            initial_indent,
+            ..self
+        }
     }
 
     pub fn subsequent_indent(self, subsequent_indent: Line<'a>) -> Self {
-        Self { subsequent_indent, ..self }
+        Self {
+            subsequent_indent,
+            ..self
+        }
     }
 
     pub fn break_words(self, break_words: bool) -> Self {
-        Self { break_words, ..self }
+        Self {
+            break_words,
+            ..self
+        }
     }
 
     pub fn word_separator(self, word_separator: WordSeparator) -> Self {
-        Self { word_separator, ..self }
+        Self {
+            word_separator,
+            ..self
+        }
     }
 
     pub fn wrap_algorithm(self, wrap_algorithm: WrapAlgorithm) -> Self {
-        Self { wrap_algorithm, ..self }
+        Self {
+            wrap_algorithm,
+            ..self
+        }
     }
 
     pub fn word_splitter(self, word_splitter: WordSplitter) -> Self {
-        Self { word_splitter, ..self }
+        Self {
+            word_splitter,
+            ..self
+        }
     }
 }
 
@@ -506,7 +527,11 @@ mod tests {
         let line = Line::from(sample);
         let lines = [line];
         let wrapped = word_wrap_lines_borrowed(&lines, 40);
-        let joined: String = wrapped.iter().map(ToString::to_string).collect::<Vec<_>>().join("\n");
+        let joined: String = wrapped
+            .iter()
+            .map(ToString::to_string)
+            .collect::<Vec<_>>()
+            .join("\n");
         assert_eq!(
             joined,
             "Years passed, and Willowmere thrived\nin peace and friendship. Mira’s herb\ngarden flourished with both ordinary and\nenchanted plants, and travelers spoke\nof the kindness of the woman who tended\nthem."

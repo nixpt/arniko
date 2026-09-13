@@ -4,8 +4,8 @@ use kurbo::{Affine, Rect};
 use peniko::{Color, Fill, ImageBrush, ImageData};
 use rustc_hash::FxHashMap;
 use std::sync::{
-    atomic::{self, AtomicU64},
     Arc,
+    atomic::{self, AtomicU64},
 };
 use vello::{
     AaConfig, AaSupport, RenderParams, Renderer as VelloRenderer, RendererOptions,
@@ -16,7 +16,7 @@ use wgpu_context::{
     DeviceHandle, SurfaceRenderer, SurfaceRendererConfiguration, TextureConfiguration, WGPUContext,
 };
 
-use crate::{CustomPaintSource, VelloScenePainter, DEFAULT_THREADS};
+use crate::{CustomPaintSource, DEFAULT_THREADS, VelloScenePainter};
 
 /// An overlay scene to composite on top of the shell scene during rendering.
 /// Used for zero-copy rendering of web content into the browser chrome.
@@ -389,12 +389,22 @@ impl WindowRenderer for VelloWindowRenderer {
                     Affine::IDENTITY,
                     clip_rect,
                 );
-                self.scene
-                    .fill(Fill::NonZero, overlay.transform, &image_brush, None, &bounds);
+                self.scene.fill(
+                    Fill::NonZero,
+                    overlay.transform,
+                    &image_brush,
+                    None,
+                    &bounds,
+                );
                 self.scene.pop_layer();
             } else {
-                self.scene
-                    .fill(Fill::NonZero, overlay.transform, &image_brush, None, &bounds);
+                self.scene.fill(
+                    Fill::NonZero,
+                    overlay.transform,
+                    &image_brush,
+                    None,
+                    &bounds,
+                );
             }
         }
         timer.record_time("cmd");
@@ -430,9 +440,7 @@ impl WindowRenderer for VelloWindowRenderer {
         timer.record_time("present");
 
         // Poll without blocking — GPU work is pipelined with presentation
-        let _ = render_surface
-            .device()
-            .poll(wgpu::PollType::Poll);
+        let _ = render_surface.device().poll(wgpu::PollType::Poll);
 
         timer.record_time("wait");
         timer.print_times("vello: ");

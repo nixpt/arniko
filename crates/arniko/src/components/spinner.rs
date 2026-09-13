@@ -137,11 +137,7 @@ mod tests {
                 Spinner::new().size(SpinnerSize::Lg).class("flex-center"),
                 &["arniko-spinner-lg", "flex-center"],
             ),
-            (
-                "Default unwrapped",
-                Spinner::new(),
-                &["arniko-spinner"],
-            ),
+            ("Default unwrapped", Spinner::new(), &["arniko-spinner"]),
         ];
         for (label, spinner, expected_frags) in cases {
             let html = spinner.render();

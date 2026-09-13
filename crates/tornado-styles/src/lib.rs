@@ -182,9 +182,8 @@ mod tests {
         let plain = RStyle::default();
         assert_ne!(got, plain, "effects should not be the default style");
         // Reconstruct with the matching modifier set.
-        let expected = RStyle::default().add_modifier(
-            Modifier::CROSSED_OUT | Modifier::DIM | Modifier::UNDERLINED,
-        );
+        let expected = RStyle::default()
+            .add_modifier(Modifier::CROSSED_OUT | Modifier::DIM | Modifier::UNDERLINED);
         assert_eq!(got, expected);
     }
 

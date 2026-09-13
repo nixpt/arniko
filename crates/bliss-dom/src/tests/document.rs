@@ -35,7 +35,7 @@ fn test_create_text_node_and_get_content() {
 
     let text_node = mutator.create_text_node("Hello, world!");
     assert!(mutator.doc.nodes.get(text_node).is_some());
-    
+
     if let Some(node) = mutator.doc.nodes.get(text_node) {
         if let Some(text_data) = node.text_data() {
             assert_eq!(text_data.content, "Hello, world!");
@@ -73,7 +73,7 @@ fn test_set_and_get_attribute() {
 
     let elem = mutator.create_element(qual_name!("div"), vec![]);
     mutator.set_attribute(elem, qual_name!("id"), "my-element");
-    
+
     if let Some(node) = mutator.doc.nodes.get(elem) {
         assert_eq!(node.attr(local_name!("id")), Some("my-element"));
     } else {
@@ -89,11 +89,11 @@ fn test_set_and_clear_attribute() {
 
     let elem = mutator.create_element(qual_name!("div"), vec![]);
     mutator.set_attribute(elem, qual_name!("class"), "active");
-    
+
     if let Some(node) = mutator.doc.nodes.get(elem) {
         assert_eq!(node.attr(local_name!("class")), Some("active"));
     }
-    
+
     mutator.clear_attribute(elem, qual_name!("class"));
     if let Some(node) = mutator.doc.nodes.get(elem) {
         assert_eq!(node.attr(local_name!("class")), None);
@@ -110,7 +110,7 @@ fn test_multiple_attributes() {
     mutator.set_attribute(elem, qual_name!("id"), "test");
     mutator.set_attribute(elem, qual_name!("class"), "foo bar");
     mutator.set_attribute(elem, qual_name!("title"), "My Title");
-    
+
     if let Some(node) = mutator.doc.nodes.get(elem) {
         assert_eq!(node.attr(local_name!("id")), Some("test"));
         assert_eq!(node.attr(local_name!("class")), Some("foo bar"));
@@ -129,9 +129,9 @@ fn test_append_children() {
     let parent = mutator.create_element(qual_name!("div"), vec![]);
     let child1 = mutator.create_element(qual_name!("span"), vec![]);
     let child2 = mutator.create_element(qual_name!("p"), vec![]);
-    
+
     mutator.append_children(parent, &[child1, child2]);
-    
+
     let children = mutator.child_ids(parent);
     assert_eq!(children.len(), 2);
     assert!(children.contains(&child1));
@@ -147,10 +147,10 @@ fn test_insert_before() {
     let parent = mutator.create_element(qual_name!("div"), vec![]);
     let anchor = mutator.create_element(qual_name!("span"), vec![]);
     let new_node = mutator.create_element(qual_name!("p"), vec![]);
-    
+
     mutator.append_children(parent, &[anchor]);
     mutator.insert_nodes_before(anchor, &[new_node]);
-    
+
     let children = mutator.child_ids(parent);
     assert_eq!(children.len(), 2);
     let pos_new = children.iter().position(|&id| id == new_node).unwrap();
@@ -167,10 +167,10 @@ fn test_insert_after() {
     let parent = mutator.create_element(qual_name!("div"), vec![]);
     let anchor = mutator.create_element(qual_name!("span"), vec![]);
     let new_node = mutator.create_element(qual_name!("p"), vec![]);
-    
+
     mutator.append_children(parent, &[anchor]);
     mutator.insert_nodes_after(anchor, &[new_node]);
-    
+
     let children = mutator.child_ids(parent);
     assert_eq!(children.len(), 2);
     let pos_anchor = children.iter().position(|&id| id == anchor).unwrap();
@@ -187,10 +187,10 @@ fn test_replace_node_with() {
     let parent = mutator.create_element(qual_name!("div"), vec![]);
     let old_node = mutator.create_element(qual_name!("span"), vec![]);
     let new_node = mutator.create_element(qual_name!("p"), vec![]);
-    
+
     mutator.append_children(parent, &[old_node]);
     mutator.replace_node_with(old_node, &[new_node]);
-    
+
     let children = mutator.child_ids(parent);
     assert_eq!(children.len(), 1);
     assert!(children.contains(&new_node));
@@ -206,10 +206,10 @@ fn test_remove_all_children() {
     let parent = mutator.create_element(qual_name!("div"), vec![]);
     let child1 = mutator.create_element(qual_name!("span"), vec![]);
     let child2 = mutator.create_element(qual_name!("p"), vec![]);
-    
+
     mutator.append_children(parent, &[child1, child2]);
     assert_eq!(mutator.child_ids(parent).len(), 2);
-    
+
     mutator.remove_and_drop_all_children(parent);
     assert_eq!(mutator.child_ids(parent).len(), 0);
     drop(mutator);
@@ -224,13 +224,13 @@ fn test_reparent_children() {
     let new_parent = mutator.create_element(qual_name!("section"), vec![]);
     let child1 = mutator.create_element(qual_name!("span"), vec![]);
     let child2 = mutator.create_element(qual_name!("p"), vec![]);
-    
+
     mutator.append_children(old_parent, &[child1, child2]);
     assert_eq!(mutator.child_ids(old_parent).len(), 2);
     assert_eq!(mutator.child_ids(new_parent).len(), 0);
-    
+
     mutator.reparent_children(old_parent, new_parent);
-    
+
     assert_eq!(mutator.child_ids(old_parent).len(), 0);
     assert_eq!(mutator.child_ids(new_parent).len(), 2);
     drop(mutator);
@@ -248,7 +248,7 @@ fn test_set_inner_html() {
 
     let elem = mutator.create_element(qual_name!("div"), vec![]);
     mutator.set_inner_html(elem, "<span>Hello</span>");
-    
+
     let children = mutator.child_ids(elem);
     assert_eq!(children.len(), 1);
     drop(mutator);
@@ -262,7 +262,7 @@ fn test_set_inner_html_with_multiple_elements() {
 
     let elem = mutator.create_element(qual_name!("div"), vec![]);
     mutator.set_inner_html(elem, "<span>First</span><span>Second</span>");
-    
+
     let children = mutator.child_ids(elem);
     assert_eq!(children.len(), 2);
     drop(mutator);
@@ -283,23 +283,23 @@ fn test_complex_document_round_trip() {
     let p = mutator.create_element(qual_name!("p"), vec![]);
     let text1 = mutator.create_text_node("Hello");
     let text2 = mutator.create_text_node("World");
-    
+
     mutator.set_attribute(root, qual_name!("lang"), "en");
-    
+
     mutator.append_children(root, &[head, body]);
     mutator.append_children(head, &[title]);
     mutator.append_children(body, &[h1, p]);
     mutator.append_children(p, &[text1, text2]);
-    
+
     assert_eq!(mutator.child_ids(root).len(), 2);
     assert_eq!(mutator.child_ids(head).len(), 1);
     assert_eq!(mutator.child_ids(body).len(), 2);
     assert_eq!(mutator.child_ids(p).len(), 2);
-    
+
     if let Some(node) = mutator.doc.nodes.get(root) {
         assert_eq!(node.attr(local_name!("lang")), Some("en"));
     }
-    
+
     assert!(mutator.doc.nodes.get(text1).is_some());
     assert!(mutator.doc.nodes.get(text2).is_some());
     drop(mutator);

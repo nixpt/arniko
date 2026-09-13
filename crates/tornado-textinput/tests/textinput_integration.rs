@@ -12,12 +12,12 @@
 //! These tests are independent of the vendored lib's inline tests and run
 //! in a separate test binary so dependency isolation is exercised end-to-end.
 
+use ratatui::Terminal;
 use ratatui::backend::TestBackend;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::Color;
 use ratatui::style::Style;
-use ratatui::Terminal;
 use tornado_textinput::{StatefulWidgetRef, TextArea, TextAreaState};
 
 // `apply_styled_render` — helper that ALWAYS uses Pattern A (fully-qualified
@@ -25,11 +25,7 @@ use tornado_textinput::{StatefulWidgetRef, TextArea, TextAreaState};
 // `term_with_stateful` pattern. ALL six integration tests route through this
 // helper — the only way to compile in this scope with BOTH `Widget` and
 // `StatefulWidget` traits imported.
-fn apply_styled_render(
-    textarea: TextArea,
-    area: Rect,
-    state: &mut TextAreaState,
-) -> Buffer {
+fn apply_styled_render(textarea: TextArea, area: Rect, state: &mut TextAreaState) -> Buffer {
     let backend = TestBackend::new(20, 4);
     let mut term = Terminal::new(backend).unwrap();
     term.draw(|f| {
@@ -91,7 +87,10 @@ fn integration_02_two_carrier_discipline_enforced() {
         .filter(|c| c.contains(&typed_filter.as_str()))
         .collect();
     assert_eq!(filtered.len(), 1, "'et' filter must reduce to exactly beta");
-    assert!(filtered.contains(&&"beta"), "filtered set must contain beta");
+    assert!(
+        filtered.contains(&&"beta"),
+        "filtered set must contain beta"
+    );
     // 2. Selection slot INDEPENDENT: hypothetical ListState::select(2)
     // would highlight candidates[2] == "gamma", but this is the
     // ROUND-11 selection carrier, NOT a TextArea storage. We assert
@@ -162,7 +161,11 @@ fn integration_04_cell_bg_is_color_field_assert_direct_no_some() {
     // test fails to COMPILE with E0308 — surfacing the violation
     // before any logic mistake can reach the integration layer.
     let bg_at_origin = buf[(0, 0)].bg;
-    assert_eq!(bg_at_origin, Color::Reset, "Cell::bg is Color field — equals Color::Reset directly (no Some wrapper)");
+    assert_eq!(
+        bg_at_origin,
+        Color::Reset,
+        "Cell::bg is Color field — equals Color::Reset directly (no Some wrapper)"
+    );
     // Also test that an arbitrary non-default bg assignment via Styled
     // mutation wouldn't compile if asserted with Some(...) — we leave
     // an example syntax hint in a comment.
@@ -185,9 +188,8 @@ fn integration_05_vendoring_compiles_with_upstream_dep_chain() {
     // but matches the round-2 tornado-wrap strict-dep-mirror precedent
     // (vendored siblings reflect upstream's needs precisely).
     use tornado_textinput::{
-        classify_key_event, EditBuffer, EditCommand, EditPlan, ElementId, ElementKind,
-        InternalClipboard, MouseAction, TextElementEvent, WordStyle, is_altgr,
-        is_undo_input,
+        EditBuffer, EditCommand, EditPlan, ElementId, ElementKind, InternalClipboard, MouseAction,
+        TextElementEvent, WordStyle, classify_key_event, is_altgr, is_undo_input,
     };
     // Just USING each exported type forces the upstream dep chain to link.
     let _clipboard = InternalClipboard::default();
@@ -198,9 +200,7 @@ fn integration_05_vendoring_compiles_with_upstream_dep_chain() {
     let _altgr_predicate_msw = is_altgr as fn(crossterm::event::KeyModifiers) -> bool;
     let _edit_buffer = EditBuffer::default();
     let _edit_command = EditCommand::Insert('x');
-    let _edit_plan: Result<EditPlan, _> = Err(
-        tornado_textinput::ApplyEditPlanError::StalePlan,
-    );
+    let _edit_plan: Result<EditPlan, _> = Err(tornado_textinput::ApplyEditPlanError::StalePlan);
     let _word_style = WordStyle::Small;
     let _event = TextElementEvent {
         id: _id,

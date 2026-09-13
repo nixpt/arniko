@@ -587,12 +587,7 @@ impl ElementCx<'_> {
 
             // Render text
             if let Some(layout) = input_data.editor.try_layout() {
-                crate::text::stroke_text(
-                    scene,
-                    layout.lines(),
-                    self.context.dom,
-                    transform,
-                );
+                crate::text::stroke_text(scene, layout.lines(), self.context.dom, transform);
             }
         }
     }
@@ -618,7 +613,11 @@ impl ElementCx<'_> {
                 .and_then(|text_layout| text_layout.layout.lines().next())
             {
                 (first_text_line.metrics().baseline
-                    - layout.lines().next().map(|l| l.metrics().baseline).unwrap_or(0.0))
+                    - layout
+                        .lines()
+                        .next()
+                        .map(|l| l.metrics().baseline)
+                        .unwrap_or(0.0))
                     / layout.scale()
             } else {
                 0.0

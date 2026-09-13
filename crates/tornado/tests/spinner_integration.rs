@@ -109,12 +109,7 @@ fn stateful_widget_renders_current_frame_at_origin() {
     let spinner = Spinner::default();
     let mut state = SpinnerState::new(SpinnerType::Line);
     let mut buf = Buffer::empty(Rect::new(0, 0, 3, 1));
-    ratatui::widgets::StatefulWidget::render(
-        &spinner,
-        Rect::new(0, 0, 3, 1),
-        &mut buf,
-        &mut state,
-    );
+    ratatui::widgets::StatefulWidget::render(&spinner, Rect::new(0, 0, 3, 1), &mut buf, &mut state);
 
     let first = buf.cell(Position::new(0, 0)).expect("first cell");
     assert_eq!(
@@ -132,12 +127,7 @@ fn stateful_widget_advances_style_after_tick() {
     let mut state = SpinnerState::new(SpinnerType::Pulse);
     state.tick(SpinnerType::Pulse.interval());
     let mut buf = Buffer::empty(Rect::new(0, 0, 3, 1));
-    ratatui::widgets::StatefulWidget::render(
-        &spinner,
-        Rect::new(0, 0, 3, 1),
-        &mut buf,
-        &mut state,
-    );
+    ratatui::widgets::StatefulWidget::render(&spinner, Rect::new(0, 0, 3, 1), &mut buf, &mut state);
     let first = buf.cell(Position::new(0, 0)).expect("first cell");
     assert_eq!(state.frame(), 1);
     assert_eq!(first.symbol(), "\u{2593}"); // "▓"

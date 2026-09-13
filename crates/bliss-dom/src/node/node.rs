@@ -270,7 +270,7 @@ impl Node {
         match index {
             0 => self.after = value,
             1 => self.before = value,
-            _ => {},
+            _ => {}
         }
     }
 

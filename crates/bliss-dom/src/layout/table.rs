@@ -69,14 +69,17 @@ pub(crate) fn build_table_context(
     let Some(stylo_styles) = root_node.primary_styles() else {
         // Table has no computed styles — skip table layout construction
         root_node.children = children;
-        return (TableContext {
-            style: Default::default(),
-            cells: Vec::new(),
-            rows: Vec::new(),
-            computed_grid_info: AtomicRefCell::new(None),
-            border_style: None,
-            border_collapse: BorderCollapse::Separate,
-        }, Vec::new());
+        return (
+            TableContext {
+                style: Default::default(),
+                cells: Vec::new(),
+                rows: Vec::new(),
+                computed_grid_info: AtomicRefCell::new(None),
+                border_style: None,
+                border_collapse: BorderCollapse::Separate,
+            },
+            Vec::new(),
+        );
     };
 
     let mut style = stylo_taffy::to_taffy_style(&stylo_styles);

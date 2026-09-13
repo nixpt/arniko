@@ -852,31 +852,43 @@ pub fn to_taffy_style(style: &stylo::ComputedValues) -> taffy::Style<Atom> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::stylo;
+    use super::*;
 
     // ── box_sizing ──────────────────────────────────────────────────────────
 
     #[test]
     fn box_sizing_border_box() {
-        assert_eq!(box_sizing(stylo::BoxSizing::BorderBox), taffy::BoxSizing::BorderBox);
+        assert_eq!(
+            box_sizing(stylo::BoxSizing::BorderBox),
+            taffy::BoxSizing::BorderBox
+        );
     }
 
     #[test]
     fn box_sizing_content_box() {
-        assert_eq!(box_sizing(stylo::BoxSizing::ContentBox), taffy::BoxSizing::ContentBox);
+        assert_eq!(
+            box_sizing(stylo::BoxSizing::ContentBox),
+            taffy::BoxSizing::ContentBox
+        );
     }
 
     // ── position ────────────────────────────────────────────────────────────
 
     #[test]
     fn position_relative() {
-        assert_eq!(position(stylo::Position::Relative), taffy::Position::Relative);
+        assert_eq!(
+            position(stylo::Position::Relative),
+            taffy::Position::Relative
+        );
     }
 
     #[test]
     fn position_absolute() {
-        assert_eq!(position(stylo::Position::Absolute), taffy::Position::Absolute);
+        assert_eq!(
+            position(stylo::Position::Absolute),
+            taffy::Position::Absolute
+        );
     }
 
     #[test]
@@ -926,25 +938,37 @@ mod tests {
     #[cfg(feature = "flexbox")]
     #[test]
     fn flex_direction_row() {
-        assert_eq!(flex_direction(stylo::FlexDirection::Row), taffy::FlexDirection::Row);
+        assert_eq!(
+            flex_direction(stylo::FlexDirection::Row),
+            taffy::FlexDirection::Row
+        );
     }
 
     #[cfg(feature = "flexbox")]
     #[test]
     fn flex_direction_column() {
-        assert_eq!(flex_direction(stylo::FlexDirection::Column), taffy::FlexDirection::Column);
+        assert_eq!(
+            flex_direction(stylo::FlexDirection::Column),
+            taffy::FlexDirection::Column
+        );
     }
 
     #[cfg(feature = "flexbox")]
     #[test]
     fn flex_direction_row_reverse() {
-        assert_eq!(flex_direction(stylo::FlexDirection::RowReverse), taffy::FlexDirection::RowReverse);
+        assert_eq!(
+            flex_direction(stylo::FlexDirection::RowReverse),
+            taffy::FlexDirection::RowReverse
+        );
     }
 
     #[cfg(feature = "flexbox")]
     #[test]
     fn flex_direction_column_reverse() {
-        assert_eq!(flex_direction(stylo::FlexDirection::ColumnReverse), taffy::FlexDirection::ColumnReverse);
+        assert_eq!(
+            flex_direction(stylo::FlexDirection::ColumnReverse),
+            taffy::FlexDirection::ColumnReverse
+        );
     }
 
     // ── flex_wrap ───────────────────────────────────────────────────────────
@@ -964,7 +988,10 @@ mod tests {
     #[cfg(feature = "flexbox")]
     #[test]
     fn flex_wrap_wrap_reverse() {
-        assert_eq!(flex_wrap(stylo::FlexWrap::WrapReverse), taffy::FlexWrap::WrapReverse);
+        assert_eq!(
+            flex_wrap(stylo::FlexWrap::WrapReverse),
+            taffy::FlexWrap::WrapReverse
+        );
     }
 
     // ── float ───────────────────────────────────────────────────────────────
@@ -1042,13 +1069,19 @@ mod tests {
     #[cfg(feature = "grid")]
     #[test]
     fn grid_auto_flow_row() {
-        assert_eq!(grid_auto_flow(stylo::GridAutoFlow::ROW), taffy::GridAutoFlow::Row);
+        assert_eq!(
+            grid_auto_flow(stylo::GridAutoFlow::ROW),
+            taffy::GridAutoFlow::Row
+        );
     }
 
     #[cfg(feature = "grid")]
     #[test]
     fn grid_auto_flow_column() {
-        assert_eq!(grid_auto_flow(stylo::GridAutoFlow::empty()), taffy::GridAutoFlow::Column);
+        assert_eq!(
+            grid_auto_flow(stylo::GridAutoFlow::empty()),
+            taffy::GridAutoFlow::Column
+        );
     }
 
     #[cfg(feature = "grid")]
@@ -1061,6 +1094,9 @@ mod tests {
     #[cfg(feature = "grid")]
     #[test]
     fn grid_auto_flow_column_dense() {
-        assert_eq!(grid_auto_flow(stylo::GridAutoFlow::DENSE), taffy::GridAutoFlow::ColumnDense);
+        assert_eq!(
+            grid_auto_flow(stylo::GridAutoFlow::DENSE),
+            taffy::GridAutoFlow::ColumnDense
+        );
     }
 }

@@ -36,23 +36,22 @@
 #![cfg_attr(test, allow(unused_imports))]
 
 #[cfg(test)]
+use ratatui::Terminal;
+#[cfg(test)]
 use ratatui::backend::TestBackend;
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
-#[cfg(test)]
-use ratatui::Terminal;
 use ratatui::widgets::Widget;
 use ratatui::widgets::{StatefulWidget, StatefulWidgetRef};
-use tornado::event::TuiEvent;
-use tornado::widget::{status_bar, List, ListState, TextArea, TextAreaState};
 use tornado::TuiApp;
+use tornado::event::TuiEvent;
+use tornado::widget::{List, ListState, TextArea, TextAreaState, status_bar};
 
 // ─── Candidate set (the unfiltered list) ─────────────────────────────────────
 
 const CANDIDATES: &[&str] = &[
-    "alpha", "apply", "apricot", "beta", "build", "cargo", "delta",
-    "echo", "filter", "gamma", "help", "lint", "log", "quit", "show",
-    "test", "version",
+    "alpha", "apply", "apricot", "beta", "build", "cargo", "delta", "echo", "filter", "gamma",
+    "help", "lint", "log", "quit", "show", "test", "version",
 ];
 
 // ─── App state ──────────────────────────────────────────────────────────────
@@ -157,9 +156,9 @@ pub fn layout(frame_area: Rect) -> LayoutSegments {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Length(3),   // Header — TextArea
-            Constraint::Min(3),      // Body — filtered List
-            Constraint::Length(1),   // Status — keymap hint
+            Constraint::Length(3), // Header — TextArea
+            Constraint::Min(3),    // Body — filtered List
+            Constraint::Length(1), // Status — keymap hint
         ])
         .split(frame_area);
 
@@ -212,9 +211,10 @@ pub fn render(app: &mut CommandPaletteApp, frame_area: Rect, buf: &mut Buffer) {
 
     // Compute the ListState.selected in the FILTERED-universe space
     // (translating from candidates-universe to filtered-universe).
-    let selected_in_filtered: Option<usize> = app.list_state.selected().and_then(|s| {
-        filtered.iter().position(|&i| i == s)
-    });
+    let selected_in_filtered: Option<usize> = app
+        .list_state
+        .selected()
+        .and_then(|s| filtered.iter().position(|&i| i == s));
     let mut state_for_render = app.list_state.clone();
     state_for_render.select(selected_in_filtered);
     if let Some(new_selected) = selected_in_filtered {
@@ -318,8 +318,15 @@ mod tests {
     #[test]
     fn smoke_01_layout_three_regions_partition_correctly() {
         let ls = layout(Rect::new(0, 0, 80, 20));
-        assert_eq!(ls.header.height, 3, "header must be 3 rows (the TextArea region)");
-        assert!(ls.body.height >= 3, "body must be at least 3 rows (got {})", ls.body.height);
+        assert_eq!(
+            ls.header.height, 3,
+            "header must be 3 rows (the TextArea region)"
+        );
+        assert!(
+            ls.body.height >= 3,
+            "body must be at least 3 rows (got {})",
+            ls.body.height
+        );
         assert_eq!(ls.status.height, 1, "status must be 1 row");
     }
 
@@ -332,7 +339,11 @@ mod tests {
         // Unfiltered len = 17 candidates.
         // "alpha" does NOT contain "ap" as a substring (a-l-p-h-a has no
         // consecutive "ap"). Only apply/apricot match.
-        assert_eq!(filtered.len(), 2, "'ap' filter must reduce to 2: apply, apricot (substring match)");
+        assert_eq!(
+            filtered.len(),
+            2,
+            "'ap' filter must reduce to 2: apply, apricot (substring match)"
+        );
     }
 
     #[test]
@@ -368,7 +379,10 @@ mod tests {
             app.textarea.insert_str(&c.to_string());
         }
         let after = app.list_state.selected();
-        assert_eq!(initial, after, "list selection must remain at initial value after typing");
+        assert_eq!(
+            initial, after,
+            "list selection must remain at initial value after typing"
+        );
     }
 
     #[test]
@@ -392,7 +406,10 @@ mod tests {
         let dispatch = app.dispatch_selected();
         assert_eq!(dispatch, Some(2));
         assert_eq!(app.dispatch_selected(), Some(2));
-        assert!(app.should_quit(), "should_quit() must return true after dispatch");
+        assert!(
+            app.should_quit(),
+            "should_quit() must return true after dispatch"
+        );
     }
 
     #[test]
@@ -419,7 +436,10 @@ mod tests {
                 }
             }
         }
-        assert!(found_typed, "typed filter text 'ap' must paint into the header region");
+        assert!(
+            found_typed,
+            "typed filter text 'ap' must paint into the header region"
+        );
         assert!(
             found_highlight_symbol,
             "the selected row's '> ' highlight symbol must paint into the body region"

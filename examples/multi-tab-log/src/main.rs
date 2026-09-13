@@ -80,15 +80,15 @@ use ratatui::backend::TestBackend;
 #[cfg(test)]
 use ratatui::buffer::Buffer;
 
+use ratatui::symbols::bar;
 use tornado::event::TuiEvent;
 use tornado::spinner::{SpinnerState, SpinnerType};
 use tornado::tab_log::TabLog;
 use tornado::theme::RatatuiThemeColors;
-use ratatui::symbols::bar;
 use tornado::widget::{Sparkline, status_bar};
-use tornado::{run_app, TuiApp};
+use tornado::{TuiApp, run_app};
 
-use crate::tab_log::{append_row, seed_streams, TAB_TITLES};
+use crate::tab_log::{TAB_TITLES, append_row, seed_streams};
 
 mod tab_log;
 
@@ -356,9 +356,7 @@ impl TuiApp for MultiTabApp {
         )
         .select(self.active_tab)
         .divider("│")
-        .style(
-            ratatui::style::Style::default().fg(ratatui::style::Color::DarkGray),
-        )
+        .style(ratatui::style::Style::default().fg(ratatui::style::Color::DarkGray))
         .highlight_style(
             ratatui::style::Style::default()
                 .fg(ratatui::style::Color::Cyan)
@@ -384,7 +382,11 @@ impl TuiApp for MultiTabApp {
         let footer_split = Layout::default()
             .direction(Direction::Horizontal)
             .constraints([
-                Constraint::Min((status_area.width as usize).saturating_sub(SPARKLINE_RING_LEN).max(1) as u16),
+                Constraint::Min(
+                    (status_area.width as usize)
+                        .saturating_sub(SPARKLINE_RING_LEN)
+                        .max(1) as u16,
+                ),
                 Constraint::Length(SPARKLINE_RING_LEN as u16),
             ])
             .split(status_area);
@@ -432,7 +434,11 @@ impl TuiApp for MultiTabApp {
         frame.render_widget(
             Sparkline::default()
                 .data(&self.sparkline_ring[..])
-                .style(ratatui::style::Style::default().fg(ratatui::style::Color::Cyan).add_modifier(ratatui::style::Modifier::BOLD))
+                .style(
+                    ratatui::style::Style::default()
+                        .fg(ratatui::style::Color::Cyan)
+                        .add_modifier(ratatui::style::Modifier::BOLD),
+                )
                 .bar_set(bar::Set {
                     full: "█",
                     seven_eighths: "▇",
@@ -664,12 +670,18 @@ mod tests {
         );
 
         // `Tab` advances and wraps. From tab 4 → (4+1) % 5 = 0.
-        app.handle_event(TuiEvent::Key(KeyEvent::new(KeyCode::Tab, KeyModifiers::NONE)));
+        app.handle_event(TuiEvent::Key(KeyEvent::new(
+            KeyCode::Tab,
+            KeyModifiers::NONE,
+        )));
         assert_eq!(app.active_tab, 0, "Tab from tab 4 wraps to active_tab=0");
 
         // `BackTab` retrenches and wraps. From tab 0: 0.checked_sub(1)
         // is None → falls back to length-1 = 4 (the last tab).
-        app.handle_event(TuiEvent::Key(KeyEvent::new(KeyCode::BackTab, KeyModifiers::NONE)));
+        app.handle_event(TuiEvent::Key(KeyEvent::new(
+            KeyCode::BackTab,
+            KeyModifiers::NONE,
+        )));
         assert_eq!(
             app.active_tab, 4,
             "BackTab from tab 0 wraps to length-1 (= 4)"
@@ -818,11 +830,11 @@ mod tests {
         );
 
         // `End` re-pins (jumps to bottom).
-        app.handle_event(TuiEvent::Key(KeyEvent::new(KeyCode::End, KeyModifiers::NONE)));
-        assert!(
-            app.active().is_pinned(),
-            "End should re-pin the active tab"
-        );
+        app.handle_event(TuiEvent::Key(KeyEvent::new(
+            KeyCode::End,
+            KeyModifiers::NONE,
+        )));
+        assert!(app.active().is_pinned(), "End should re-pin the active tab");
 
         // `q` quits.
         app.handle_event(TuiEvent::Key(KeyEvent::new(

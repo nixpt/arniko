@@ -199,7 +199,10 @@ impl<Rend: WindowRenderer> View<Rend> {
         self.renderer
             .resume(Arc::new(self.window.clone()), width, height);
         if !self.renderer.is_active() {
-            eprintln!("bliss-shell: renderer failed to resume for window {:?}", window_id);
+            eprintln!(
+                "bliss-shell: renderer failed to resume for window {:?}",
+                window_id
+            );
             return;
         }
 

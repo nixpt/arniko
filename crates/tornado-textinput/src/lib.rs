@@ -149,18 +149,16 @@ mod wrapping;
 
 // Upstream public type re-exports (mirror xai-ratatui-textarea/src/lib.rs).
 pub use editor::{
-    ApplyEditPlanError, EditBuffer, EditCommand, EditCommandCategory, EditDelta,
-    EditOutcome, EditPlan, PostEditCursorAffinity, SingleLineViewport, WordStyle,
-    classify_key_event,
+    ApplyEditPlanError, EditBuffer, EditCommand, EditCommandCategory, EditDelta, EditOutcome,
+    EditPlan, PostEditCursorAffinity, SingleLineViewport, WordStyle, classify_key_event,
 };
 pub use textarea::{
-    ClipboardProvider, ElementId, ElementKind, InternalClipboard, MouseAction,
-    TextArea, TextAreaState, TextElement, TextElementEvent, TextElementEventKind,
-    is_undo_input,
+    ClipboardProvider, ElementId, ElementKind, InternalClipboard, MouseAction, TextArea,
+    TextAreaState, TextElement, TextElementEvent, TextElementEventKind, is_undo_input,
 };
 
-pub use ratatui::widgets::{WidgetRef, StatefulWidgetRef};
 use crossterm::event::KeyModifiers;
+pub use ratatui::widgets::{StatefulWidgetRef, WidgetRef};
 
 // `is_altgr` from upstream — Windows-specific. Vendored verbatim, NOT
 // re-exported (vendored source is internal-to-tornado-textinput).
@@ -186,10 +184,13 @@ pub fn is_altgr(_modifiers: KeyModifiers) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ratatui::backend::TestBackend;
     use ratatui::Terminal;
+    use ratatui::backend::TestBackend;
 
-    fn term_with_textarea<L: ratatui::widgets::Widget>(input: L, area: ratatui::layout::Rect) -> ratatui::buffer::Buffer {
+    fn term_with_textarea<L: ratatui::widgets::Widget>(
+        input: L,
+        area: ratatui::layout::Rect,
+    ) -> ratatui::buffer::Buffer {
         let backend = TestBackend::new(20, 4);
         let mut term = Terminal::new(backend).unwrap();
         term.draw(|f| {
@@ -321,9 +322,8 @@ mod tests {
         let buf = term.backend().buffer().clone();
         // Verify the call path reached the buffer mutation step
         // (positive assertion, no buffer-length-inverted tricks).
-        let rendered_some_chars = (0..buf.area.height).any(|y| {
-            (0..buf.area.width).any(|x| !buf[(x, y)].symbol().trim().is_empty())
-        });
+        let rendered_some_chars = (0..buf.area.height)
+            .any(|y| (0..buf.area.width).any(|x| !buf[(x, y)].symbol().trim().is_empty()));
         assert!(
             rendered_some_chars || buf.area.width == 0 || buf.area.height == 0,
             "fully-qualified StatefulWidget::render path must produce \

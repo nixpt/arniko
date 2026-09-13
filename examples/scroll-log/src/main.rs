@@ -55,7 +55,7 @@ use tornado::spinner::{SpinnerState, SpinnerType};
 use tornado::tab_log::TabLog;
 use tornado::theme::RatatuiThemeColors;
 use tornado::widget::status_bar;
-use tornado::{run_app, TuiApp};
+use tornado::{TuiApp, run_app};
 
 // ── Constants ─────────────────────────────────────────────────────────────
 
@@ -476,10 +476,7 @@ mod tests {
         app.log.rebuild_buffer();
 
         // Initially at top → anchor #1 (the very first seeded row).
-        assert_eq!(
-            app.log.scroll_state_mut().offset(),
-            Position::new(0, 0)
-        );
+        assert_eq!(app.log.scroll_state_mut().offset(), Position::new(0, 0));
         let top = app.log.top_anchor().expect("anchor at offset y=0");
         assert_eq!(top.id, 1, "expected anchor #1 at the top of viewport");
         assert_eq!(top.line_index, 0);
@@ -494,11 +491,17 @@ mod tests {
     fn smoke_quit_keys_set_should_quit() {
         let mut app = fresh_app();
 
-        app.handle_event(TuiEvent::Key(KeyEvent::new(KeyCode::Char('q'), KeyModifiers::NONE)));
+        app.handle_event(TuiEvent::Key(KeyEvent::new(
+            KeyCode::Char('q'),
+            KeyModifiers::NONE,
+        )));
         assert!(app.should_quit(), "q must set should_quit");
 
         let mut app = fresh_app();
-        app.handle_event(TuiEvent::Key(KeyEvent::new(KeyCode::Esc, KeyModifiers::NONE)));
+        app.handle_event(TuiEvent::Key(KeyEvent::new(
+            KeyCode::Esc,
+            KeyModifiers::NONE,
+        )));
         assert!(app.should_quit(), "Esc must set should_quit");
 
         let mut app = fresh_app();
@@ -514,7 +517,10 @@ mod tests {
         let mut app = fresh_app();
         assert!(app.log.is_pinned(), "default is pinned-to-bottom");
 
-        app.handle_event(TuiEvent::Key(KeyEvent::new(KeyCode::Char('k'), KeyModifiers::NONE)));
+        app.handle_event(TuiEvent::Key(KeyEvent::new(
+            KeyCode::Char('k'),
+            KeyModifiers::NONE,
+        )));
         assert!(!app.log.is_pinned(), "k should unpin from bottom");
 
         app.handle_event(TuiEvent::Key(KeyEvent::new(
@@ -523,7 +529,10 @@ mod tests {
         )));
         assert!(app.log.is_pinned(), "End should re-pin to bottom");
 
-        app.handle_event(TuiEvent::Key(KeyEvent::new(KeyCode::PageUp, KeyModifiers::NONE)));
+        app.handle_event(TuiEvent::Key(KeyEvent::new(
+            KeyCode::PageUp,
+            KeyModifiers::NONE,
+        )));
         assert!(!app.log.is_pinned(), "PageUp should unpin");
     }
 

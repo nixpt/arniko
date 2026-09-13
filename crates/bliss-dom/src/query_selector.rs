@@ -1,7 +1,9 @@
 use selectors::SelectorList;
 use smallvec::SmallVec;
 use style::context::QuirksMode;
-use style::dom_apis::{MayUseInvalidation, QueryAll, QueryFirst, element_closest, element_matches, query_selector};
+use style::dom_apis::{
+    MayUseInvalidation, QueryAll, QueryFirst, element_closest, element_matches, query_selector,
+};
 use style::selector_parser::{SelectorImpl, SelectorParser};
 use style_traits::ParseError;
 
@@ -95,7 +97,12 @@ impl BaseDocument {
             return SmallVec::new();
         };
         let mut results = SmallVec::new();
-        query_selector::<&Node, QueryAll>(root, selector_list, &mut results, MayUseInvalidation::Yes);
+        query_selector::<&Node, QueryAll>(
+            root,
+            selector_list,
+            &mut results,
+            MayUseInvalidation::Yes,
+        );
         results
             .iter()
             .map(|node| node.id)

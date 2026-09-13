@@ -80,11 +80,7 @@ impl PanState {
         // Use `map(...).unwrap_or(time_ms)` so an empty front (after the inner
         // partition drain) yields `time_ms - time_ms = 0 <= 100`, short-circuiting
         // the partition/pop dance instead of panicking on an empty deque.
-        let front_time = self
-            .samples
-            .front()
-            .map(|s| s.time)
-            .unwrap_or(time_ms);
+        let front_time = self.samples.front().map(|s| s.time).unwrap_or(time_ms);
         if self.samples.len() > 50 && time_ms - front_time > 100 {
             let idx = self
                 .samples
@@ -243,7 +239,10 @@ pub(crate) fn handle_pointermove<F: FnMut(DomEvent)>(
 
         text_input_data
             .editor
-            .driver(&mut doc.font_ctx.lock().unwrap_or_else(|e| e.into_inner()), &mut doc.layout_ctx)
+            .driver(
+                &mut doc.font_ctx.lock().unwrap_or_else(|e| e.into_inner()),
+                &mut doc.layout_ctx,
+            )
             .extend_selection_to_point(x as f32, y as f32);
 
         changed = true;
@@ -370,8 +369,7 @@ pub(crate) fn handle_pointerdown(
                 // Avoids `drop(guard)` (which trips the `dropping_references`
                 // lint when the guard wraps a reference-typed `FontContext`).
                 {
-                    let mut font_ctx =
-                        doc.font_ctx.lock().unwrap_or_else(|e| e.into_inner());
+                    let mut font_ctx = doc.font_ctx.lock().unwrap_or_else(|e| e.into_inner());
                     let mut driver = text_input_data
                         .editor
                         .driver(&mut font_ctx, &mut doc.layout_ctx);
@@ -603,7 +601,10 @@ pub(crate) fn handle_click(
                     // Update file input label text (safe access pattern)
                     if let (Some(&child_label_id), Some(&child_text_id)) = (
                         doc.nodes[node_id].children.get(1),
-                        doc.nodes[node_id].children.get(1).and_then(|&clid| doc.nodes[clid].children.first()),
+                        doc.nodes[node_id]
+                            .children
+                            .get(1)
+                            .and_then(|&clid| doc.nodes[clid].children.first()),
                     ) {
                         if let Some(text_data) = doc.nodes[child_text_id].text_data_mut() {
                             text_data.content = text_content;

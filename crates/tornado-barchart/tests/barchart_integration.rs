@@ -10,10 +10,10 @@
 //! These tests are independent of the vendored lib's inline tests and run in
 //! a separate test binary so dependency isolation is exercised end-to-end.
 
+use ratatui::Terminal;
 use ratatui::backend::TestBackend;
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Direction, Rect};
-use ratatui::Terminal;
 use tornado_barchart::{Bar, BarChart, BarGroup, Widget};
 
 fn render_chart(chart: BarChart<'static>, area: Rect, w: u16, h: u16) -> Buffer {
@@ -57,7 +57,10 @@ fn integration_01_vertical_bar_paints_expected_cells() {
     let buf = render_chart(chart, Rect::new(0, 0, 10, 5), 10, 5);
     // bar_width=2 cols, full height (5 rows), max=10 -> 5 rows filled
     let filled = count_filled_cells(&buf, '█', 0, 0, 10, 5);
-    assert_eq!(filled, 10, "5 rows * 2 cols = 10 block cells expected, got {filled}");
+    assert_eq!(
+        filled, 10,
+        "5 rows * 2 cols = 10 block cells expected, got {filled}"
+    );
 }
 
 #[test]
@@ -75,7 +78,10 @@ fn integration_02_horizontal_bar_paints_expected_cells() {
     let buf = render_chart(chart, Rect::new(0, 0, 10, 1), 10, 1);
     // Horizontal: 1 row, full width when max=bar.value
     let filled = count_filled_cells(&buf, '█', 0, 0, 10, 1);
-    assert!(filled >= 7, "expect 7+ filled cells in full-width bar, got {filled}");
+    assert!(
+        filled >= 7,
+        "expect 7+ filled cells in full-width bar, got {filled}"
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -109,8 +115,10 @@ fn bar_chart_max_scales_tallest_bar_to_full_height() {
     let filled_max10 = count_filled_cells(&buf_max10, '█', 0, 0, 5, 5);
     let filled_max20 = count_filled_cells(&buf_max20, '█', 0, 0, 5, 5);
     assert_eq!(filled_max10, 5, "max=10 fills all 5 rows (1 col)");
-    assert!(filled_max20 < filled_max10,
-        "max=20 should paint ~half of max=10's cells (got max10={filled_max10} vs max20={filled_max20})");
+    assert!(
+        filled_max20 < filled_max10,
+        "max=20 should paint ~half of max=10's cells (got max10={filled_max10} vs max20={filled_max20})"
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -146,8 +154,10 @@ fn bar_chart_direction_arms_yield_distinct_cell_anchors() {
     // Vertical: bar grows from top to bottom — TOP row should have at least 1
     // filled cell.
     let top_row_vert = count_filled_cells(&buf_vert, '█', 0, 0, 4, 1);
-    assert!(top_row_vert >= 1,
-        "Vertical direction: max=10 bar fills all rows including top (got top_row={top_row_vert})");
+    assert!(
+        top_row_vert >= 1,
+        "Vertical direction: max=10 bar fills all rows including top (got top_row={top_row_vert})"
+    );
 
     // Horizontal: bar of max=10 fills entire width; the single horizontal row
     // is filled, but only that row.
@@ -156,8 +166,10 @@ fn bar_chart_direction_arms_yield_distinct_cell_anchors() {
 
     // The horizontal layout should fill fewer TOTAL cells than vertical for
     // the same data because horizontal uses only 1 row of the 5-row area.
-    assert!(total_horiz < total_vert,
-        "Horizontal direction should use a single row (got total={total_horiz} vs vertical total={total_vert})");
+    assert!(
+        total_horiz < total_vert,
+        "Horizontal direction should use a single row (got total={total_horiz} vs vertical total={total_vert})"
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -181,8 +193,10 @@ fn integration_03_multi_group_separation() {
     let buf = render_chart(chart, Rect::new(0, 0, 12, 5), 12, 5);
     let total = count_filled_cells(&buf, '█', 0, 0, 12, 5);
     // Total block cells expected: 5 → 3 rows, 7 → 4 rows, 3 → 2 rows => 9 total
-    assert!(total >= 7 && total <= 12,
-        "multi-group separation: expect 7..12 block cells, got {total}");
+    assert!(
+        total >= 7 && total <= 12,
+        "multi-group separation: expect 7..12 block cells, got {total}"
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -205,8 +219,10 @@ fn integration_04_compute_max_fallback_when_none_set() {
     let buf = render_chart(chart, Rect::new(0, 0, 4, 5), 4, 5);
     let filled_high = count_filled_cells(&buf, '█', 0, 0, 2, 5);
     let filled_low = count_filled_cells(&buf, '█', 0, 2, 2, 5);
-    assert!(filled_high > filled_low,
-        "auto-computed max=8 means bar_high has more cells than bar_low (got high={filled_high} vs low={filled_low})");
+    assert!(
+        filled_high > filled_low,
+        "auto-computed max=8 means bar_high has more cells than bar_low (got high={filled_high} vs low={filled_low})"
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -230,5 +246,8 @@ fn integration_05_label_constructor_does_not_panic() {
 
     let buf = render_chart(chart, Rect::new(0, 0, 5, 5), 5, 5);
     let filled = count_filled_cells(&buf, '█', 0, 0, 5, 5);
-    assert!(filled >= 4, "label/text_value constructors must not panic; filled={filled}");
+    assert!(
+        filled >= 4,
+        "label/text_value constructors must not panic; filled={filled}"
+    );
 }

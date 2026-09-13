@@ -31,17 +31,17 @@
 
 #![allow(clippy::manual_is_multiple_of)]
 
+#[cfg(feature = "hyperlink")]
+pub use crate::hyperlink::Link;
+#[cfg(feature = "scroller")]
+pub use crate::scroller::ScrollView;
+#[cfg(feature = "spinner")]
+pub use crate::spinner::Spinner;
 #[cfg(feature = "styles")]
 pub use crate::styles::{
     HyperlinkTarget as AnsiHyperlinkTarget, anstyle_to_ratatui_color as ansi_color,
     style_into_ratatui as ansi_to_style,
 };
-#[cfg(feature = "hyperlink")]
-pub use crate::hyperlink::Link;
-#[cfg(feature = "spinner")]
-pub use crate::spinner::Spinner;
-#[cfg(feature = "scroller")]
-pub use crate::scroller::ScrollView;
 // Round 6 catch-up (migrated): `TabNav` is now re-exported from
 // `ratatui::widgets::Tabs` directly. The vendored `crates/tornado-tabs`
 // has been removed. The `tabs` feature is kept as an empty feature
@@ -102,10 +102,10 @@ pub use crate::barchart::{Bar, BarChart, BarGroup, BarSet};
 // `<&TextArea as ratatui::widgets::StatefulWidgetRef>::render_ref(...)`
 // form is the supported render path — `StatefulWidgetRef` is only
 // implemented for `&TextArea`, not `TextArea` by value.
-#[cfg(feature = "textinput")]
-pub use crate::textinput::{TextArea, TextAreaState};
 #[cfg(feature = "styles")]
 use crate::styles::Style as AnsiStyle;
+#[cfg(feature = "textinput")]
+pub use crate::textinput::{TextArea, TextAreaState};
 
 use ratatui::style::Style;
 use ratatui::text::Line;
@@ -117,10 +117,7 @@ use crate::theme::RatatuiThemeColors;
 
 /// Style for a table header row.
 pub fn table_header_style(theme: &RatatuiThemeColors) -> Style {
-    Style::default()
-        .fg(theme.accent)
-        .bg(theme.surface)
-        .bold()
+    Style::default().fg(theme.accent).bg(theme.surface).bold()
 }
 
 /// Style for a table row with zebra striping.
@@ -128,17 +125,13 @@ pub fn table_row_style(theme: &RatatuiThemeColors, index: usize) -> Style {
     if index % 2 == 0 {
         Style::default().fg(theme.fg).bg(theme.bg)
     } else {
-        Style::default()
-            .fg(theme.fg)
-            .bg(theme.surface)
+        Style::default().fg(theme.fg).bg(theme.surface)
     }
 }
 
 /// Style for a highlighted / selected table row.
 pub fn table_row_highlight_style(theme: &RatatuiThemeColors) -> Style {
-    Style::default()
-        .fg(theme.fg)
-        .bg(theme.highlight)
+    Style::default().fg(theme.fg).bg(theme.highlight)
 }
 
 /// Build a status bar paragraph spanning the full width.
@@ -150,9 +143,7 @@ pub fn status_bar<'a>(
     right: Option<impl Into<Line<'a>>>,
     theme: &RatatuiThemeColors,
 ) -> Paragraph<'a> {
-    let bar_style = Style::default()
-        .fg(theme.dim)
-        .bg(theme.surface);
+    let bar_style = Style::default().fg(theme.dim).bg(theme.surface);
 
     let left_line: Line = left.into();
     let line = if let Some(r) = right {
@@ -164,9 +155,11 @@ pub fn status_bar<'a>(
         left_line
     };
 
-    Paragraph::new(line)
-        .style(bar_style)
-        .block(Block::default().borders(Borders::TOP).border_style(Style::default().fg(theme.border)))
+    Paragraph::new(line).style(bar_style).block(
+        Block::default()
+            .borders(Borders::TOP)
+            .border_style(Style::default().fg(theme.border)),
+    )
 }
 
 // ─── ANSI ↔ ratatui bridge helpers (feature: `styles`) ────────────────────

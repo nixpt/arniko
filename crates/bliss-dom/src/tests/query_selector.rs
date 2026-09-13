@@ -17,7 +17,7 @@ fn test_query_selector_by_tag_name() {
     let div1 = mutator.create_element(qual_name!("div"), vec![]);
     let span = mutator.create_element(qual_name!("span"), vec![]);
     let div2 = mutator.create_element(qual_name!("div"), vec![]);
-    
+
     // Build tree: root -> [div1, span, div2]
     mutator.append_children(0, &[div1, span, div2]);
     drop(mutator);
@@ -36,7 +36,7 @@ fn test_query_selector_all_by_tag_name() {
     let div1 = mutator.create_element(qual_name!("div"), vec![]);
     let span = mutator.create_element(qual_name!("span"), vec![]);
     let div2 = mutator.create_element(qual_name!("div"), vec![]);
-    
+
     // Build tree: root -> [div1, span, div2]
     mutator.append_children(0, &[div1, span, div2]);
     drop(mutator);
@@ -55,11 +55,11 @@ fn test_query_selector_by_id() {
 
     let div1 = mutator.create_element(qual_name!("div"), vec![]);
     let div2 = mutator.create_element(qual_name!("div"), vec![]);
-    
+
     // Set IDs
     mutator.set_attribute(div1, qual_name!("id"), "first");
     mutator.set_attribute(div2, qual_name!("id"), "second");
-    
+
     // Build tree
     mutator.append_children(0, &[div1, div2]);
     drop(mutator);
@@ -67,7 +67,7 @@ fn test_query_selector_by_id() {
     // Query by ID
     let result = doc.query_selector("#first").unwrap();
     assert_eq!(result, Some(div1));
-    
+
     let result2 = doc.query_selector("#second").unwrap();
     assert_eq!(result2, Some(div2));
 }
@@ -80,12 +80,12 @@ fn test_query_selector_by_class() {
     let div1 = mutator.create_element(qual_name!("div"), vec![]);
     let div2 = mutator.create_element(qual_name!("div"), vec![]);
     let div3 = mutator.create_element(qual_name!("div"), vec![]);
-    
+
     // Set classes
     mutator.set_attribute(div1, qual_name!("class"), "active");
     mutator.set_attribute(div2, qual_name!("class"), "active");
     // div3 has no class
-    
+
     // Build tree
     mutator.append_children(0, &[div1, div2, div3]);
     drop(mutator);
@@ -105,11 +105,11 @@ fn test_query_selector_by_attribute() {
 
     let div1 = mutator.create_element(qual_name!("div"), vec![]);
     let div2 = mutator.create_element(qual_name!("div"), vec![]);
-    
+
     // Set attributes
     mutator.set_attribute(div1, qual_name!("role"), "button");
     mutator.set_attribute(div2, qual_name!("role"), "button");
-    
+
     // Build tree
     mutator.append_children(0, &[div1, div2]);
     drop(mutator);
@@ -127,11 +127,11 @@ fn test_query_selector_nested() {
     let root_div = mutator.create_element(qual_name!("div"), vec![]);
     let parent_div = mutator.create_element(qual_name!("div"), vec![]);
     let child_span = mutator.create_element(qual_name!("span"), vec![]);
-    
+
     // Set IDs
     mutator.set_attribute(root_div, qual_name!("id"), "root");
     mutator.set_attribute(child_span, qual_name!("id"), "child");
-    
+
     // Build nested tree: root -> root_div -> parent_div -> child_span
     mutator.append_children(0, &[root_div]);
     mutator.append_children(root_div, &[parent_div]);
@@ -141,7 +141,7 @@ fn test_query_selector_nested() {
     // Query for nested span
     let result = doc.query_selector("#root span").unwrap();
     assert_eq!(result, Some(child_span));
-    
+
     // Query for nested span by ID
     let result2 = doc.query_selector("div div #child").unwrap();
     assert_eq!(result2, Some(child_span));
@@ -157,7 +157,7 @@ fn test_query_selector_all_nested() {
     let span2 = mutator.create_element(qual_name!("span"), vec![]);
     let nested_div = mutator.create_element(qual_name!("div"), vec![]);
     let span3 = mutator.create_element(qual_name!("span"), vec![]);
-    
+
     // Build tree: root -> [root_div, span1] and root_div -> [span2, nested_div] and nested_div -> [span3]
     mutator.append_children(0, &[root_div, span1]);
     mutator.append_children(root_div, &[span2, nested_div]);
@@ -184,7 +184,7 @@ fn test_query_selector_no_match() {
     // Query for non-existent element
     let result = doc.query_selector("span").unwrap();
     assert_eq!(result, None);
-    
+
     // Query all for non-existent element
     let result_all = doc.query_selector_all("span").unwrap();
     assert_eq!(result_all.len(), 0);
@@ -198,12 +198,12 @@ fn test_query_selector_complex() {
     let div1 = mutator.create_element(qual_name!("div"), vec![]);
     let div2 = mutator.create_element(qual_name!("div"), vec![]);
     let span = mutator.create_element(qual_name!("span"), vec![]);
-    
+
     // Set attributes
     mutator.set_attribute(div1, qual_name!("class"), "container");
     mutator.set_attribute(div2, qual_name!("class"), "item");
     mutator.set_attribute(span, qual_name!("id"), "special");
-    
+
     // Build tree
     mutator.append_children(0, &[div1, div2, span]);
     drop(mutator);
@@ -211,7 +211,7 @@ fn test_query_selector_complex() {
     // Query for div with class container
     let result = doc.query_selector("div.container").unwrap();
     assert_eq!(result, Some(div1));
-    
+
     // Query for div.item
     let result2 = doc.query_selector("div.item").unwrap();
     assert_eq!(result2, Some(div2));
@@ -224,11 +224,11 @@ fn test_get_element_by_id() {
 
     let div1 = mutator.create_element(qual_name!("div"), vec![]);
     let div2 = mutator.create_element(qual_name!("div"), vec![]);
-    
+
     // Set IDs
     mutator.set_attribute(div1, qual_name!("id"), "test-id");
     mutator.set_attribute(div2, qual_name!("id"), "other-id");
-    
+
     // Build tree
     mutator.append_children(0, &[div1, div2]);
     drop(mutator);
@@ -236,10 +236,10 @@ fn test_get_element_by_id() {
     // Get by ID
     let result = doc.get_element_by_id("test-id");
     assert_eq!(result, Some(div1));
-    
+
     let result2 = doc.get_element_by_id("other-id");
     assert_eq!(result2, Some(div2));
-    
+
     // Non-existent ID
     let result3 = doc.get_element_by_id("does-not-exist");
     assert_eq!(result3, None);

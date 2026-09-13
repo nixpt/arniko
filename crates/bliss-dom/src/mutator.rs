@@ -81,7 +81,9 @@ impl DocumentMutator<'_> {
     // Query methods
 
     pub fn node_has_parent(&self, node_id: usize) -> bool {
-        self.doc.get_node(node_id).is_some_and(|n| n.parent.is_some())
+        self.doc
+            .get_node(node_id)
+            .is_some_and(|n| n.parent.is_some())
     }
 
     pub fn previous_sibling_id(&self, node_id: usize) -> Option<usize> {
@@ -101,11 +103,17 @@ impl DocumentMutator<'_> {
     }
 
     pub fn child_ids(&self, node_id: usize) -> Vec<usize> {
-        self.doc.get_node(node_id).map(|n| n.children.clone()).unwrap_or_default()
+        self.doc
+            .get_node(node_id)
+            .map(|n| n.children.clone())
+            .unwrap_or_default()
     }
 
     pub fn element_name(&self, node_id: usize) -> Option<&QualName> {
-        self.doc.get_node(node_id)?.element_data().map(|el| &el.name)
+        self.doc
+            .get_node(node_id)?
+            .element_data()
+            .map(|el| &el.name)
     }
 
     pub fn node_at_path(&self, start_node_id: usize, path: &[u8]) -> usize {
@@ -212,7 +220,10 @@ impl DocumentMutator<'_> {
                 if let Some(parent) = self.doc.get_node_mut(parent_id) {
                     parent.insert_damage(ALL_DAMAGE);
                 } else {
-                    debug_assert!(false, "set_node_text parent_id={parent_id} stale after get_node_mut on child");
+                    debug_assert!(
+                        false,
+                        "set_node_text parent_id={parent_id} stale after get_node_mut on child"
+                    );
                 }
             }
 
@@ -241,7 +252,10 @@ impl DocumentMutator<'_> {
         };
         node.insert_damage(ALL_DAMAGE);
         let Some(element_data) = node.element_data_mut() else {
-            debug_assert!(false, "add_attrs_if_missing called on non-element node_id={node_id}");
+            debug_assert!(
+                false,
+                "add_attrs_if_missing called on non-element node_id={node_id}"
+            );
             return;
         };
 
@@ -436,7 +450,10 @@ impl DocumentMutator<'_> {
                 parent.children.retain(|id| *id != node_id);
                 self.maybe_record_node(parent_id);
             } else {
-                debug_assert!(false, "remove_node: node {node_id} reports stale parent {parent_id}");
+                debug_assert!(
+                    false,
+                    "remove_node: node {node_id} reports stale parent {parent_id}"
+                );
             }
         }
 
@@ -454,7 +471,10 @@ impl DocumentMutator<'_> {
         // Update child_idx values
         if let Some(parent_id) = node.as_ref().and_then(|node| node.parent) {
             let Some(parent) = self.doc.get_node_mut(parent_id) else {
-                debug_assert!(false, "remove_and_drop_node: node {node_id} reports stale parent {parent_id}");
+                debug_assert!(
+                    false,
+                    "remove_and_drop_node: node {node_id} reports stale parent {parent_id}"
+                );
                 return node;
             };
             parent.insert_damage(ALL_DAMAGE);
@@ -552,10 +572,7 @@ impl DocumentMutator<'_> {
             );
             return;
         }
-        if !child_ids
-            .iter()
-            .all(|&id| self.doc.get_node(id).is_some())
-        {
+        if !child_ids.iter().all(|&id| self.doc.get_node(id).is_some()) {
             debug_assert!(
                 false,
                 "add_children_to_parent: at least one child_id is stale; aborting"
@@ -591,7 +608,10 @@ impl DocumentMutator<'_> {
 
             if let Some(old_parent_id) = old_parent_id {
                 let Some(old_parent) = self.doc.get_node_mut(old_parent_id) else {
-                    debug_assert!(false, "add_children_to_parent: stale old_parent_id={old_parent_id}");
+                    debug_assert!(
+                        false,
+                        "add_children_to_parent: stale old_parent_id={old_parent_id}"
+                    );
                     continue;
                 };
                 old_parent.insert_damage(ALL_DAMAGE);
@@ -621,7 +641,10 @@ impl DocumentMutator<'_> {
             None => match self.parent_id(anchor_node_id) {
                 Some(parent_id) => self.append_children(parent_id, new_node_ids),
                 None => {
-                    debug_assert!(false, "insert_nodes_after called with orphan anchor_node_id={anchor_node_id}");
+                    debug_assert!(
+                        false,
+                        "insert_nodes_after called with orphan anchor_node_id={anchor_node_id}"
+                    );
                 }
             },
         }
@@ -813,7 +836,10 @@ impl<'doc> DocumentMutator<'doc> {
         };
 
         let Some(node) = self.doc.get_node(node_id) else {
-            debug_assert!(false, "maybe_record_node called with stale node_id={node_id}");
+            debug_assert!(
+                false,
+                "maybe_record_node called with stale node_id={node_id}"
+            );
             return;
         };
         let Some(tag_name) = node.data.downcast_element().map(|elem| &elem.name.local) else {
@@ -875,7 +901,10 @@ impl<'doc> DocumentMutator<'doc> {
             return;
         };
         let SpecialElementData::Stylesheet(stylesheet) = element.special_data.take() else {
-            debug_assert!(false, "unload_stylesheet: node {node_id} carries non-Stylesheet special_data");
+            debug_assert!(
+                false,
+                "unload_stylesheet: node {node_id} carries non-Stylesheet special_data"
+            );
             return;
         };
 
@@ -910,7 +939,10 @@ impl<'doc> DocumentMutator<'doc> {
                             element_data.special_data =
                                 SpecialElementData::Image(Box::new(cached_image));
                         } else {
-                            debug_assert!(false, "load_image (cache): node {target_id} not element");
+                            debug_assert!(
+                                false,
+                                "load_image (cache): node {target_id} not element"
+                            );
                             return;
                         }
                         node.cache.clear();

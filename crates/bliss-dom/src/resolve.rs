@@ -325,8 +325,7 @@ impl BaseDocument {
             self.root_element().is_some(),
             "resolve_layout: 'no DOM' guard above lost its effect — root_element became None when an element child was expected"
         );
-        let root_element_id =
-            taffy::NodeId::from(self.root_element().map(|r| r.id).unwrap_or(0));
+        let root_element_id = taffy::NodeId::from(self.root_element().map(|r| r.id).unwrap_or(0));
 
         // println!("\n\nRESOLVE LAYOUT\n===========\n");
 

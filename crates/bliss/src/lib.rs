@@ -45,8 +45,8 @@ pub use bliss_traits as traits;
 // Convenience re-exports used by cece-code and other downstream consumers
 // ---------------------------------------------------------------------------
 
-pub mod style;
 pub mod element;
+pub mod style;
 
 /// Keyboard key identifier.
 pub use keyboard_types::Key;

@@ -144,5 +144,4 @@ impl<Rend: WindowRenderer> ApplicationHandler for BlissApplication<Rend> {
             self.handle_bliss_shell_event(event_loop, event);
         }
     }
-
 }

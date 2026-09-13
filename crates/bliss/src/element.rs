@@ -6,10 +6,10 @@
 
 use anyrender_vello::VelloWindowRenderer;
 
-use bliss_dom::{Attribute, DocumentMutator};
 use bliss_dom::LocalName;
 use bliss_dom::Namespace;
 use bliss_dom::QualName;
+use bliss_dom::{Attribute, DocumentMutator};
 use bliss_shell::View;
 use bliss_traits::events::BlissKeyEvent;
 
@@ -94,11 +94,7 @@ impl Element {
 }
 
 // Helper — materialise an Element tree into a real bliss-dom document.
-fn materialise_element(
-    mutator: &mut DocumentMutator<'_>,
-    el: &Element,
-    parent_id: usize,
-) {
+fn materialise_element(mutator: &mut DocumentMutator<'_>, el: &Element, parent_id: usize) {
     let style_inline = el.style.to_inline_css();
 
     let mut attrs: Vec<Attribute> = Vec::new();
@@ -156,7 +152,11 @@ impl<'a> Window<'a> {
         let mut mutator = DocumentMutator::new(&mut *inner);
 
         // Find the root node to attach to.
-        let mount_id = if mutator.element_name(2).is_some() { 2 } else { 0 };
+        let mount_id = if mutator.element_name(2).is_some() {
+            2
+        } else {
+            0
+        };
 
         // Remove existing children.
         let existing = mutator.child_ids(mount_id);

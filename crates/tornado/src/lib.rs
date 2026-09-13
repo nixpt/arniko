@@ -61,7 +61,7 @@ pub use hyperrat as hyperlink;
 // `ratatui-cheese` crate (v0.7, MIT). API is identical:
 // `Spinner`, `SpinnerState`, `SpinnerType`.
 #[cfg(feature = "spinner")]
-pub use ratatui_cheese::spinner as spinner;
+pub use ratatui_cheese::spinner;
 
 // Migrated from vendored `tornado-scrollview` to upstream
 // `tui-scrollview` crate (v0.6, MIT/Apache-2.0). API is

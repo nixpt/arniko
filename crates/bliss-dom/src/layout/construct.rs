@@ -676,7 +676,10 @@ fn create_text_editor(doc: &mut BaseDocument, input_element_id: usize, is_multil
     styles.insert(StyleProperty::LineHeight(parley_style.line_height));
     styles.insert(StyleProperty::Brush(parley_style.brush));
 
-    editor.refresh_layout(&mut doc.font_ctx.lock().unwrap_or_else(|e| e.into_inner()), &mut doc.layout_ctx);
+    editor.refresh_layout(
+        &mut doc.font_ctx.lock().unwrap_or_else(|e| e.into_inner()),
+        &mut doc.layout_ctx,
+    );
 }
 
 fn create_checkbox_input(doc: &mut BaseDocument, input_element_id: usize) {

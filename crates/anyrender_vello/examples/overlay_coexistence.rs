@@ -96,22 +96,24 @@ impl ApplicationHandler for App {
             .set_overlay_scene(Arc::new(scene), Affine::translate((40.0, 40.0)), None);
 
         // ── TextureOverlay: a blue rect rendered to an offscreen texture ───────────
-        let texture = device_handle.device.create_texture(&wgpu::TextureDescriptor {
-            label: Some("overlay-coexistence-blue"),
-            size: wgpu::Extent3d {
-                width: TEX_W,
-                height: TEX_H,
-                depth_or_array_layers: 1,
-            },
-            mip_level_count: 1,
-            sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
-            format: wgpu::TextureFormat::Rgba8Unorm,
-            // STORAGE_BINDING: required by render_to_texture (compute rasterizer).
-            // COPY_SRC: required by register_texture (copied into the image atlas).
-            usage: wgpu::TextureUsages::STORAGE_BINDING | wgpu::TextureUsages::COPY_SRC,
-            view_formats: &[],
-        });
+        let texture = device_handle
+            .device
+            .create_texture(&wgpu::TextureDescriptor {
+                label: Some("overlay-coexistence-blue"),
+                size: wgpu::Extent3d {
+                    width: TEX_W,
+                    height: TEX_H,
+                    depth_or_array_layers: 1,
+                },
+                mip_level_count: 1,
+                sample_count: 1,
+                dimension: wgpu::TextureDimension::D2,
+                format: wgpu::TextureFormat::Rgba8Unorm,
+                // STORAGE_BINDING: required by render_to_texture (compute rasterizer).
+                // COPY_SRC: required by register_texture (copied into the image atlas).
+                usage: wgpu::TextureUsages::STORAGE_BINDING | wgpu::TextureUsages::COPY_SRC,
+                view_formats: &[],
+            });
 
         let mut offscreen_renderer = vello::Renderer::new(
             &device_handle.device,

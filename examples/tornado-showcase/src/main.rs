@@ -42,19 +42,19 @@ use std::time::{Duration, Instant};
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::layout::{Constraint, Direction, Layout, Margin, Rect};
 use ratatui::style::{Color, Modifier, Style};
+use ratatui::symbols::bar;
 use ratatui::text::{Line, Span, Text};
 use ratatui::widgets::{Block, Borders, Paragraph};
-use ratatui::symbols::bar;
 
 use tornado::event::TuiEvent;
 use tornado::spinner::{SpinnerState, SpinnerType};
 use tornado::tab_log::TabLog;
 use tornado::theme::RatatuiThemeColors;
 use tornado::widget::{
-    status_bar, BigText, Link, List, ListState, PixelSize, Popup, PopupState, Sparkline, TabNav,
-    Tree, TreeItem, TreeState,
+    BigText, Link, List, ListState, PixelSize, Popup, PopupState, Sparkline, TabNav, Tree,
+    TreeItem, TreeState, status_bar,
 };
-use tornado::{run_app, TuiApp};
+use tornado::{TuiApp, run_app};
 
 // ── Constants ─────────────────────────────────────────────────────────────
 
@@ -84,7 +84,6 @@ struct ShowcaseApp {
     quit: bool,
 
     // ── Widget-specific state ────────────────────────────────────
-
     /// List widget state.
     list_state: ListState,
     /// Total items in the list (used for index clamping).
@@ -230,7 +229,8 @@ impl TuiApp for ShowcaseApp {
                     .unwrap_or(TAB_TITLES.len() - 1);
             }
             TuiEvent::Key(KeyEvent {
-                code: KeyCode::Left, ..
+                code: KeyCode::Left,
+                ..
             }) if self.active_tab != 3 => {
                 self.active_tab = self
                     .active_tab
@@ -312,8 +312,7 @@ impl TuiApp for ShowcaseApp {
                 self.popup_log.set_pinned(false);
             }
             TuiEvent::Key(KeyEvent {
-                code: KeyCode::End,
-                ..
+                code: KeyCode::End, ..
             }) if self.active_tab == 4 && !self.popup_visible => {
                 self.popup_log.scroll_state_mut().scroll_to_bottom();
                 self.popup_log.set_pinned(true);
@@ -337,10 +336,10 @@ impl TuiApp for ShowcaseApp {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
-                Constraint::Length(1),    // Title
-                Constraint::Length(3),    // TabNav
-                Constraint::Min(3),       // Body
-                Constraint::Length(2),    // Footer
+                Constraint::Length(1), // Title
+                Constraint::Length(3), // TabNav
+                Constraint::Min(3),    // Body
+                Constraint::Length(2), // Footer
             ])
             .split(area);
 
@@ -450,8 +449,8 @@ impl ShowcaseApp {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
-                Constraint::Length(9),   // BigText
-                Constraint::Min(3),      // Description + links
+                Constraint::Length(9), // BigText
+                Constraint::Min(3),    // Description + links
             ])
             .split(area);
 
@@ -632,33 +631,61 @@ impl ShowcaseApp {
                             Style::default().fg(Color::Cyan),
                         )),
                         vec![
-                            TreeItem::new("header.rs".to_string(), Line::from("    header.rs"), vec![]).unwrap(),
-                            TreeItem::new("footer.rs".to_string(), Line::from("    footer.rs"), vec![]).unwrap(),
-                            TreeItem::new("sidebar.rs".to_string(), Line::from("    sidebar.rs"), vec![]).unwrap(),
+                            TreeItem::new(
+                                "header.rs".to_string(),
+                                Line::from("    header.rs"),
+                                vec![],
+                            )
+                            .unwrap(),
+                            TreeItem::new(
+                                "footer.rs".to_string(),
+                                Line::from("    footer.rs"),
+                                vec![],
+                            )
+                            .unwrap(),
+                            TreeItem::new(
+                                "sidebar.rs".to_string(),
+                                Line::from("    sidebar.rs"),
+                                vec![],
+                            )
+                            .unwrap(),
                         ],
-                    ).unwrap(),
+                    )
+                    .unwrap(),
                     TreeItem::new(
                         "utils".to_string(),
-                        Line::from(Span::styled(
-                            "  utils/",
-                            Style::default().fg(Color::Cyan),
-                        )),
+                        Line::from(Span::styled("  utils/", Style::default().fg(Color::Cyan))),
                         vec![
-                            TreeItem::new("helpers.rs".to_string(), Line::from("    helpers.rs"), vec![]).unwrap(),
-                            TreeItem::new("parsers.rs".to_string(), Line::from("    parsers.rs"), vec![]).unwrap(),
+                            TreeItem::new(
+                                "helpers.rs".to_string(),
+                                Line::from("    helpers.rs"),
+                                vec![],
+                            )
+                            .unwrap(),
+                            TreeItem::new(
+                                "parsers.rs".to_string(),
+                                Line::from("    parsers.rs"),
+                                vec![],
+                            )
+                            .unwrap(),
                         ],
-                    ).unwrap(),
+                    )
+                    .unwrap(),
                 ],
-            ).unwrap(),
+            )
+            .unwrap(),
             TreeItem::new(
                 "docs".to_string(),
                 Line::from(Span::styled("docs/", Style::default().fg(Color::Cyan))),
                 vec![
-                    TreeItem::new("README.md".to_string(), Line::from("  README.md"), vec![]).unwrap(),
+                    TreeItem::new("README.md".to_string(), Line::from("  README.md"), vec![])
+                        .unwrap(),
                     TreeItem::new("API.md".to_string(), Line::from("  API.md"), vec![]).unwrap(),
-                    TreeItem::new("DESIGN.md".to_string(), Line::from("  DESIGN.md"), vec![]).unwrap(),
+                    TreeItem::new("DESIGN.md".to_string(), Line::from("  DESIGN.md"), vec![])
+                        .unwrap(),
                 ],
-            ).unwrap(),
+            )
+            .unwrap(),
             TreeItem::new(
                 "Cargo.toml".to_string(),
                 Line::from(Span::styled(
@@ -666,7 +693,8 @@ impl ShowcaseApp {
                     Style::default().fg(Color::Yellow),
                 )),
                 vec![],
-            ).unwrap(),
+            )
+            .unwrap(),
             TreeItem::new(
                 "README.md".to_string(),
                 Line::from(Span::styled(
@@ -674,14 +702,16 @@ impl ShowcaseApp {
                     Style::default().fg(Color::Yellow),
                 )),
                 vec![],
-            ).unwrap(),
+            )
+            .unwrap(),
         ]
     }
 
     fn render_tree_tab(&mut self, frame: &mut ratatui::Frame, area: Rect) {
         let items = Self::build_mock_tree();
 
-        let tree = Tree::new(&items).unwrap()
+        let tree = Tree::new(&items)
+            .unwrap()
             .block(
                 Block::default()
                     .title(" File System Tree ")
@@ -777,7 +807,12 @@ fn centered_rect(parent: Rect, width_pct: u16, height_pct: u16) -> Rect {
     let h = parent.height * height_pct / 100;
     let x = parent.x + (parent.width - w) / 2;
     let y = parent.y + (parent.height - h) / 2;
-    Rect { x, y, width: w, height: h }
+    Rect {
+        x,
+        y,
+        width: w,
+        height: h,
+    }
 }
 
 // ── Boot ──────────────────────────────────────────────────────────────────
@@ -868,14 +903,8 @@ mod tests {
             tabnav.contains("Sparkline"),
             "TabNav missing 'Sparkline': {tabnav:?}"
         );
-        assert!(
-            tabnav.contains("List"),
-            "TabNav missing 'List': {tabnav:?}"
-        );
-        assert!(
-            tabnav.contains("Tree"),
-            "TabNav missing 'Tree': {tabnav:?}"
-        );
+        assert!(tabnav.contains("List"), "TabNav missing 'List': {tabnav:?}");
+        assert!(tabnav.contains("Tree"), "TabNav missing 'Tree': {tabnav:?}");
         assert!(
             tabnav.contains("Popup"),
             "TabNav missing 'Popup': {tabnav:?}"
@@ -988,7 +1017,8 @@ mod tests {
                 KeyModifiers::NONE,
             )));
             assert_eq!(
-                app.active_tab, expected,
+                app.active_tab,
+                expected,
                 "Tab from tab {} should advance to {}",
                 expected - 1,
                 expected
@@ -1007,10 +1037,7 @@ mod tests {
             KeyCode::BackTab,
             KeyModifiers::NONE,
         )));
-        assert_eq!(
-            app.active_tab, 4,
-            "BackTab from tab 0 wraps to last tab"
-        );
+        assert_eq!(app.active_tab, 4, "BackTab from tab 0 wraps to last tab");
     }
 
     // ── Sparkline smoke test ────────────────────────────────────

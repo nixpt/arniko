@@ -24,8 +24,8 @@ use bliss_traits::navigation::{DummyNavigationProvider, NavigationProvider};
 use bliss_traits::net::{DummyNetProvider, NetProvider, Request};
 use bliss_traits::shell::{ColorScheme, DummyShellProvider, ShellProvider, Viewport};
 use cursor_icon::CursorIcon;
-use linebender_resource_handle::Blob;
 use downcast_rs::{Downcast, impl_downcast};
+use linebender_resource_handle::Blob;
 use markup5ever::local_name;
 use parley::{FontContext, PlainEditorDriver};
 use selectors::{Element, matching::QuirksMode};
@@ -599,9 +599,9 @@ impl BaseDocument {
 
     /// Set base url for resolving linked resources (stylesheets, images, fonts, etc)
     pub fn set_base_url(&mut self, url: &str) {
-        self.url = DocumentUrl::from(Url::parse(url).unwrap_or_else(|_| {
-            Url::parse("about:blank").unwrap()
-        }));
+        self.url = DocumentUrl::from(
+            Url::parse(url).unwrap_or_else(|_| Url::parse("about:blank").unwrap()),
+        );
     }
 
     pub fn guard(&self) -> &SharedRwLock {
@@ -830,10 +830,7 @@ impl BaseDocument {
     /// trusting that a real clone produces a slot id strictly in `[1, MAX-1]`.
     pub fn deep_clone_node(&mut self, node_id: usize) -> usize {
         let Some(node) = self.get_node(node_id) else {
-            debug_assert!(
-                false,
-                "deep_clone_node: stale root node_id={node_id}"
-            );
+            debug_assert!(false, "deep_clone_node: stale root node_id={node_id}");
             return usize::MAX;
         };
         let data = node.data.clone();
@@ -863,10 +860,7 @@ impl BaseDocument {
             match self.get_node_mut(child_id) {
                 Some(child) => child.parent = Some(new_node_id),
                 None => {
-                    debug_assert!(
-                        false,
-                        "deep_clone_node: vanished child_id={child_id}"
-                    );
+                    debug_assert!(false, "deep_clone_node: vanished child_id={child_id}");
                     return usize::MAX;
                 }
             }
@@ -874,10 +868,7 @@ impl BaseDocument {
         match self.get_node_mut(new_node_id) {
             Some(new_node) => new_node.children = new_children,
             None => {
-                debug_assert!(
-                    false,
-                    "deep_clone_node: vanished new_node_id={new_node_id}"
-                );
+                debug_assert!(false, "deep_clone_node: vanished new_node_id={new_node_id}");
                 return usize::MAX;
             }
         }
@@ -1753,7 +1744,10 @@ impl BaseDocument {
     pub fn scroll_viewport_by_has_changed(&mut self, x: f64, y: f64) -> bool {
         // D-2c-followup: root_element widened to Option<&Node>; degrade to a
         // default (zero) content size when no root element is mounted.
-        let content_size = self.root_element().map(|r| r.final_layout.size).unwrap_or_default();
+        let content_size = self
+            .root_element()
+            .map(|r| r.final_layout.size)
+            .unwrap_or_default();
         let new_scroll = (self.viewport_scroll.x - x, self.viewport_scroll.y - y);
         let window_width = self.viewport.window_size.0 as f64 / self.viewport.scale() as f64;
         let window_height = self.viewport.window_size.1 as f64 / self.viewport.scale() as f64;

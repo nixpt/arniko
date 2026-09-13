@@ -13,10 +13,10 @@
 
 #![cfg(feature = "hyperlink")]
 
-use ratatui::buffer::CellDiffOption;
-use ratatui::layout::{Position, Rect};
 use ratatui::Terminal;
 use ratatui::backend::TestBackend;
+use ratatui::buffer::CellDiffOption;
+use ratatui::layout::{Position, Rect};
 use tornado::hyperlink::Link;
 
 fn terminal(width: u16, height: u16) -> Terminal<TestBackend> {
@@ -33,10 +33,7 @@ fn hyperlink_widget_is_reachable_through_tornado_hyperlink() {
     let mut term = terminal(20, 1);
     term.draw(|frame| {
         let area = Rect::new(0, 0, 8, 1);
-        frame.render_widget(
-            Link::new("docs", "https://docs.rs/tornado-hyperlink"),
-            area,
-        );
+        frame.render_widget(Link::new("docs", "https://docs.rs/tornado-hyperlink"), area);
     })
     .expect("draw");
 
@@ -83,7 +80,11 @@ fn disabled_link_falls_back_to_plain_letters() {
     assert_eq!(c0.symbol(), "r");
     assert_eq!(c1.symbol(), "a");
     // No skip markers when fallback plain-text path is in use.
-    assert_ne!(c1.diff_option, CellDiffOption::Skip, "plain-text fallback should not set Skip");
+    assert_ne!(
+        c1.diff_option,
+        CellDiffOption::Skip,
+        "plain-text fallback should not set Skip"
+    );
 }
 
 #[test]
@@ -122,9 +123,7 @@ fn builder_chain_compiles_through_re_export() {
     // type-check every fluent setter.
     let link = Link::new("a", "https://example.com")
         .style(ratatui::style::Style::default().fg(ratatui::style::Color::Cyan))
-        .hover_style(
-            ratatui::style::Style::default().add_modifier(ratatui::style::Modifier::BOLD),
-        )
+        .hover_style(ratatui::style::Style::default().add_modifier(ratatui::style::Modifier::BOLD))
         .fallback_suffix("…")
         .enabled(true)
         .focused(true);

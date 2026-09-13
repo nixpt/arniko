@@ -193,7 +193,10 @@ pub struct BarGroup<'a> {
 
 impl Default for BarGroup<'static> {
     fn default() -> Self {
-        Self { label: None, bars: Vec::new() }
+        Self {
+            label: None,
+            bars: Vec::new(),
+        }
     }
 }
 
@@ -326,7 +329,11 @@ impl<'a> BarChart<'a> {
     /// Vendor's `max` is `None` → compute as `Max of all bar values`. If
     /// `Some(n)`, the rendered bar height is proportional to `n`.
     fn compute_max(data: &[BarGroup<'_>]) -> u64 {
-        data.iter().flat_map(|g| g.bars.iter()).map(|b| b.value).max().unwrap_or(0)
+        data.iter()
+            .flat_map(|g| g.bars.iter())
+            .map(|b| b.value)
+            .max()
+            .unwrap_or(0)
     }
 }
 
@@ -448,19 +455,24 @@ impl<'a> Widget for BarChart<'a> {
 // Direction::Vertical case
 impl<'a> BarChart<'a> {
     fn render_vertical(&self, area: Rect, buf: &mut Buffer, max: u64) {
-        let layout = compute_columns_layout(self.bar_width, self.bar_gap, self.group_gap, &self.data);
+        let layout =
+            compute_columns_layout(self.bar_width, self.bar_gap, self.group_gap, &self.data);
 
         // Paint each group's bars top-down; bars grow vertically toward the bottom.
         let chart_height = area.height;
         for (group_idx, group) in self.data.iter().enumerate() {
             for (bar_idx, bar) in group.bars.iter().enumerate() {
-                let start_col = layout.group_starts[group_idx] + (bar_idx as u16) * layout.bar_width_with_gap;
+                let start_col =
+                    layout.group_starts[group_idx] + (bar_idx as u16) * layout.bar_width_with_gap;
                 if start_col + self.bar_width as u16 > area.x + area.width {
                     continue; // would overflow column
                 }
-                let height_in_cells = ((bar.value as u128 * chart_height as u128) / max.max(1) as u128) as u16;
+                let height_in_cells =
+                    ((bar.value as u128 * chart_height as u128) / max.max(1) as u128) as u16;
                 let filled_rows = height_in_cells.min(chart_height);
-                let base_y = area.y.saturating_add(chart_height.saturating_sub(filled_rows));
+                let base_y = area
+                    .y
+                    .saturating_add(chart_height.saturating_sub(filled_rows));
                 for j in 0..self.bar_width as u16 {
                     let x = start_col + j;
                     for k in 0..filled_rows {
@@ -485,8 +497,10 @@ impl<'a> BarChart<'a> {
             }
             let group_base = group.bars.iter().map(|b| b.value).max().unwrap_or(0).max(1);
             for (bar_idx, bar) in group.bars.iter().enumerate() {
-                let base_col = area.x + (bar_idx as u16) * (self.bar_width as u16 + self.bar_gap as u16);
-                let cells_for_bar = ((bar.value as u128 * chart_width as u128) / (group_base as u128 + 1).max(1)) as u16;
+                let base_col =
+                    area.x + (bar_idx as u16) * (self.bar_width as u16 + self.bar_gap as u16);
+                let cells_for_bar = ((bar.value as u128 * chart_width as u128)
+                    / (group_base as u128 + 1).max(1)) as u16;
                 let filled = cells_for_bar.min(chart_width - base_col.saturating_sub(area.x));
                 for j in 0..filled {
                     let x = base_col + j;
@@ -507,7 +521,12 @@ struct ColumnsLayout {
     group_starts: Vec<u16>,
 }
 
-fn compute_columns_layout(bar_width: u8, bar_gap: u8, group_gap: u8, data: &[BarGroup<'_>]) -> ColumnsLayout {
+fn compute_columns_layout(
+    bar_width: u8,
+    bar_gap: u8,
+    group_gap: u8,
+    data: &[BarGroup<'_>],
+) -> ColumnsLayout {
     let bw = bar_width as u16;
     let bg = bar_gap as u16;
     let gg = group_gap as u16;
@@ -519,7 +538,10 @@ fn compute_columns_layout(bar_width: u8, bar_gap: u8, group_gap: u8, data: &[Bar
         cursor = cursor.saturating_add(((group.bars.len() as u16).saturating_sub(1)) * bg);
         cursor = cursor.saturating_add(gg);
     }
-    ColumnsLayout { bar_width_with_gap: bw + bg, group_starts }
+    ColumnsLayout {
+        bar_width_with_gap: bw + bg,
+        group_starts,
+    }
 }
 
 // ===========================================================================

@@ -357,7 +357,9 @@ impl taffy::CacheTree for BaseDocument {
         inputs: &taffy::LayoutInput,
         layout_output: taffy::LayoutOutput,
     ) {
-        self.node_from_id_mut(node_id).cache.store(inputs, layout_output);
+        self.node_from_id_mut(node_id)
+            .cache
+            .store(inputs, layout_output);
     }
 
     #[inline]

@@ -8,7 +8,9 @@ pub mod custom_paint_source;
 pub use custom_paint_source::*;
 pub use image_renderer::VelloImageRenderer;
 pub use scene::VelloScenePainter;
-pub use window_renderer::{SceneOverlay, TextureOverlay, VelloRendererOptions, VelloWindowRenderer};
+pub use window_renderer::{
+    SceneOverlay, TextureOverlay, VelloRendererOptions, VelloWindowRenderer,
+};
 
 pub use vello;
 pub use wgpu;

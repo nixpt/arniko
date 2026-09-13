@@ -153,11 +153,7 @@ impl Table {
                     .iter()
                     .map(|c| format!("<td>{}</td>", escape_html(c)))
                     .collect();
-                format!(
-                    r#"<tr class="{}">{}</tr>"#,
-                    escape_html(&row.class),
-                    tds
-                )
+                format!(r#"<tr class="{}">{}</tr>"#, escape_html(&row.class), tds)
             })
             .collect();
         format!("<tbody>{}</tbody>", rows)

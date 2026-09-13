@@ -177,10 +177,7 @@ fn paragraph_into_scroll_view_renders_into_internal_buffer() {
     let mut scroll_view = ScrollView::new(Size::new(20, 5));
     let items: Vec<String> = (1..=5).map(|i| format!("Item {i}")).collect();
     let paragraph = Paragraph::new(items.join("\n"));
-    scroll_view.render_widget(
-        paragraph,
-        Rect::new(0, 0, 20, 5),
-    );
+    scroll_view.render_widget(paragraph, Rect::new(0, 0, 20, 5));
 
     let mut buf = Buffer::empty(Rect::new(0, 0, 20, 5));
     let mut state = ScrollViewState::default();
