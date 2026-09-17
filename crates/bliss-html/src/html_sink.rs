@@ -145,8 +145,14 @@ impl<'m, 'doc> TreeSink for DocumentHtmlParser<'m, 'doc> {
         Self: 'a;
 
     fn finish(self) -> Self::Output {
+        // Never `println!` here: this is a library, and stdout belongs to the
+        // consumer (a stdio JSON-RPC server's protocol channel, a CLI's output,
+        // …). Parse errors go to `tracing` when enabled, stderr otherwise.
         for error in self.errors.borrow().iter() {
-            println!("ERROR: {error}");
+            #[cfg(feature = "tracing")]
+            tracing::warn!("bliss-html parse error: {error}");
+            #[cfg(not(feature = "tracing"))]
+            eprintln!("bliss-html parse error: {error}");
         }
     }
 

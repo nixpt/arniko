@@ -10,6 +10,13 @@ homepage.workspace = true
 repository.workspace = true
 categories.workspace = true
 
+[features]
+# Emit parse errors through `tracing` instead of stderr (matches bliss-dom /
+# bliss-paint / bliss-shell). Off by default: the fallback is `eprintln!` —
+# never `println!`, because a library that writes to stdout corrupts any
+# stdio-protocol consumer (surfer-mcp's JSON-RPC channel is how this was found).
+tracing = ["dep:tracing"]
+
 [dependencies]
 bliss-dom = { path = "../bliss-dom", version = "0.2.99" }
 bliss-traits = { path = "../bliss-traits", version = "0.2.99" }
@@ -17,3 +24,5 @@ bliss-traits = { path = "../bliss-traits", version = "0.2.99" }
 # Servo dependencies
 html5ever = "0.37.0"
 xml5ever = "0.37.0"
+
+tracing = { version = "0.1.40", optional = true }

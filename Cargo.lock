@@ -835,6 +835,7 @@ dependencies = [
  "bliss-dom",
  "bliss-traits",
  "html5ever",
+ "tracing",
  "xml5ever",
 ]
 
