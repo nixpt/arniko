@@ -445,3 +445,14 @@ Round-13 design memo composition trap T13 (constitutional): For round-13's Comma
 Reason:
 Round-13 design memo constitutional record (extension-not-divergence): Round-12 (BarChart, widget-only stateless vendoring) captured event_id dfaed35e5ccb as a constitutional CLAIM of round-12's DIVERGENCE from round-11's two precedents encoded in crates/tornado-list/src/lib.rs: §3 E0034 carve-out did NOT apply (BarChart is stateless — no StatefulWidget impl upstream, so fully-qualified trait disambiguation is unnecessary) AND §4 selection-driven composition did NOT apply (no selection carrier upstream). Round-13 (Textarea vendoring from xai-ratatui-textarea where upstream TextAreaState is a discrete state type that round-13 re-exports as a separate carrier) DEBERATELY RE-INHERITS BOTH round-11 precedents and explicitly UNDOES round-12's divergence. Said differently: round-12 was the divergence (StatelessWidget precedent extending WITHOUT StatefulWidget), round-13 is the re-inheritance (StatefulWidget precedent extension REVERTING to round-11 shape because Textarea is stateful). This record anchors round-13 as the StatefulWidget-vendoring EXTENSION precedent (not divergence) — future rounds reading only the round-12 divergence claim would mistakenly apply it to a future StatefulWidget round and skip the E0034 carve-out module doc. Defense: round-13 vendoring's §3 module doc MUST explicitly note 'round-13 deliberately re-inherits round-11's E0034 carve-out because Textarea is stateful, overriding any read of round-12's divergence claim that the carve-out is MOOT for vendored widgets'. Diagnostic anchor: crates/tornado-textinput/src/lib.rs will mirror crates/tornado-list/src/lib.rs §3 verbatim with the widget/state name substituted. Cross-references: event_id 6e85a6219d4d (Buffer::set_line u16) and event_id ec5e60481cb4 (Cell::bg Color) are the round-11 carry-forward hazards that round-13's vendoring must defend against synchronously with the E0034 carve-out re-inheritance.
 
+
+## 2026-09-17T08:43:58-05:00 — [ADOPTED] [ARCHITECTURAL] bliss-html: parser diagnostics must not write stdout
+
+Reason:
+bliss-html's html_sink finish() printed every parser error with println! — found when surfer-mcp (stdio JSON-RPC) got 'ERROR: Current node doesn't match tag' injected into its protocol stream by a real-world DuckDuckGo parse error. A library must never own stdout: stdio-protocol consumers, CLIs, and pipelines all break. Fixed to eprintln! by default with tracing::warn! behind an optional tracing feature, matching the pattern bliss-dom/bliss-paint/bliss-shell already use.
+
+Artifacts: crates/bliss-html/src/html_sink.rs,crates/bliss-html/Cargo.toml
+
+Rejected alternatives:
+- **leave println! (breaks every stdio consumer); add a log dep + logger (heavier, and arniko's convention is optional tracing)**
+
