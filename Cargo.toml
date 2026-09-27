@@ -74,7 +74,7 @@ categories   = ["gui"]
 edition      = "2024"
 rust-version = "1.85.0"
 
-# ── patch: redirect crates-io bliss-* + exo-mesh to in-repo / vendored ───────
+# ── patch: redirect crates-io bliss-* to in-repo ────────────────────────────────
 [patch.crates-io]
 arniko-bliss  = { path = "crates/bliss" }
 bliss-dom     = { path = "crates/bliss-dom" }

@@ -1,9 +1,10 @@
 # Arniko
 
-Unified UI SDK for Exosphere agent capsules, built on the Bliss rendering engine.
+Unified UI SDK for Exosphere agent capsules, built on the Bliss rendering engine
+(forked from [Blitz](https://github.com/DioxusLabs/blitz)).
 
 Arniko provides a component library (28 components, 6 themes), reactive signal bindings,
-and a headless HTML+CSS layout engine extracted from the Servo/Firefox lineage.
+and a headless HTML+CSS layout engine built on Blitz's Stylo (Servo) + Taffy + Parley stack.
 
 ## Architecture
 
@@ -32,7 +33,7 @@ and a headless HTML+CSS layout engine extracted from the Servo/Firefox lineage.
 |---------|---------|
 | `default` | `html` + `components` |
 | `components` | 28 UI components + themes |
-| `networking` | Exosphere mesh networking (vendored exo-mesh) |
+| `networking` | HTTP networking via `exo-bliss-net` |
 | `full` | All of the above |
 
 ## Build
@@ -49,10 +50,25 @@ cargo test  -p bliss-dom --lib               # 44 tests
 cargo test  -p stylo_taffy --lib             # 58 tests
 ```
 
+## Relationship to Upstream
+
+The `bliss*`, `stylo_taffy`, `debug_timer` and `accesskit_xplat` crates are a hard fork of
+[Blitz](https://github.com/DioxusLabs/blitz) by Dioxus Labs, carried here with Arniko's
+modifications; the standalone fork is [nixpt/bliss-engine](https://github.com/nixpt/bliss-engine).
+`anyrender_vello` is vendored from [DioxusLabs/anyrender](https://github.com/DioxusLabs/anyrender),
+and the `tornado-*` crates vendor code from [ratatui](https://github.com/ratatui/ratatui) and
+[xai-org/grok-build](https://github.com/xai-org/grok-build). Upstream copyright and license
+terms are preserved in [NOTICE](NOTICE) and each crate's own `NOTICE`.
+
 ## License
 
 Most crates: MIT OR Apache-2.0 — see [LICENSE-MIT](LICENSE-MIT) and [LICENSE-APACHE](LICENSE-APACHE).
 
-`accesskit_xplat`: Apache-2.0 only.
+Exceptions:
 
-`stylo_taffy`: MIT OR Apache-2.0 OR MPL-2.0 (Stylo/Servo CSS engine is MPL-licensed) — see [LICENSE-MPL](LICENSE-MPL).
+- `accesskit_xplat`: Apache-2.0 only.
+- `stylo_taffy`: MIT OR Apache-2.0 OR MPL-2.0 (Stylo/Servo CSS engine is MPL-licensed) — see [LICENSE-MPL](LICENSE-MPL).
+- `tornado-styles`, `tornado-textinput`, `tornado-wrap`: Apache-2.0 only (derived from Apache-2.0 xai-org/grok-build code).
+- `crates/_vendored/exo-mesh` (vendored source, not built by any crate): OCPL-1.1, Exosphere's runtime-tier license — see [its LICENSE](crates/_vendored/exo-mesh/LICENSE).
+
+Third-party attributions: [NOTICE](NOTICE).

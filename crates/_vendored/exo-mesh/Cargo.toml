@@ -3,7 +3,7 @@ name = "exo-mesh"
 version = "0.2.99-a4b"
 edition = "2021"
 description = "Exosphere P2P Service Mesh - zero-config networking via DIDs"
-license-file = "../../../../LICENSE"
+license-file = "LICENSE"  # OCPL-1.1 — exosphere runtime tier (exosphere LICENSING.md); see NOTICE
 
 [features]
 default = ["local", "lan", "p2p"]
