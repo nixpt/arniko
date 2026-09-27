@@ -7,6 +7,9 @@ description = "Arniko UI components as importable host capabilities for CRUSH ca
 license.workspace = true
 homepage.workspace = true
 repository.workspace = true
+rust-version.workspace = true
+categories.workspace = true
+readme = "README.md"
 
 [features]
 default = []

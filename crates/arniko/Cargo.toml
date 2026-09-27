@@ -88,7 +88,7 @@ optional = true
 # Networking dependencies (optional)
 [dependencies.exo-bliss-net]
 path = "../exo-bliss-net"
-version = "0.2.99"
+version = "0.3.0"
 optional = true
 
 # exo-mesh removed for crates.io publish (vendored, not on registry; networking feature uses exo-bliss-net only)

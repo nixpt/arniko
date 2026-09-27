@@ -6,10 +6,13 @@ license.workspace = true
 description = "Exosphere-native NetProvider for Bliss - routes capsule://, data://, file://, http(s):// schemes"
 homepage.workspace = true
 repository.workspace = true
+rust-version.workspace = true
+categories.workspace = true
+readme = "README.md"
 
 [features]
 default = ["http-fallback"]
-# capsule:// routing via exo-mesh (monorepo-only; exo-mesh not on crates.io — feature is a no-op when installed from registry)
+# capsule:// routing: placeholder, currently a no-op (its exo-mesh backend was removed from arniko in s506)
 capsule = []
 # http/https fallback via reqwest
 http-fallback = ["dep:reqwest"]

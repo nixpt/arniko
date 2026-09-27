@@ -222,7 +222,7 @@ dependencies = [
 
 [[package]]
 name = "arniko"
-version = "0.2.99"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "arniko-bliss",
@@ -263,7 +263,7 @@ dependencies = [
 
 [[package]]
 name = "arniko-crush"
-version = "0.2.99"
+version = "0.3.0"
 dependencies = [
  "arniko",
  "crush-lang-sdk",
@@ -1193,7 +1193,7 @@ dependencies = [
 
 [[package]]
 name = "exo-bliss-net"
-version = "0.2.99"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "bliss-traits",
