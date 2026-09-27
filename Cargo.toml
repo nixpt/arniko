@@ -1,25 +1,6 @@
 [workspace]
 resolver = "2"
 members = [
-    # Bliss DOM engine
-    "crates/bliss-traits",
-    "crates/bliss-dom",
-    "crates/bliss-html",
-    "crates/bliss-net",
-    "crates/bliss-paint",
-    "crates/bliss-shell",
-    "crates/bliss",
-    # Bliss support crates
-    "crates/stylo_taffy",
-    "crates/debug_timer",
-    "crates/accesskit_xplat",
-    # Vello rendering backend (in-repo fork: SceneOverlay/set_scene_effects
-    # mustang hooks — see SHELL-SPLIT-0-1). Was previously unwired (consumed
-    # from crates.io instead), which left the in-tree copy dead code and
-    # `--features "reactive gpu"` examples (blur_panel, phase5_demo) broken
-    # against the published crate. Patched below to fix that.
-    "crates/anyrender_vello",
-
     # Arniko SDK
     "crates/arniko",
     # Networking
@@ -36,31 +17,35 @@ categories   = ["gui"]
 edition      = "2024"
 rust-version = "1.85.0"
 
-# ── patch: redirect crates-io bliss-* to in-repo ────────────────────────────────
-[patch.crates-io]
-arniko-bliss  = { path = "crates/bliss" }
-bliss-dom     = { path = "crates/bliss-dom" }
-bliss-html    = { path = "crates/bliss-html" }
-bliss-net     = { path = "crates/bliss-net" }
-bliss-paint   = { path = "crates/bliss-paint" }
-bliss-shell   = { path = "crates/bliss-shell" }
-bliss-traits  = { path = "crates/bliss-traits" }
-bliss-stylo-taffy = { path = "crates/stylo_taffy" }
-anyrender_vello = { path = "crates/anyrender_vello" }
-
 # ── workspace.dependencies ────────────────────────────────────────────────────
 [workspace.dependencies]
-# Arniko stack (in-repo)
-bliss         = { path = "crates/bliss",        version = "0.2.99", package = "arniko-bliss" }
-bliss-dom     = { path = "crates/bliss-dom",    version = "0.2.99", default-features = false }
-bliss-html    = { path = "crates/bliss-html",   version = "0.2.99", default-features = false }
-bliss-net     = { path = "crates/bliss-net",    version = "0.2.99", default-features = false }
-bliss-paint   = { path = "crates/bliss-paint",  version = "0.2.99", default-features = false }
-bliss-shell   = { path = "crates/bliss-shell",  version = "0.2.99", default-features = false }
-bliss-traits  = { path = "crates/bliss-traits", version = "0.2.99", default-features = false }
-stylo_taffy   = { path = "crates/stylo_taffy",  version = "0.2.99", package = "bliss-stylo-taffy", default-features = false }
-debug_timer   = { path = "crates/debug_timer",  version = "0.1.3" }
-accesskit_xplat = { path = "crates/accesskit_xplat", version = "0.1", default-features = false }
+# BLISS-HOME-2 (s506): the bliss/stylo_taffy/accesskit_xplat/anyrender_vello
+# crates that used to live in-tree here (crates/bliss, crates/bliss-dom, ...)
+# have moved to their own repo, nixpt/bliss-engine, and are published to
+# crates.io at 0.3.0. Consumed the same way `mustang` already was below
+# (registry dep, NOT a workspace member, NOT patched in-repo) — no more
+# `[patch.crates-io]` bliss-* block.
+bliss         = { version = "0.3", package = "arniko-bliss" }
+bliss-dom     = { version = "0.3", default-features = false }
+bliss-html    = { version = "0.3", default-features = false }
+bliss-net     = { version = "0.3", default-features = false }
+bliss-paint   = { version = "0.3", default-features = false }
+bliss-shell   = { version = "0.3", default-features = false }
+bliss-traits  = { version = "0.3", default-features = false }
+stylo_taffy   = { version = "0.3", package = "bliss-stylo-taffy", default-features = false }
+# debug_timer: bliss-engine found this identical to nicoburns' upstream
+# crate and depends on it directly rather than republishing — do the same
+# here (was already effectively true: the old dual path+version pin
+# resolved to upstream 0.1.3 for any registry consumer anyway).
+debug_timer   = { version = "0.1.3" }
+# accesskit_xplat: bliss-engine's fork is genuinely modified (graceful
+# UiKit/WinRT fallback, hardened Android JNI attach) and republished as
+# `bliss-accesskit-xplat` — `package =` keeps the in-repo `accesskit_xplat`
+# name working for any consumer that still uses it.
+accesskit_xplat = { version = "0.3", package = "bliss-accesskit-xplat", default-features = false }
+# anyrender_vello: bliss-engine's fork (SceneOverlay/set_scene_effects
+# mustang hooks) is republished as `bliss-anyrender-vello`.
+anyrender_vello = { version = "0.3", package = "bliss-anyrender-vello" }
 # mustang lives in its own repo (nixpt/mustang), published as `arniko-mustang`
 # (0.3.0 from tag v0.3.0 @ 1db503e; the old in-tree crates/mustang snapshot is gone).
 # Consumed from crates.io here — unlike bliss-*, mustang is NOT a workspace
@@ -103,7 +88,6 @@ parley = { version = "0.10", default-features = false, features = ["std"] }
 
 # GPU / rendering
 anyrender       = "0.7"
-anyrender_vello = { path = "crates/anyrender_vello", version = "0.7" }
 anyrender_svg   = "0.8"
 wgpu            = "27"
 vello           = { version = "0.7", features = ["wgpu"] }

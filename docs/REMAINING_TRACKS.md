@@ -1,5 +1,9 @@
 # Arniko Remaining Track Work
 
+> **s506 (BLISS-HOME-2):** `crates/_vendored/exo-mesh` (referenced below in A-4b/A-4c)
+> was removed — unused, not in `Cargo.lock`. Also note the whole Bliss stack this doc
+> discusses (stylo_taffy etc.) moved to nixpt/bliss-engine the same session.
+>
 > **Generated:** 2026-06-16 · **Updated:** 2026-06-17 (after M1 follow-up commit series on branch `agent/vibe/ar-m4`) · **2026-06-18** (C-8 close-out at commit `283bd0e` on `agent/vibe/dogfood-m4`) · **2026-06-18** (C-8a close-out: rustdoc `# Examples` for all 28 components in two slices — slice 1 verbatim from DESIGN_SYSTEM.md `051d4b3`, slice 2 synthesized from public API `a23a931`) · **2026-06-19** (A-4b+A-4c ✅: vendored exo-mesh + networking/full gate clean) · **2026-06-19** (B ✅ COMPLETE: B-7 all primitives confirmed present + tested — `batch`/`create_effect`/`create_resource`/`provide`+`inject`/`ErrorBoundary`/`KeyedFor`; toast doctest fix) · **2026-06-19** (C ✅ COMPLETE: C-4 `toast_reactive`, C-5 color tokens, C-6 constructor docs, C-7 `Table`/`Tabs`/`Tag` dashboard components; D2=dashboard kit resolved) · **2026-06-19** (E-1/E-2 confirmed ✅; E-3 ✅: 28 enum-conversion tests in `stylo_taffy/convert.rs`; E-4 ✅: CI YAML bug fixed, `workspace-check` + `platform-matrix` jobs added) · **2026-06-19** (F-3 ✅: LICENSE-MIT+APACHE+MPL at root + per-crate; A-1 fix committed; F-4 ✅: workspace.package inheritance across all crates, single 0.2.99 version track; F-5 ✅: README.md + cargo-audit CI job)
 > **Source:** `PRODUCTION_READINESS_SPEC.md` + `.dejavue/state.md`
 > **Status:** **M2 ✅** + **M4 ✅** + **Epic A ✅** + **Epic B ✅** + **Epic C ✅** + **Epic D ✅** + **Epic E (E-1..E-4) ✅** + **Epic F (F-3..F-5) ✅** DONE. **Remaining:** E-5 P2, F-1/F-2 (blocked D1/D4), F-6 P2.
