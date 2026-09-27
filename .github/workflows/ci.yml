@@ -40,6 +40,14 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
+      # bliss-html (a dev-dependency) pulls parley -> fontique ->
+      # yeslogic-fontconfig-sys, whose build script needs fontconfig.pc.
+      - name: Install apt deps
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libfontconfig1-dev
+          version: 1.0
+
       - name: cargo fmt --check
         run: cargo fmt --all --check
 
@@ -60,6 +68,12 @@ jobs:
         uses: dtolnay/rust-toolchain@1.89.0
 
       - uses: Swatinem/rust-cache@v2
+
+      - name: Install apt deps
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libfontconfig1-dev
+          version: 1.0
 
       - name: cargo check --workspace --all-targets
         run: cargo check --workspace --all-targets
