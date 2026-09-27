@@ -465,9 +465,9 @@ dependencies = [
 
 [[package]]
 name = "arniko-mustang"
-version = "0.2.99"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e4bc15e1fb80ebca096414b59a6455018d166c17d3e7f71ffab71d2244acd3ff"
+checksum = "4546c7e0984a5180aa828b3e7f2d7990d061fb0f13f674edaf7ae0f31d94d44e"
 dependencies = [
  "anyhow",
  "anyrender",
