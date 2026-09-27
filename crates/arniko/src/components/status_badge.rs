@@ -168,7 +168,9 @@ mod tests {
             ),
             (
                 "error-with-class",
-                StatusBadge::new("Down").variant(StatusVariant::Error).class("ml-2"),
+                StatusBadge::new("Down")
+                    .variant(StatusVariant::Error)
+                    .class("ml-2"),
                 &["arniko-status-error", "ml-2"],
             ),
             (

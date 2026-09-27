@@ -145,12 +145,16 @@ mod tests {
             },
             Case {
                 label: "with-description",
-                html: EmptyState::new("Empty").description("Try adding items").render(),
+                html: EmptyState::new("Empty")
+                    .description("Try adding items")
+                    .render(),
                 fragments: &["arniko-empty-desc", "Try adding items"],
             },
             Case {
                 label: "with-action",
-                html: EmptyState::new("Empty").action("<button>Add</button>").render(),
+                html: EmptyState::new("Empty")
+                    .action("<button>Add</button>")
+                    .render(),
                 fragments: &["arniko-empty-action", "<button>Add</button>"],
             },
             Case {

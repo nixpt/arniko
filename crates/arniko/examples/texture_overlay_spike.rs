@@ -46,7 +46,9 @@
 //!         issues; a true suspend→resume cycle remains formally unverified live in
 //!         this environment.
 
-use anyrender_vello::{CustomPaintCtx, CustomPaintSource, DeviceHandle, TextureHandle, vello, wgpu};
+use anyrender_vello::{
+    CustomPaintCtx, CustomPaintSource, DeviceHandle, TextureHandle, vello, wgpu,
+};
 use arniko::reactive::{Div, Text, View, launch_reactive_configured};
 use bliss_dom::{Attribute, QualName, local_name, ns};
 
@@ -66,7 +68,10 @@ const OFFSCREEN_H: u32 = 160;
 
 /// GPU state that only exists while the paint source is resumed (i.e. while the
 /// window has a live surface). Rebuilt from scratch on every `resume()`.
-#[allow(dead_code, reason = "renderer/device_handle held for lifetime, not re-read after setup")]
+#[allow(
+    dead_code,
+    reason = "renderer/device_handle held for lifetime, not re-read after setup"
+)]
 struct GpuState {
     /// A second, independent `vello::Renderer` used ONLY to rasterize into the
     /// offscreen texture. It shares the window's device/queue but is otherwise
@@ -90,7 +95,11 @@ impl SolidColorPaintSource {
         Self { state: None }
     }
 
-    fn render_solid_scene(renderer: &mut vello::Renderer, device_handle: &DeviceHandle, texture: &wgpu::Texture) {
+    fn render_solid_scene(
+        renderer: &mut vello::Renderer,
+        device_handle: &DeviceHandle,
+        texture: &wgpu::Texture,
+    ) {
         let mut scene = vello::Scene::new();
         scene.fill(
             peniko::Fill::NonZero,
@@ -127,20 +136,22 @@ impl CustomPaintSource for SolidColorPaintSource {
         // (STORAGE_BINDING | TEXTURE_BINDING) — that recipe is for a texture that gets
         // *sampled by a TextureBlitter*, not one that gets registered with
         // `Renderer::register_texture`. TEXTURE_BINDING is not required for this path.
-        let texture = device_handle.device.create_texture(&wgpu::TextureDescriptor {
-            label: Some("shell-split-phase0-offscreen"),
-            size: wgpu::Extent3d {
-                width: OFFSCREEN_W,
-                height: OFFSCREEN_H,
-                depth_or_array_layers: 1,
-            },
-            mip_level_count: 1,
-            sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
-            format: wgpu::TextureFormat::Rgba8Unorm,
-            usage: wgpu::TextureUsages::STORAGE_BINDING | wgpu::TextureUsages::COPY_SRC,
-            view_formats: &[],
-        });
+        let texture = device_handle
+            .device
+            .create_texture(&wgpu::TextureDescriptor {
+                label: Some("shell-split-phase0-offscreen"),
+                size: wgpu::Extent3d {
+                    width: OFFSCREEN_W,
+                    height: OFFSCREEN_H,
+                    depth_or_array_layers: 1,
+                },
+                mip_level_count: 1,
+                sample_count: 1,
+                dimension: wgpu::TextureDimension::D2,
+                format: wgpu::TextureFormat::Rgba8Unorm,
+                usage: wgpu::TextureUsages::STORAGE_BINDING | wgpu::TextureUsages::COPY_SRC,
+                view_formats: &[],
+            });
 
         let mut renderer = vello::Renderer::new(
             &device_handle.device,
@@ -226,7 +237,9 @@ fn main() {
                         name: QualName::new(None, ns!(), local_name!("src")),
                         value: "0".to_string(),
                     },
-                    style_attr("width:220px; height:160px; border:2px solid #a855f7; display:block;"),
+                    style_attr(
+                        "width:220px; height:160px; border:2px solid #a855f7; display:block;",
+                    ),
                 ],
             );
             mutator.append_children(shell_id, &[canvas_id]);
@@ -238,8 +251,12 @@ fn main() {
         // src="0">` above. (A real embedder would thread the returned ID into the DOM
         // instead of relying on registration order.)
         |renderer| {
-            let source_id = renderer.register_custom_paint_source(Box::new(SolidColorPaintSource::new()));
-            debug_assert_eq!(source_id, 0, "phase0-spike: <canvas src=\"0\"> assumes first-registered id");
+            let source_id =
+                renderer.register_custom_paint_source(Box::new(SolidColorPaintSource::new()));
+            debug_assert_eq!(
+                source_id, 0,
+                "phase0-spike: <canvas src=\"0\"> assumes first-registered id"
+            );
         },
     );
 }
