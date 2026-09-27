@@ -23,7 +23,9 @@ and a headless HTML+CSS layout engine built on Blitz's Stylo (Servo) + Taffy + P
 | `debug_timer` | Phase timing instrumentation |
 | `accesskit_xplat` | Cross-platform accessibility (AccessKit) |
 | `anyrender_vello` | Vello-backed anyrender implementation |
-| `tornado` | Ratatui/crossterm TUI shell (replaces `tui-shell`) |
+
+The `tornado`/`tornado-*` TUI toolkit was extracted to its own repository,
+renamed `tui-easy`: https://github.com/nixpt/tui-easy.
 
 ## Feature Flags
 
@@ -55,10 +57,12 @@ cargo test  -p stylo_taffy --lib             # 58 tests
 The `bliss*`, `stylo_taffy`, `debug_timer` and `accesskit_xplat` crates are a hard fork of
 [Blitz](https://github.com/DioxusLabs/blitz) by Dioxus Labs, carried here with Arniko's
 modifications; the standalone fork is [nixpt/bliss-engine](https://github.com/nixpt/bliss-engine).
-`anyrender_vello` is vendored from [DioxusLabs/anyrender](https://github.com/DioxusLabs/anyrender),
-and the `tornado-*` crates vendor code from [ratatui](https://github.com/ratatui/ratatui) and
-[xai-org/grok-build](https://github.com/xai-org/grok-build). Upstream copyright and license
-terms are preserved in [NOTICE](NOTICE) and each crate's own `NOTICE`.
+`anyrender_vello` is vendored from [DioxusLabs/anyrender](https://github.com/DioxusLabs/anyrender).
+The `tornado`/`tornado-*` TUI toolkit (which vendored code from
+[ratatui](https://github.com/ratatui/ratatui) and
+[xai-org/grok-build](https://github.com/xai-org/grok-build)) now lives in its own
+repository, renamed `tui-easy`: https://github.com/nixpt/tui-easy. Upstream copyright
+and license terms are preserved in [NOTICE](NOTICE) and each crate's own `NOTICE`.
 
 ## License
 
@@ -68,7 +72,6 @@ Exceptions:
 
 - `accesskit_xplat`: Apache-2.0 only.
 - `stylo_taffy`: MIT OR Apache-2.0 OR MPL-2.0 (Stylo/Servo CSS engine is MPL-licensed) — see [LICENSE-MPL](LICENSE-MPL).
-- `tornado-styles`, `tornado-textinput`, `tornado-wrap`: Apache-2.0 only (derived from Apache-2.0 xai-org/grok-build code).
 - `crates/_vendored/exo-mesh` (vendored source, not built by any crate): OCPL-1.1, Exosphere's runtime-tier license — see [its LICENSE](crates/_vendored/exo-mesh/LICENSE).
 
 Third-party attributions: [NOTICE](NOTICE).

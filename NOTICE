@@ -41,18 +41,12 @@ crates/anyrender_vello is vendored from the anyrender_vello crate
   License:    MIT OR Apache-2.0
 
 ==============================================================================
-Tornado TUI crates
+Tornado TUI crates (extracted)
 ==============================================================================
 
-Each vendoring crate carries its own NOTICE with the exact upstream files:
-
-  crates/tornado-barchart   ratatui (MIT OR Apache-2.0)
-  crates/tornado-styles     xai-org/grok-build (Apache-2.0 only)
-  crates/tornado-textinput  xai-org/grok-build (Apache-2.0 only)
-  crates/tornado-wrap       xai-org/grok-build (Apache-2.0 only)
-
-The three grok-build derivatives are licensed Apache-2.0 only; they are not
-available under MIT.
+The `tornado`/`tornado-*` TUI toolkit crates were extracted to their own
+repository and renamed `tui-easy`: https://github.com/nixpt/tui-easy
+(carries the full history and upstream attribution for these crates).
 
 ==============================================================================
 exo-mesh (vendored source, not built)
