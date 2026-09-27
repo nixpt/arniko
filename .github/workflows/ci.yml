@@ -1,10 +1,17 @@
 name: CI
 
+# arniko is the SDK layer only (arniko, arniko-crush, exo-bliss-net). Its
+# rendering stack comes from crates.io — bliss-* (nixpt/bliss-engine) and
+# arniko-mustang (nixpt/mustang) — so no sibling repos are checked out.
+# (The previous workflow checked out ../exosphere and ../khukuri, which
+# actions/checkout refuses, and built crates that no longer live here.)
+
 on:
   pull_request:
     branches: [main]
   push:
     branches: [main]
+  workflow_dispatch:
 
 # Cancel in-progress runs when a new commit lands on the same PR/branch.
 concurrency:
@@ -22,210 +29,47 @@ jobs:
   fmt-and-lint:
     name: fmt + clippy
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Rust toolchain
+      - name: Install Rust toolchain (MSRV 1.89)
         uses: dtolnay/rust-toolchain@1.89.0
         with:
           components: rustfmt, clippy
 
-      - name: Cache cargo registry & target
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
-      - name: Checkout exosphere sibling (exo-bliss-net + exo-shell-client)
-        uses: actions/checkout@v4
-        with:
-          repository: nixpt/exosphere
-          path: ../exosphere
-
-      - name: Checkout khukuri sibling (khukuri-core + khukuri-exo via exo-shell-client)
-        uses: actions/checkout@v4
-        with:
-          repository: nixpt/khukuri
-          path: ../khukuri
-
+      - uses: Swatinem/rust-cache@v2
 
       - name: cargo fmt --check
-        run: cargo fmt --package arniko --package bliss-dom --check
+        run: cargo fmt --all --check
 
-      # -D warnings is passed to clippy via `--` so it only affects
-      # clippy lints, not arbitrary compiler warnings in build/test.
-      - name: cargo clippy (arniko, bliss-dom)
-        run: |
-          # Clippy scope: --no-deps keeps gate runtime low; --lib skips
-          # `reactive_components` test (which imports `arniko::components`,
-          # gated behind the default `components` feature). Strict-warnings
-          # gate (`-D warnings`) deferred to EPIC A-5 — the 19 warnings
-          # currently emitted on the reactive module include pre-existing
-          # very-complex-type + deref-could-be-auto-deref lints, not
-          # introduced by PR #1.
-          cargo clippy -p arniko --no-default-features --features reactive --lib --no-deps
-          cargo clippy -p bliss-dom --all-targets --no-deps
-          # Note: `-D warnings` is the documented acceptance gate (per docs/REMAINING_TRACKS.md A-5).
-          # The 18 pre-existing warnings on the branch tip (missing Default impls, method-add-confusion,
-          # double-ended-last, etc.) are independent of the workspace-load fix and are tracked under
-          # EPIC A-5; they are NOT introduced by PR #1 itself.
+      # Warnings are reported but not fatal (-D warnings is deferred to
+      # EPIC A-5: pre-existing complex-type / missing-Default lints).
+      - name: cargo clippy
+        run: cargo clippy --workspace --all-targets --no-deps
 
-  build-arniko:
-    name: build arniko + mustang
+  check-and-test:
+    name: check + test (MSRV 1.89)
     runs-on: ubuntu-latest
     needs: fmt-and-lint
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Rust toolchain
+      - name: Install Rust toolchain (MSRV 1.89)
         uses: dtolnay/rust-toolchain@1.89.0
 
-      - name: Cache cargo registry & target
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
+      - uses: Swatinem/rust-cache@v2
 
-      - name: cargo build (arniko)
-        run: cargo build -p arniko
+      - name: cargo check --workspace --all-targets
+        run: cargo check --workspace --all-targets
 
-      - name: cargo build (mustang)
-        run: cargo build -p mustang
-
-      - name: Checkout exosphere sibling (exo-bliss-net + exo-shell-client)
-        uses: actions/checkout@v4
-        with:
-          repository: nixpt/exosphere
-          path: ../exosphere
-      - name: Checkout khukuri sibling (khukuri-core + khukuri-exo via exo-shell-client)
-        uses: actions/checkout@v4
-        with:
-          repository: nixpt/khukuri
-          path: ../khukuri
-
-  test:
-    name: test (arniko + bliss-dom + mustang)
-    runs-on: ubuntu-latest
-    needs: fmt-and-lint
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@1.89.0
-
-      - name: Cache cargo registry & target
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
-
-      - name: cargo test (arniko)
-        run: cargo test -p arniko --lib
-
-      - name: cargo test (bliss-dom)
-        run: cargo test -p bliss-dom --lib
-
-      - name: cargo test (mustang)
-        run: cargo test -p mustang --lib
-
-      - name: cargo test (stylo_taffy)
-        run: cargo test -p stylo_taffy --lib
-
-      - name: Checkout exosphere sibling (exo-bliss-net + exo-shell-client)
-        uses: actions/checkout@v4
-        with:
-          repository: nixpt/exosphere
-          path: ../exosphere
-      - name: Checkout khukuri sibling (khukuri-core + khukuri-exo via exo-shell-client)
-        uses: actions/checkout@v4
-        with:
-          repository: nixpt/khukuri
-          path: ../khukuri
-
-  arniko-crush:
-    name: check arniko-crush (requires sibling crush-ast)
-    runs-on: ubuntu-latest
-    needs: fmt-and-lint
-
-    # arniko-crush depends on crush-lang-sdk from the sibling crush-ast repo.
-    # We check out crush-ast at the same directory level as arniko so the
-    # relative path dependency in arniko/Cargo.toml resolves.
-    # Adjust CRUSH_AST_REF below to track a known-good crush-ast commit
-    # (e.g. after the stdlib fix lands).
-    env:
-      CRUSH_AST_REF: a0eabdd
-
-    steps:
-      - name: Checkout arniko
-        uses: actions/checkout@v4
-        with:
-          path: projects/arniko
-
-      - name: Checkout crush-ast (pinned to known-good ref)
-        uses: actions/checkout@v4
-        with:
-          repository: nixpt/crush-ast
-          ref: ${{ env.CRUSH_AST_REF }}
-          path: projects/crush-ast
-
-      - name: Checkout exosphere sibling (projects layout)
-        uses: actions/checkout@v4
-        with:
-          repository: nixpt/exosphere
-          path: projects/exosphere
-
-      - name: Checkout khukuri sibling (projects layout)
-        uses: actions/checkout@v4
-        with:
-          repository: nixpt/khukuri
-          path: projects/khukuri
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@1.89.0
-
-      - name: Cache cargo registry & target
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
-
-      - name: cargo check (arniko-crush)
-        working-directory: projects/arniko
-        run: cargo check -p arniko-crush
-
-      - name: cargo fmt --check (arniko-crush)
-        working-directory: projects/arniko
-        run: cargo fmt --package arniko-crush --check
+      - name: cargo test --workspace --lib
+        run: cargo test --workspace --lib
 
   cargo-audit:
     name: cargo audit (F-5)
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -239,58 +83,17 @@ jobs:
       - name: cargo audit
         run: cargo audit
 
-  workspace-check:
-    name: check --workspace (E-4)
-    runs-on: ubuntu-latest
-    needs: fmt-and-lint
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install Rust toolchain (MSRV 1.89)
-        uses: dtolnay/rust-toolchain@1.89.0
-        with:
-          components: clippy
-
-      - name: Cache cargo registry & target
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-ws-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-ws-
-
-      - name: Checkout exosphere sibling
-        uses: actions/checkout@v4
-        with:
-          repository: nixpt/exosphere
-          path: ../exosphere
-
-      - name: Checkout khukuri sibling
-        uses: actions/checkout@v4
-        with:
-          repository: nixpt/khukuri
-          path: ../khukuri
-
-      - name: cargo check --workspace
-        run: cargo check --workspace
-
-      - name: cargo test --workspace --lib
-        run: cargo test --workspace --lib
-
+  # macOS/Windows runners bill several times the Linux rate on a private
+  # repo, so the platform check runs only when started by hand
+  # (Actions tab → CI → Run workflow), not on every push/PR.
   platform-matrix:
-    name: check (${{ matrix.os }}) (E-4)
+    name: check (${{ matrix.os }})
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ${{ matrix.os }}
-    needs: fmt-and-lint
     strategy:
       fail-fast: false
       matrix:
         os: [macos-latest, windows-latest]
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -298,21 +101,7 @@ jobs:
       - name: Install Rust toolchain (MSRV 1.89)
         uses: dtolnay/rust-toolchain@1.89.0
 
-      - name: Cache cargo registry & target
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
+      - uses: Swatinem/rust-cache@v2
 
-      # Platform check: exercises accesskit_xplat Win32/AppKit paths and
-      # platform-specific clipboard/shell backends (cfg-gated per target_os).
       - name: cargo check -p arniko (platform-gated paths)
         run: cargo check -p arniko
-
-      - name: cargo check -p accesskit_xplat
-        run: cargo check -p accesskit_xplat
