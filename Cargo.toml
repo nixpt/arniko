@@ -15,7 +15,7 @@ homepage     = "https://github.com/nixpt/arniko"
 repository   = "https://github.com/nixpt/arniko"
 categories   = ["gui"]
 edition      = "2024"
-rust-version = "1.85.0"
+rust-version = "1.89"
 
 # ── workspace.dependencies ────────────────────────────────────────────────────
 [workspace.dependencies]
