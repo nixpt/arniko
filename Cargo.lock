@@ -606,6 +606,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8ae3f5d315924270530207e2a68396c3cc547f6dca3fbdca317cfb1a51edb593"
 
 [[package]]
+name = "caison"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8547b3c34be6c145c55ad272a0e5f17b656a064d590777cb2e9c9d05d1ad3ce0"
+dependencies = [
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "calloop"
 version = "0.14.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -632,9 +642,9 @@ dependencies = [
 
 [[package]]
 name = "casm"
-version = "0.2.0"
+version = "0.3.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f6b5cd2e17c1ceea36e3ef1ff7711dfd9689fd9c9ef7d69f255e79f195c89f4b"
+checksum = "bba12492353c9b8e4010946bd50e5bb52484d3b383b1444ad0e5251aa65f932f"
 dependencies = [
  "bitflags 2.13.0",
  "byteorder",
@@ -688,6 +698,17 @@ dependencies = [
  "cfg-if",
  "cpufeatures 0.3.0",
  "rand_core 0.10.1",
+]
+
+[[package]]
+name = "chrono"
+version = "0.4.45"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1aa79e62e7697b8e29b513a68abacf485adcd1fe8284a4316c5ae868e6633327"
+dependencies = [
+ "iana-time-zone",
+ "num-traits",
+ "windows-link",
 ]
 
 [[package]]
@@ -883,12 +904,14 @@ checksum = "460fbee9c2c2f33933d720630a6a0bac33ba7053db5344fac858d4b8952d77d5"
 
 [[package]]
 name = "crush-cast"
-version = "0.2.0"
+version = "0.3.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "62a77c743a33f5f5b4403de8dd94c50db2150d93b8696a8196af02c010f45bb3"
+checksum = "37773f64d7b6456646ca21b84f77af430e71ab7b596f6707b0ad33a8493319f3"
 dependencies = [
  "cbor4ii",
+ "crush-cson",
  "crush-errors",
+ "indexmap",
  "serde",
  "serde_json",
  "serde_path_to_error",
@@ -896,10 +919,32 @@ dependencies = [
 ]
 
 [[package]]
-name = "crush-errors"
-version = "0.2.0"
+name = "crush-cson"
+version = "0.3.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cbbf3346d59c1c37c03c3803dc16a2ddb0d96d9406f338ade5d6be54f87ae41e"
+checksum = "727d82443bb4718ede5a1f20d17959d86a20193157110b176ee5113c58136520"
+dependencies = [
+ "caison",
+ "crush-vm",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "crush-diagnostics"
+version = "0.3.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "66695dfa7109271c2afe42ff07c8d75feaf3eeb076cc29b274db9f0246f7b844"
+dependencies = [
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "crush-errors"
+version = "0.3.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4441bdfa71aff991b8e650ee6c48529428d35be21f56f1e2dcc6392bfa81926e"
 dependencies = [
  "regex",
  "serde",
@@ -908,31 +953,52 @@ dependencies = [
 
 [[package]]
 name = "crush-frontend"
-version = "0.2.0"
+version = "0.3.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "156cb1862d7c53dfc89fb13edf1d06a87ce80722afd062861249cda49f283472"
+checksum = "2509c20bfabcb583b5e3c4adca19ff7e6e842d9430be51ebaa0fd4a9d635ec20"
 dependencies = [
  "anyhow",
  "casm",
+ "chrono",
  "crush-cast",
  "crush-errors",
+ "crush-index",
+ "indexmap",
  "serde",
  "serde_json",
  "thiserror 1.0.69",
 ]
 
 [[package]]
-name = "crush-lang-sdk"
-version = "0.2.0"
+name = "crush-index"
+version = "0.3.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "77594e9826290d3835ff39e06131139f76df7c2df0481dc042daa9beb9f09d0b"
+checksum = "4e1e21b1dbaa82eec1e95f58af0c342390ecb77bba2665e9a9eaefab7fe04f1b"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "crush-cast",
+ "crush-cson",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "crush-lang-sdk"
+version = "0.3.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "aa59d4c531d5cca6ec347f85f5d0032f52a3823411f575af8ef4ff4d8869e225"
 dependencies = [
  "anyhow",
  "base64",
  "casm",
+ "chrono",
  "clap",
  "crush-cast",
+ "crush-cson",
+ "crush-errors",
  "crush-frontend",
+ "crush-index",
  "crush-vm",
  "getrandom 0.2.17",
  "rand 0.8.6",
@@ -940,14 +1006,22 @@ dependencies = [
  "serde_json",
  "sha2",
  "thiserror 1.0.69",
+ "yansi",
 ]
 
 [[package]]
 name = "crush-vm"
-version = "0.2.0"
+version = "0.3.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a01e472a491e1c3712edd08e703bf6ab3040cdafa617a794201e63898bb092f3"
+checksum = "3866019d5777a586a9601370d7c38b40a818e6164b0219d29f81018d7f55f11e"
 dependencies = [
+ "anyhow",
+ "casm",
+ "crush-diagnostics",
+ "crush-errors",
+ "hex",
+ "libc",
+ "parking_lot",
  "serde",
  "serde_json",
  "thiserror 1.0.69",
@@ -1768,6 +1842,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "iana-time-zone"
+version = "0.1.65"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e31bc9ad994ba00e440a8aa5c9ef0ec67d5cb5e5cb0cc7f8b744a35b389cc470"
+dependencies = [
+ "android_system_properties",
+ "core-foundation-sys",
+ "iana-time-zone-haiku",
+ "js-sys",
+ "log",
+ "wasm-bindgen",
+ "windows-core 0.62.2",
+]
+
+[[package]]
+name = "iana-time-zone-haiku"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f31827a206f56af32e590ba56d5d2d085f558508192593743f16b2306495269f"
+dependencies = [
+ "cc",
+]
+
+[[package]]
 name = "icu_collections"
 version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1964,6 +2062,8 @@ checksum = "d466e9454f08e4a911e14806c24e16fba1b4c121d1ea474396f396069cf949d9"
 dependencies = [
  "equivalent",
  "hashbrown 0.17.1",
+ "serde",
+ "serde_core",
 ]
 
 [[package]]
@@ -5564,6 +5664,12 @@ name = "xmlwriter"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ec7a2a501ed189703dba8b08142f057e887dfc4b2cc4db2d343ac6376ba3e0b9"
+
+[[package]]
+name = "yansi"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cfe53a6657fd280eaa890a3bc59152892ffa3e30101319d168b781ed6529b049"
 
 [[package]]
 name = "yeslogic-fontconfig-sys"

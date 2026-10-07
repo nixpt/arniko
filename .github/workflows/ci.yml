@@ -54,7 +54,7 @@ jobs:
       # Warnings are reported but not fatal (-D warnings is deferred to
       # EPIC A-5: pre-existing complex-type / missing-Default lints).
       - name: cargo clippy
-        run: cargo clippy --workspace --all-targets --no-deps
+        run: cargo clippy --workspace --all-targets --no-deps --exclude arniko-crush
 
   check-and-test:
     name: check + test (MSRV 1.89)
@@ -75,11 +75,42 @@ jobs:
           packages: libfontconfig1-dev
           version: 1.0
 
+      # arniko-crush is excluded here: crush-lang-sdk 0.3.9 pulls crush-cson and
+      # crush-index, which need rustc 1.95. It has its own job below.
       - name: cargo check --workspace --all-targets
-        run: cargo check --workspace --all-targets
+        run: cargo check --workspace --all-targets --exclude arniko-crush
 
       - name: cargo test --workspace --lib
-        run: cargo test --workspace --lib
+        run: cargo test --workspace --lib --exclude arniko-crush
+
+  arniko-crush:
+    name: arniko-crush (rust 1.95)
+    runs-on: ubuntu-latest
+    needs: fmt-and-lint
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # crush-lang-sdk 0.3.9's dependency tree (crush-cson, crush-index)
+      # declares rust-version 1.95, so this crate can't build on the 1.89 MSRV.
+      - name: Install Rust toolchain (1.95)
+        uses: dtolnay/rust-toolchain@1.95.0
+        with:
+          components: clippy
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install apt deps
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libfontconfig1-dev
+          version: 1.0
+
+      - name: cargo clippy -p arniko-crush
+        run: cargo clippy -p arniko-crush --all-targets --no-deps --locked
+
+      - name: cargo test -p arniko-crush
+        run: cargo test -p arniko-crush --locked
 
   cargo-audit:
     name: cargo audit (F-5)
