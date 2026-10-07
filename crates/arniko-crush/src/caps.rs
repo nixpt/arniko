@@ -35,7 +35,12 @@ fn text_arg(v: &Value) -> String {
         Value::Float(f) => f.to_string(),
         Value::Str(s) => s.clone(),
         Value::Bool(b) => b.to_string(),
-        Value::Array(a) => a.borrow().iter().map(text_arg).collect::<Vec<_>>().join(", "),
+        Value::Array(a) => a
+            .borrow()
+            .iter()
+            .map(text_arg)
+            .collect::<Vec<_>>()
+            .join(", "),
         // Maps, errors, bytes and the collection variants added in crush-lang-sdk 0.3
         // (tuples, lists, vectors, …) have no text form for a UI argument.
         _ => String::new(),

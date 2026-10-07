@@ -7,7 +7,9 @@ description = "Arniko UI components as importable host capabilities for CRUSH ca
 license.workspace = true
 homepage.workspace = true
 repository.workspace = true
-rust-version.workspace = true
+# crush-lang-sdk 0.3.9 needs rustc 1.95 (crush-cson / crush-index); the rest of
+# the workspace keeps the 1.89 MSRV.
+rust-version = "1.95"
 categories.workspace = true
 readme = "README.md"
 
