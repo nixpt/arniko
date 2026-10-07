@@ -1,0 +1,27 @@
+Arniko
+Copyright 2026 Exosphere Team
+
+Arniko is dual-licensed under MIT OR Apache-2.0 (LICENSE-MIT, LICENSE-APACHE),
+except where a crate states otherwise below. It incorporates third-party
+source, whose original copyright and license terms are preserved here.
+
+==============================================================================
+Bliss rendering stack (extracted)
+==============================================================================
+
+The Bliss rendering stack (bliss, bliss-dom, bliss-html, bliss-net,
+bliss-paint, bliss-shell, bliss-traits, stylo_taffy, accesskit_xplat,
+anyrender_vello) — a hard fork of Blitz by Dioxus Labs, and for
+anyrender_vello also of DioxusLabs/anyrender — was extracted to its own
+repository, https://github.com/nixpt/bliss-engine, published to crates.io
+at 0.3.0 (BLISS-HOME-1/2, s506). That repository carries the full history
+and upstream attribution (Blitz, the Masonry-derived checkbox tick in
+bliss-paint, anyrender_vello) in its own NOTICE.
+
+==============================================================================
+Tornado TUI crates (extracted)
+==============================================================================
+
+The `tornado`/`tornado-*` TUI toolkit crates were extracted to their own
+repository and renamed `tui-easy`: https://github.com/nixpt/tui-easy
+(carries the full history and upstream attribution for these crates).

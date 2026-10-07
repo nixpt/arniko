@@ -108,7 +108,11 @@ fn extract_query_params(url: &url::Url) -> serde_json::Value {
     if pairs.is_empty() {
         serde_json::Value::Null
     } else {
-        serde_json::json!(pairs.into_iter().collect::<std::collections::HashMap<_, _>>())
+        serde_json::json!(
+            pairs
+                .into_iter()
+                .collect::<std::collections::HashMap<_, _>>()
+        )
     }
 }
 
@@ -127,7 +131,8 @@ mod tests {
 
     #[test]
     fn test_extract_query_params() {
-        let url = url::Url::parse("capsule://ai.brain/complete?prompt=hello&max_tokens=100").unwrap();
+        let url =
+            url::Url::parse("capsule://ai.brain/complete?prompt=hello&max_tokens=100").unwrap();
         let params = extract_query_params(&url);
         assert_eq!(params["prompt"], "hello");
         assert_eq!(params["max_tokens"], "100");

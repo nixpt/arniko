@@ -1,5 +1,10 @@
 # Arniko Production-Readiness Spec
 
+> **s506 (BLISS-HOME-2):** `crates/_vendored/exo-mesh` referenced throughout this doc
+> (A-4/A-4b/A-4c) was removed — nothing depended on it (the `networking` feature uses
+> `exo-bliss-net` only), and it was never in `Cargo.lock`. The A-4 narrative below is
+> historical.
+>
 > **Status:** M1 substantially complete · **Authored:** 2026-06-16 (foreman-z, [zorro] box, 6-agent analysis) ·
 > **Owner:** foreman-x (arniko) · **Audience:** anyone working on the arniko / Bliss stack.
 >

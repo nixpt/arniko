@@ -38,7 +38,7 @@ parking_lot = "0.12"
 
 # Mustang GPU compositor (optional)
 [dependencies.mustang]
-version = "0.2.99"
+version = "0.3"
 package = "arniko-mustang"
 optional = true
 
@@ -66,17 +66,15 @@ optional = true
 # version = "0.6"
 # optional = true
 
-# Native window launch (optional)
+# Native window launch (optional) — BLISS-HOME-2: now crates.io
+# nixpt/bliss-engine, not an in-tree path.
 [dependencies.bliss]
-path = "../bliss"
-version = "0.2.99"
-package = "arniko-bliss"
+workspace = true
 optional = true
 
 # Reactive layer — DOM mutation API (optional)
 [dependencies.bliss-dom]
-path = "../bliss-dom"
-version = "0.2.99"
+workspace = true
 optional = true
 
 [dependencies.anyrender_vello]
@@ -90,7 +88,7 @@ optional = true
 # Networking dependencies (optional)
 [dependencies.exo-bliss-net]
 path = "../exo-bliss-net"
-version = "0.2.99"
+version = "0.3.0"
 optional = true
 
 # exo-mesh removed for crates.io publish (vendored, not on registry; networking feature uses exo-bliss-net only)
@@ -104,7 +102,7 @@ tokio-test = "0.4"
 vello = { workspace = true }
 peniko = { workspace = true }
 kurbo = { workspace = true }
-bliss-html = { path = "../bliss-html", version = "0.2.99" }
+bliss-html = { workspace = true }
 
 [[test]]
 name = "reactive_components"

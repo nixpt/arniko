@@ -217,8 +217,7 @@ mod tests {
 
     #[test]
     fn test_tabs_xss() {
-        let tabs = Tabs::new()
-            .add(TabItem::new("<script>", "safe content"));
+        let tabs = Tabs::new().add(TabItem::new("<script>", "safe content"));
         let html = tabs.render();
         assert!(!html.contains("<script>alert"));
     }

@@ -180,6 +180,11 @@ pub fn launch_reactive_configured(
         r#"<!DOCTYPE html><html><head></head><body id="arniko-root"></body></html>"#,
         DocumentConfig {
             net_provider: Some(Arc::new(DummyNetProvider)),
+            // Real html5ever-backed parser. Without this, BaseDocument falls
+            // back to DummyHtmlParserProvider (a silent no-op), which makes
+            // DocumentMutator::set_inner_html do nothing — ComponentView
+            // mounts (Button etc.) and reactive innerHTML binds render empty.
+            html_parser_provider: Some(Arc::new(bliss::html::HtmlProvider)),
             ..Default::default()
         },
     );
