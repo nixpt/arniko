@@ -21,6 +21,10 @@ tcp_loopback.rs.bak
 .newnmv
 command.sh
 
+# Agent worktrees + per-agent session state (zorro precedent).
+# Worktrees are created at .claude/worktrees/<name>/ and must never be committed.
+.claude/
+
 # ── agent/MCP artifacts — never commit ──────────────────────────────────────
 # worktree-setup SEEDS a per-agent .mcp.json into every dispatched worktree,
 # carrying the live joker-mcp JWT_SECRET so each horse posts under its own
@@ -58,3 +62,6 @@ id_ecdsa*
 credentials*.json
 .netrc
 secrets.json
+
+# Fleet agent worktrees (kitchen / agent-launch) live under .jagent/worktrees/.
+.jagent/worktrees/
