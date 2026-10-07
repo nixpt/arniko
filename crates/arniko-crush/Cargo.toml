@@ -16,5 +16,5 @@ default = []
 
 [dependencies]
 arniko = { workspace = true, features = ["html", "components"] }
-crush-lang-sdk = { version = "0.2.0", default-features = false }
+crush-lang-sdk = { version = "0.3.9", default-features = false }
 serde_json = "1"
