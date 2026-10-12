@@ -72,7 +72,7 @@ homepage     = "https://github.com/nixpt/arniko"
 repository   = "https://github.com/nixpt/arniko"
 categories   = ["gui"]
 edition      = "2024"
-rust-version = "1.85.0"
+rust-version = "1.88.0"
 
 # ── patch: redirect crates-io bliss-* + exo-mesh to in-repo / vendored ───────
 [patch.crates-io]
@@ -110,7 +110,7 @@ accesskit_xplat = { path = "crates/accesskit_xplat", version = "0.1", default-fe
 # arniko` if `projects/mustang/` isn't cloned alongside arniko. Use a transient
 # (uncommitted) `[patch.crates-io]` override only when iterating mustang+arniko
 # in lock-step.
-mustang       = { version = "0.2.99", package = "arniko-mustang" }
+mustang       = { version = "0.3.0", package = "arniko-mustang" }
 arniko        = { path = "crates/arniko",       version = "0.2.99" }
 exo-bliss-net = { path = "crates/exo-bliss-net", version = "0.2.99" }
 arniko-crush  = { path = "crates/arniko-crush", version = "0.1.0" }
