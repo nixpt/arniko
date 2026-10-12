@@ -71,7 +71,9 @@ impl ApplicationHandler for ReactiveApplication {
         for view in self.inner.windows.values_mut() {
             let mut inner = view.doc.inner_mut();
             let mut mutator = inner.mutate();
-            self.reactor.lock().flush(&mut mutator, self.scheduler.as_ref());
+            self.reactor
+                .lock()
+                .flush(&mut mutator, self.scheduler.as_ref());
             drop(mutator);
             drop(inner);
             view.request_redraw();
@@ -102,7 +104,9 @@ impl ApplicationHandler for ReactiveApplication {
             // Flush all dirty signal patches into the DOM.
             let mut inner = view.doc.inner_mut();
             let mut mutator = inner.mutate();
-            self.reactor.lock().flush(&mut mutator, self.scheduler.as_ref());
+            self.reactor
+                .lock()
+                .flush(&mut mutator, self.scheduler.as_ref());
             drop(mutator);
             drop(inner);
             view.request_redraw();
@@ -259,7 +263,14 @@ pub fn launch_reactive_scheduled(
 
         let mut reactor = Reactor::new();
         let mut mutator = inner.mutate();
-        setup(&mut mutator, &mut reactor, &mut router, root_id, &rt, &scheduler);
+        setup(
+            &mut mutator,
+            &mut reactor,
+            &mut router,
+            root_id,
+            &rt,
+            &scheduler,
+        );
         reactor
     };
 

@@ -32,8 +32,8 @@
 
 use bliss_dom::{DocumentMutator, QualName, qual_name};
 
-use crate::mustang::scheduler::SceneScheduler;
 use crate::mustang::Region;
+use crate::mustang::scheduler::SceneScheduler;
 
 /// Direct DOM mutation API. Wraps a `DocumentMutator` and notifies a
 /// `SceneScheduler` on every successful mutation.

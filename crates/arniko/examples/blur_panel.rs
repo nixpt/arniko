@@ -16,8 +16,7 @@
 use arniko::mustang::compositor::region::Region;
 use arniko::mustang::{Effect, MustangCompositor, SceneDirtyState};
 use arniko::reactive::{
-    Div, ReactiveText, Signal, StaticHtml, Text, VelloScenePainter, View,
-    launch_reactive_scheduled,
+    Div, ReactiveText, Signal, StaticHtml, Text, VelloScenePainter, View, launch_reactive_scheduled,
 };
 
 /// Apply the effect list to a fresh scene, scoped by the dirty state.
@@ -34,12 +33,7 @@ fn apply_effects(
     } else {
         effects
             .iter()
-            .filter(|e| {
-                dirty
-                    .regions
-                    .iter()
-                    .any(|r| r.intersects(&e.region))
-            })
+            .filter(|e| dirty.regions.iter().any(|r| r.intersects(&e.region)))
             .cloned()
             .collect()
     };
