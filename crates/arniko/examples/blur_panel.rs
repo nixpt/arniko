@@ -3,23 +3,56 @@
 //! A Gaussian blur halo is drawn over a rounded panel region every frame via
 //! `VelloWindowRenderer::set_scene_effects` → mustang `MustangCompositor`.
 //!
+//! Uses `launch_reactive_scheduled` (mustang 0.4 scheduling): the effect
+//! hook consumes the per-frame dirty state via `SceneScheduler::take_dirty()`.
+//! The vello scene is rebuilt fresh every frame, so scene-native effects are
+//! re-encoded every frame — what the scheduler decides is whether anything
+//! CHANGED (full vs region-tracked vs clean), surfaced here as diagnostics
+//! and ready for region-scoped application + GPU-compute gating downstream.
+//!
 //! Run with:
 //!   CARGO_TARGET_DIR=/build/target-arniko cargo run -p arniko --features reactive,gpu --example blur_panel
 
 use arniko::mustang::compositor::region::Region;
-use arniko::mustang::{Effect, MustangCompositor};
+use arniko::mustang::{Effect, MustangCompositor, SceneDirtyState};
 use arniko::reactive::{
     Div, ReactiveText, Signal, StaticHtml, Text, VelloScenePainter, View,
-    launch_reactive_configured,
+    launch_reactive_scheduled,
 };
+
+/// Apply the effect list to a fresh scene, scoped by the dirty state.
+fn apply_effects(
+    compositor: &mut MustangCompositor,
+    painter: &mut VelloScenePainter<'_, '_>,
+    effects: &[Effect],
+    dirty: &SceneDirtyState,
+    w: u32,
+    h: u32,
+) {
+    let scoped: Vec<Effect> = if dirty.full {
+        effects.to_vec()
+    } else {
+        effects
+            .iter()
+            .filter(|e| {
+                dirty
+                    .regions
+                    .iter()
+                    .any(|r| r.intersects(&e.region))
+            })
+            .cloned()
+            .collect()
+    };
+    let _ = compositor.apply_scene_effects(painter, &scoped, (w, h));
+}
 
 fn main() {
     // Panel region in screen coords — matched to the CSS layout below.
     let panel_region = Region::new(80.0, 80.0, 480.0, 260.0);
 
-    launch_reactive_configured(
+    launch_reactive_scheduled(
         // ── DOM + signal setup ─────────────────────────────────────────────────
-        |mutator, reactor, router, root, _rt| {
+        |mutator, reactor, router, root, _rt, _scheduler| {
             let count = Signal::new(0i32);
 
             let ui = Div::styled(
@@ -81,18 +114,33 @@ fn main() {
             let inc = count.clone();
             router.on_click(btn_ids[2], move || inc.update(|n| n + 1));
         },
-        // ── Renderer configuration: wire mustang blur ──────────────────────────
-        |renderer| {
+        // ── Renderer configuration: wire mustang blur + the scheduler ──────────
+        |renderer, scheduler| {
             let mut compositor = MustangCompositor::default();
             let effects = vec![
                 // Gaussian blur halo over the glass panel — radius=20px, 2 passes.
                 Effect::blur("glass-panel", 20.0, 1280, 720).with_region(panel_region),
             ];
+            let sched = scheduler.clone();
 
             renderer.set_scene_effects(move |scene, w, h| {
-                // Wrap the raw VelloScene in a PaintScene painter for mustang.
+                // Consume the frame's dirty state: reactive flushes + direct
+                // DOM mutations coalesce into one cycle per frame.
+                let dirty = sched.take_dirty();
+                if !dirty.is_dirty() {
+                    eprintln!("[blur-panel] frame: clean (effects re-encoded, no DOM change)");
+                } else if dirty.full {
+                    eprintln!("[blur-panel] frame: FULL dirty — re-check every effect");
+                } else {
+                    eprintln!(
+                        "[blur-panel] frame: {} region(s) dirty — scoped re-check",
+                        dirty.regions.len()
+                    );
+                }
+                // The scene is fresh each frame — effects are re-encoded
+                // unconditionally, scoped by the dirty regions.
                 let mut painter = VelloScenePainter::new(scene);
-                compositor.apply_scene_effects(&mut painter, &effects, (w, h));
+                apply_effects(&mut compositor, &mut painter, &effects, &dirty, w, h);
             });
         },
     );
