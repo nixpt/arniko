@@ -16,6 +16,7 @@ use winit::window::WindowId;
 use super::Reactor;
 use super::signal::{Signal, WakeFn};
 use super::sink::{EventRouter, event_router};
+use crate::mustang::SceneScheduler;
 
 /// Reactive runtime context — holds a wake closure so `Signal::set()` can
 /// wake the event loop. Passed into the `launch_reactive` setup closure.
@@ -35,9 +36,14 @@ impl ReactiveRuntime {
 /// ApplicationHandler that wraps BlissApplication and flushes the reactor
 /// after each event. Click dispatch is handled by the DOM event sink
 /// (ArnikoEventSink) — no redundant ancestor walk here.
+///
+/// The `SceneScheduler` (when present) is notified on every reactive flush
+/// that produced dirty patches — mustang 0.3.0+'s per-region scheduling
+/// consumes that state per frame via `take_dirty()`.
 struct ReactiveApplication {
     inner: BlissApplication<VelloWindowRenderer>,
     reactor: Arc<Mutex<Reactor>>,
+    scheduler: Option<SceneScheduler>,
 }
 
 impl ApplicationHandler for ReactiveApplication {
@@ -65,7 +71,9 @@ impl ApplicationHandler for ReactiveApplication {
         for view in self.inner.windows.values_mut() {
             let mut inner = view.doc.inner_mut();
             let mut mutator = inner.mutate();
-            self.reactor.lock().flush(&mut mutator, None);
+            self.reactor
+                .lock()
+                .flush(&mut mutator, self.scheduler.as_ref());
             drop(mutator);
             drop(inner);
             view.request_redraw();
@@ -96,9 +104,9 @@ impl ApplicationHandler for ReactiveApplication {
             // Flush all dirty signal patches into the DOM.
             let mut inner = view.doc.inner_mut();
             let mut mutator = inner.mutate();
-            // No SceneScheduler in the non-GPU reactive launch path → no GPU
-            // re-application coordination needed.
-            self.reactor.lock().flush(&mut mutator, None);
+            self.reactor
+                .lock()
+                .flush(&mut mutator, self.scheduler.as_ref());
             drop(mutator);
             drop(inner);
             view.request_redraw();
@@ -154,6 +162,12 @@ pub fn launch_reactive(
 ///     },
 /// );
 /// ```
+///
+/// A `SceneScheduler` is created internally and wired into every reactive
+/// flush (coalescing N signal updates in one frame into one dirty cycle);
+/// it is not exposed to the closures — use
+/// [`launch_reactive_scheduled`] when your effect hook needs the
+/// per-frame dirty state.
 pub fn launch_reactive_configured(
     setup: impl FnOnce(
         &mut bliss::dom::DocumentMutator,
@@ -163,6 +177,50 @@ pub fn launch_reactive_configured(
         &ReactiveRuntime,
     ),
     configure_renderer: impl FnOnce(&mut VelloWindowRenderer),
+) {
+    launch_reactive_scheduled(
+        |mutator, reactor, router, root, rt, _| setup(mutator, reactor, router, root, rt),
+        |renderer, _| configure_renderer(renderer),
+    );
+}
+
+/// Launch a reactive arniko application with **scheduler-aware** GPU effects.
+///
+/// Like [`launch_reactive_configured`], but both closures additionally
+/// receive a shared `&SceneScheduler` (mustang 0.3+):
+///
+/// - `setup` can hand it to `DirectDomMutator` so every direct DOM
+///   mutation reports the mutated node's layout rect as a dirty region
+///   (falling back to whole-scene dirtiness when no rect is available).
+/// - `configure_renderer` can clone it into the
+///   `set_scene_effects` hook and consume the per-frame dirty state via
+///   `take_dirty()` → `SceneDirtyState { full, regions }` — coalescing N
+///   mutations/flushes in one frame into a single consumed cycle.
+///
+/// ```rust,ignore
+/// launch_reactive_scheduled(
+///     |mutator, reactor, router, root, rt, scheduler| {
+///         // DirectDomMutator::new(mutator, scheduler) for region-tracked edits
+///     },
+///     |renderer, scheduler| {
+///         renderer.set_scene_effects(move |scene, w, h| {
+///             let dirty = scheduler.take_dirty();
+///             // full → re-check every effect; regions → intersecting only;
+///             // clean → nothing changed since the last consumed cycle.
+///         });
+///     },
+/// );
+/// ```
+pub fn launch_reactive_scheduled(
+    setup: impl FnOnce(
+        &mut bliss::dom::DocumentMutator,
+        &mut Reactor,
+        &mut EventRouter,
+        usize,
+        &ReactiveRuntime,
+        &SceneScheduler,
+    ),
+    configure_renderer: impl FnOnce(&mut VelloWindowRenderer, &SceneScheduler),
 ) {
     let event_loop = create_default_event_loop();
     let (proxy, receiver) = BlissShellProxy::new(event_loop.create_proxy());
@@ -175,6 +233,8 @@ pub fn launch_reactive_configured(
             move || proxy.wake_up()
         }),
     };
+
+    let scheduler = SceneScheduler::new();
 
     let mut doc = HtmlDocument::from_html(
         r#"<!DOCTYPE html><html><head></head><body id="arniko-root"></body></html>"#,
@@ -203,14 +263,21 @@ pub fn launch_reactive_configured(
 
         let mut reactor = Reactor::new();
         let mut mutator = inner.mutate();
-        setup(&mut mutator, &mut reactor, &mut router, root_id, &rt);
+        setup(
+            &mut mutator,
+            &mut reactor,
+            &mut router,
+            root_id,
+            &rt,
+            &scheduler,
+        );
         reactor
     };
 
     let reactor = Arc::new(Mutex::new(reactor));
 
     let mut renderer = VelloWindowRenderer::new();
-    configure_renderer(&mut renderer);
+    configure_renderer(&mut renderer, &scheduler);
 
     let window = WindowConfig::new(Box::new(doc) as _, renderer);
 
@@ -221,6 +288,7 @@ pub fn launch_reactive_configured(
         .run_app(ReactiveApplication {
             inner: application,
             reactor,
+            scheduler: Some(scheduler),
         })
         .unwrap();
 }
