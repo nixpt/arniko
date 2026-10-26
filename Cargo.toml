@@ -9,7 +9,7 @@ members = [
 ]
 
 [workspace.package]
-version      = "0.3.0"
+version      = "0.3.1"
 license      = "MIT OR Apache-2.0"
 homepage     = "https://github.com/nixpt/arniko"
 repository   = "https://github.com/nixpt/arniko"
@@ -58,7 +58,7 @@ anyrender_vello = { version = "0.3", package = "bliss-anyrender-vello" }
 # (uncommitted) `[patch.crates-io]` override only when iterating mustang+arniko
 # in lock-step.
 mustang       = { version = "0.4", package = "arniko-mustang" }
-arniko        = { path = "crates/arniko",       version = "0.3.0" }
+arniko        = { path = "crates/arniko",       version = "0.3.1" }
 exo-bliss-net = { path = "crates/exo-bliss-net", version = "0.3.0" }
 arniko-crush  = { path = "crates/arniko-crush", version = "0.1.0" }
 
