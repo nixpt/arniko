@@ -18,7 +18,9 @@ mod view;
 pub use crate::mustang::SceneScheduler;
 pub use anyrender_vello::{VelloScenePainter, VelloWindowRenderer};
 
-pub use app::{ReactiveRuntime, launch_reactive, launch_reactive_configured};
+pub use app::{
+    ReactiveRuntime, launch_reactive, launch_reactive_configured, launch_reactive_scheduled,
+};
 pub use batch::batch;
 pub use computed::Computed;
 pub use effect::create_effect;
