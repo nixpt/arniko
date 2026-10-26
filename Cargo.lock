@@ -627,12 +627,13 @@ dependencies = [
 
 [[package]]
 name = "casm"
-version = "0.3.9"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bba12492353c9b8e4010946bd50e5bb52484d3b383b1444ad0e5251aa65f932f"
+checksum = "adfc90050cfe02d9828902e83d79854d079118c7c2b0de60636eba1050745bbc"
 dependencies = [
  "bitflags 2.13.0",
  "byteorder",
+ "crush-cosm",
  "crush-errors",
  "hex",
  "rmp-serde",
@@ -888,13 +889,25 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "460fbee9c2c2f33933d720630a6a0bac33ba7053db5344fac858d4b8952d77d5"
 
 [[package]]
-name = "crush-cast"
-version = "0.3.9"
+name = "crush-caison"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "37773f64d7b6456646ca21b84f77af430e71ab7b596f6707b0ad33a8493319f3"
+checksum = "23f54e3e38d69b358938e821ff688fcf7033aa9cfb16c7eee20ccc936a2c15ce"
+dependencies = [
+ "caison",
+ "crush-vm",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "crush-cast"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "23f144b04517a8b264e490bd19e09ccb71ba846d1c6991c48d4ea1158b3b23f1"
 dependencies = [
  "cbor4ii",
- "crush-cson",
+ "crush-caison",
  "crush-errors",
  "indexmap",
  "serde",
@@ -904,22 +917,21 @@ dependencies = [
 ]
 
 [[package]]
-name = "crush-cson"
-version = "0.3.9"
+name = "crush-cosm"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "727d82443bb4718ede5a1f20d17959d86a20193157110b176ee5113c58136520"
+checksum = "194fdd5aadccde5a73dc811ac30f1ed488046d1ab03c17597c46971eced08053"
 dependencies = [
- "caison",
- "crush-vm",
  "serde",
  "serde_json",
+ "serde_path_to_error",
 ]
 
 [[package]]
 name = "crush-diagnostics"
-version = "0.3.9"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "66695dfa7109271c2afe42ff07c8d75feaf3eeb076cc29b274db9f0246f7b844"
+checksum = "7dbc0666392a2e991358276b3c1262093176e44e5d3a59cc7fd47a2ff7a4e20f"
 dependencies = [
  "serde",
  "serde_json",
@@ -927,9 +939,9 @@ dependencies = [
 
 [[package]]
 name = "crush-errors"
-version = "0.3.9"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4441bdfa71aff991b8e650ee6c48529428d35be21f56f1e2dcc6392bfa81926e"
+checksum = "9fc3f6600e06a91cae8516312c6aa6fc76155514365e7cd66d53545218d18971"
 dependencies = [
  "regex",
  "serde",
@@ -938,14 +950,15 @@ dependencies = [
 
 [[package]]
 name = "crush-frontend"
-version = "0.3.9"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2509c20bfabcb583b5e3c4adca19ff7e6e842d9430be51ebaa0fd4a9d635ec20"
+checksum = "b164739f8d413921c176fcf802afb7aa542b498263e9840f4be6282c30066552"
 dependencies = [
  "anyhow",
  "casm",
  "chrono",
  "crush-cast",
+ "crush-cosm",
  "crush-errors",
  "crush-index",
  "indexmap",
@@ -956,35 +969,36 @@ dependencies = [
 
 [[package]]
 name = "crush-index"
-version = "0.3.9"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4e1e21b1dbaa82eec1e95f58af0c342390ecb77bba2665e9a9eaefab7fe04f1b"
+checksum = "ac91262b3c9569a52935f11f68b3276108085f12db7de6314883485977b76613"
 dependencies = [
  "anyhow",
  "chrono",
+ "crush-caison",
  "crush-cast",
- "crush-cson",
  "serde",
  "serde_json",
 ]
 
 [[package]]
 name = "crush-lang-sdk"
-version = "0.3.9"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aa59d4c531d5cca6ec347f85f5d0032f52a3823411f575af8ef4ff4d8869e225"
+checksum = "e404b86fb5f526874a21d56e31e4154135923467eb06bd4039f786ae2a931976"
 dependencies = [
  "anyhow",
  "base64",
  "casm",
  "chrono",
  "clap",
+ "crush-caison",
  "crush-cast",
- "crush-cson",
  "crush-errors",
  "crush-frontend",
  "crush-index",
  "crush-vm",
+ "crush-walker-core",
  "getrandom 0.2.17",
  "rand 0.8.6",
  "serde",
@@ -996,18 +1010,32 @@ dependencies = [
 
 [[package]]
 name = "crush-vm"
-version = "0.3.9"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3866019d5777a586a9601370d7c38b40a818e6164b0219d29f81018d7f55f11e"
+checksum = "eb1ddba3d136abc1308d3cde5d9257e1eda645a114b37ea152fac1ce35c2e161"
 dependencies = [
  "anyhow",
  "casm",
+ "crush-cosm",
  "crush-diagnostics",
  "crush-errors",
  "hex",
+ "indexmap",
  "libc",
  "parking_lot",
  "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+]
+
+[[package]]
+name = "crush-walker-core"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "85980f30a600710c727e9a18053461875f06038ffaa017c0ca68bf92cb9314be"
+dependencies = [
+ "anyhow",
+ "crush-cast",
  "serde_json",
  "thiserror 1.0.69",
 ]
