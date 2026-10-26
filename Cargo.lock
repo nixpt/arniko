@@ -177,23 +177,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "anyrender_vello"
-version = "0.7.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8b47ec304e9ee64601df694022e67bb05585351aae2fd6dcf1b6f3293a1713c3"
-dependencies = [
- "anyrender",
- "debug_timer",
- "kurbo",
- "peniko",
- "pollster",
- "rustc-hash 2.1.2",
- "vello",
- "wgpu",
- "wgpu_context",
-]
-
-[[package]]
 name = "app_units"
 version = "0.7.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -272,15 +255,17 @@ dependencies = [
 
 [[package]]
 name = "arniko-mustang"
-version = "0.3.0"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4546c7e0984a5180aa828b3e7f2d7990d061fb0f13f674edaf7ae0f31d94d44e"
+checksum = "a8bcc698b3445fab213e77f7b28a42900b2f3dd3dc6354b546f3837805901f1d"
 dependencies = [
  "anyhow",
  "anyrender",
- "anyrender_vello",
+ "bliss-anyrender-vello",
+ "bytemuck",
  "kurbo",
  "peniko",
+ "pollster",
  "tracing",
  "vello",
  "wgpu",
