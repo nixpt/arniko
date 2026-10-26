@@ -57,7 +57,7 @@ anyrender_vello = { version = "0.3", package = "bliss-anyrender-vello" }
 # arniko` if `projects/mustang/` isn't cloned alongside arniko. Use a transient
 # (uncommitted) `[patch.crates-io]` override only when iterating mustang+arniko
 # in lock-step.
-mustang       = { version = "0.3", package = "arniko-mustang" }
+mustang       = { version = "0.4", package = "arniko-mustang" }
 arniko        = { path = "crates/arniko",       version = "0.3.0" }
 exo-bliss-net = { path = "crates/exo-bliss-net", version = "0.3.0" }
 arniko-crush  = { path = "crates/arniko-crush", version = "0.1.0" }
