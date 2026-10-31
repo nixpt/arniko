@@ -9,7 +9,7 @@ members = [
 ]
 
 [workspace.package]
-version      = "0.3.1"
+version      = "0.3.2"
 license      = "MIT OR Apache-2.0"
 homepage     = "https://github.com/nixpt/arniko"
 repository   = "https://github.com/nixpt/arniko"
