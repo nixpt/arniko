@@ -43,10 +43,9 @@ jobs:
       # bliss-html (a dev-dependency) pulls parley -> fontique ->
       # yeslogic-fontconfig-sys, whose build script needs fontconfig.pc.
       - name: Install apt deps
-        uses: awalsh128/cache-apt-pkgs-action@latest
-        with:
-          packages: libfontconfig1-dev
-          version: 1.0
+        # Plain apt-get: awalsh128/cache-apt-pkgs-action can restore a cached set without
+        # fontconfig's pkg-config file (it broke bliss-engine's CI from 2026-10-12).
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends pkg-config libfontconfig1-dev
 
       - name: cargo fmt --check
         run: cargo fmt --all --check
@@ -70,10 +69,9 @@ jobs:
       - uses: Swatinem/rust-cache@v2
 
       - name: Install apt deps
-        uses: awalsh128/cache-apt-pkgs-action@latest
-        with:
-          packages: libfontconfig1-dev
-          version: 1.0
+        # Plain apt-get: awalsh128/cache-apt-pkgs-action can restore a cached set without
+        # fontconfig's pkg-config file (it broke bliss-engine's CI from 2026-10-12).
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends pkg-config libfontconfig1-dev
 
       # arniko-crush is excluded here: crush-lang-sdk 0.3.9 pulls crush-cson and
       # crush-index, which need rustc 1.95. It has its own job below.
@@ -101,10 +99,9 @@ jobs:
       - uses: Swatinem/rust-cache@v2
 
       - name: Install apt deps
-        uses: awalsh128/cache-apt-pkgs-action@latest
-        with:
-          packages: libfontconfig1-dev
-          version: 1.0
+        # Plain apt-get: awalsh128/cache-apt-pkgs-action can restore a cached set without
+        # fontconfig's pkg-config file (it broke bliss-engine's CI from 2026-10-12).
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends pkg-config libfontconfig1-dev
 
       - name: cargo clippy -p arniko-crush
         run: cargo clippy -p arniko-crush --all-targets --no-deps --locked

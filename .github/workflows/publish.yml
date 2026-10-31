@@ -1,0 +1,138 @@
+name: publish
+
+# Publish the tagged commit's crates to crates.io. Tags (vX.Y.Z) are pushed by
+# hand; this publishes exactly the commit the tag points at, never a moving main.
+# Adapted from nixpt/bliss-engine's publish.yml.
+#
+# Why it exists: 0.3.1 was released by hand and only `arniko` went out —
+# `exo-bliss-net` and `arniko-crush` stayed at 0.3.0 although the workspace
+# version moved, and arniko-crush 0.3.0 can't be installed (nixpt/arniko#27).
+# This publishes every crate below, refuses to run if their versions differ, and
+# is safe to re-run: a crate whose version is already on crates.io is skipped.
+#
+# Order (leaves first): exo-bliss-net (bliss-traits from crates.io) → arniko
+# (optional exo-bliss-net) → arniko-crush (arniko + crush-lang-sdk).
+#
+# Auth, in order:
+#   1. crates.io Trusted Publishing (OIDC, no stored secret) — configure once
+#      per crate on crates.io: crate settings → Trusted Publishing → GitHub,
+#      repository nixpt/arniko, workflow publish.yml.
+#   2. Fallback: a CARGO_REGISTRY_TOKEN repository secret.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      verify_auth:
+        description: "Only prove the crates.io Trusted Publishing exchange works (no publish)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  id-token: write # trusted publishing needs the OIDC token
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  CRATES: "exo-bliss-net arniko arniko-crush"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install apt deps
+        # Same list as ci.yml: the dry run compiles every crate, and
+        # yeslogic-fontconfig-sys / winit / rfd / arboard need these system libs.
+        # Plain apt-get, not awalsh128/cache-apt-pkgs-action: its restored cache left
+        # fontconfig's pkg-config file missing, so yeslogic-fontconfig-sys's build
+        # script failed and every job was red from 2026-10-12.
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends pkg-config libxdo-dev libasound2-dev libudev-dev libssl-dev libfontconfig1-dev
+
+      - name: tag must match every crate's version
+        id: ver
+        run: |
+          meta="$(cargo metadata --no-deps --format-version 1)"
+          ver="$(echo "$meta" | jq -r '.packages[] | select(.name=="arniko") | .version')"
+          echo "version=$ver" >> "$GITHUB_OUTPUT"
+          for c in $CRATES; do
+            v="$(echo "$meta" | jq -r --arg c "$c" '.packages[] | select(.name==$c) | .version')"
+            if [ "$v" != "$ver" ]; then
+              echo "::error::$c is $v but arniko is $ver — versions must move together"
+              exit 1
+            fi
+          done
+          case "$GITHUB_REF" in
+            refs/tags/v*)
+              tag="${GITHUB_REF_NAME#v}"
+              if [ "$tag" != "$ver" ]; then
+                echo "::error::tag v$tag does not match crate version $ver"
+                exit 1
+              fi ;;
+            *)
+              echo "manual run on $GITHUB_REF_NAME — publishing version $ver" ;;
+          esac
+
+      - name: which crates still need publishing
+        id: todo
+        run: |
+          ver="${{ steps.ver.outputs.version }}"
+          todo=""
+          for c in $CRATES; do
+            code="$(curl -sS -o /dev/null -w '%{http_code}' \
+              -A 'arniko publish workflow (github actions)' \
+              "https://crates.io/api/v1/crates/$c/$ver")"
+            if [ "$code" = "200" ]; then
+              echo "$c $ver is already published — skipping"
+            else
+              echo "$c $ver not on crates.io (HTTP $code) — will publish"
+              todo="$todo $c"
+            fi
+          done
+          echo "crates=${todo# }" >> "$GITHUB_OUTPUT"
+
+      - name: package (list contents, verify build)
+        if: steps.todo.outputs.crates != ''
+        run: cargo publish --workspace --dry-run
+
+      - name: crates.io trusted publishing token
+        if: steps.todo.outputs.crates != '' || inputs.verify_auth == true
+        id: auth
+        uses: rust-lang/crates-io-auth-action@v1
+        continue-on-error: true # falls back to the CARGO_REGISTRY_TOKEN secret below
+
+      - name: report trusted publishing status (verify_auth)
+        if: inputs.verify_auth == true
+        env:
+          TP_TOKEN: ${{ steps.auth.outputs.token }}
+        run: |
+          if [ -n "$TP_TOKEN" ]; then
+            echo "trusted publishing OK: crates.io issued a short-lived token to this workflow (length ${#TP_TOKEN})"
+          else
+            echo "::error::trusted publishing FAILED: crates.io did not issue a token — check each crate's Trusted Publishing config (repo nixpt/arniko, workflow publish.yml)"
+            exit 1
+          fi
+
+      - name: cargo publish (dependency order)
+        if: steps.todo.outputs.crates != ''
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token || secrets.CARGO_REGISTRY_TOKEN }}
+          TODO: ${{ steps.todo.outputs.crates }}
+        run: |
+          if [ -z "$CARGO_REGISTRY_TOKEN" ]; then
+            echo "::error::no crates.io credential: configure Trusted Publishing for publish.yml or add a CARGO_REGISTRY_TOKEN secret"
+            exit 1
+          fi
+          for c in $CRATES; do
+            case " $TODO " in *" $c "*) ;; *) continue ;; esac
+            echo "::group::publish $c"
+            cargo publish -p "$c" --no-verify
+            echo "::endgroup::"
+          done
