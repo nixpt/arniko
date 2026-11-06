@@ -101,6 +101,18 @@ are **renderer internals**. bliss-paint pushes `anyrender` commands implemented 
 `anyrender_vello`, so those belong to the `anyrender`/vello owners, not bliss-engine or
 mustang. Noted here so they aren't mis-scoped into the wrong repo.
 
+## Filed
+
+Tracked in the engine repos so the items aren't lost:
+
+- **bliss-engine** ([issues enabled on 2026-11-06](https://github.com/nixpt/bliss-engine) — they were off):
+  [#15 headless tooling](https://github.com/nixpt/bliss-engine/issues/15),
+  [#16 spring timing](https://github.com/nixpt/bliss-engine/issues/16),
+  [#17 scroll polish](https://github.com/nixpt/bliss-engine/issues/17).
+- **mustang**:
+  [#10 springs + retarget](https://github.com/nixpt/mustang/issues/10),
+  [#11 effect breadth + determinism](https://github.com/nixpt/mustang/issues/11).
+
 ## Priority (cheapest high-value first)
 
 1. **(arniko)** stop stripping `transition`/`animation`/`@keyframes` → instant engine motion.

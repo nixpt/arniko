@@ -593,3 +593,13 @@ Rejected alternatives:
 - **Implement the full 9-step wheel in the sink**: rejected — steps 1-4 and 6-9 need the app's own handlers, a default-button declaration, IME, and the engine's field editor; step 5 (focus navigation) is the arniko-ownable slice.
 - **Own DOM focus in FocusManager**: rejected — the engine (bliss-dom) owns DOM focus; FocusManager owns no DOM, the caller applies the result (style the focused node / move engine focus), so it composes rather than conflicts.
 
+
+## 2026-11-06T05:17:33-06:00 — [TACTICAL] Filed engine-borrow issues in bliss-engine (15-17) and mustang (10-11)
+
+Reason:
+Opened the engine-side borrow items from docs/RUNE_ENGINE_BORROW.md as tracked issues. bliss-engine had issues DISABLED (has_issues=false, no discussions/wiki); re-enabled via gh api PATCH (has admin) and filed #15 (headless element-tree JSON dump + virtual clock + scripted input), #16 (spring timing function + velocity-preserving retarget), #17 (scroll polish: edge fade + snap, then virtualization). mustang (issues already enabled) got #10 (springs + retarget in the animation layer) and #11 (effect breadth + (time, seed) determinism contract). Doc cross-links updated.
+
+Rejected alternatives:
+- **Open a PR to bliss-engine instead of issues**: rejected — the items are proposals/tracking, not a code change to review; the user asked for issues, and issues are the right tracking surface.
+- **Leave bliss-engine issues disabled and report only**: rejected — the user asked to open issues there and I have admin; enabling is minimal and reversible (flagged in the decision).
+
