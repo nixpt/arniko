@@ -46,6 +46,8 @@ pub mod reactive;
 
 pub mod css;
 
+pub mod motion;
+
 // Mustang is now an external crate at crates/platform/rendering/mustang
 // Re-export it when gpu or reactive is enabled (reactive's SceneScheduler hook
 // lives in mustang; it is a hard dependency, so this only controls the re-export).

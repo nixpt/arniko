@@ -466,3 +466,14 @@ Rejected alternatives:
 - **Design-system tokens**: deferred to a later branch — the Kit schema + Theme::from_json change is orthogonal and larger than a concept borrow.
 - **Copy Rune code verbatim**: rejected — Rune is a Rust DSL while arniko is CSS-native; each borrow must be re-expressed as a CSS engine feature or a reactive-layer addition.
 
+
+## 2026-11-06T04:50:56-06:00 — [TACTICAL] Arniko motion math module landed (crates/arniko/src/motion/)
+
+Reason:
+First slice of RUNE_BORROW track 1. Pure-math, dependency-free: Spring/SpringPair (perceptual duration+bounce, closed-form sample across under/critical/over damped regimes), Easing/CubicBezier (CSS cubic-bezier + steps), Curve/Decay (spring/tween/decay/instant with Curve::sample), and a named token palette. Independent implementation of the concept, not a copy of rune-motion. 28 tests; full lib 192 green; doctest included; zero new clippy warnings.
+
+Rejected alternatives:
+- **Gate behind a 'motion' cargo feature**: rejected — would keep it out of the default 'cargo test -p arniko --lib' path and add feature juggling before either the CSS driver (1a) or reactive bindings (1b) can use it. It is pure math with no deps, so always-on (like css/theme) cannot break a feature combination.
+- **Sibling crate (mirroring rune-motion)**: rejected for now — overkill for ~700 lines of pure math; can be extracted later if bliss-engine wants to share it.
+- **Wire engine-side CSS transition timeline now (track 1a)**: deferred — the math must land and be testable before a driver consumes it.
+

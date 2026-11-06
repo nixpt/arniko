@@ -75,9 +75,11 @@ were deliberately deferred to a later branch.
 - **Reduced motion** as a first-class token from day one (`REDUCED_FADE` precedent), plus a
   time scale for a settings slider.
 
-**First slice.** Port `Spring` + `Curve` math verbatim-as-concept into a new
-`crates/arniko/src/motion/` (or a sibling crate), with the token palette; unit-test
-`sample`/`settling_duration` against closed-form expectations. No engine wiring yet.
+**First slice.** Port `Spring` + `Curve` math into a new `crates/arniko/src/motion/`
+with the token palette; unit-test `sample`/`settling_duration` against closed-form
+expectations. No engine wiring yet. **(✅ landed — `crates/arniko/src/motion/`:
+`Spring`/`SpringPair`, `Easing`/`CubicBezier`, `Curve`/`Decay`, the token palette;
+28 tests.)**
 
 ### 2. Agent-native headless tooling
 
@@ -210,6 +212,7 @@ over a static scene, with a determinism test (`(time, seed)` fixed → byte-iden
 ## Next steps
 
 1. Approve the track order; pick the first slice per track.
-2. Land track 1's math-only slice with tests (`Spring`/`Curve` + token palette).
-3. Add the `--tree` JSON dump (track 2), the smallest agent-facing win.
+2. ✅ Track 1's math-only slice landed (`crates/arniko/src/motion/`, 28 tests).
+3. Next: decide engine-side CSS driver (1a) vs reactive spring bindings (1b) for wiring
+   the math in; and add the `--tree` JSON dump (track 2), the smallest agent-facing win.
 4. Capture each decision in `.dejavue/` as it is made.
