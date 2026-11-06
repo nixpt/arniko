@@ -487,3 +487,14 @@ Rejected alternatives:
 - **AnimationStore (struct-of-arrays, many lanes keyed by id) now**: rejected — a single Track is the minimal testable unit that unblocks both consumers; a store can wrap N tracks when a consumer actually needs keyed multi-property animation.
 - **A Clock abstraction**: rejected for now — the driver takes a caller-supplied now: f64; the engine loop provides the timestamp, so a Clock type is premature.
 
+
+## 2026-11-06T04:57:10-06:00 — [TACTICAL] Agent tree-dump landed (inspect feature) — DOM + layout as JSON
+
+Reason:
+Track 2 first slice of docs/RUNE_BORROW.md. crates/arniko/src/inspect.rs behind a new 'inspect' feature (enables bliss-dom only, NOT the heavy reactive stack): document_tree(&BaseDocument) -> serde_json::Value and document_tree_string(). Each node emits tag/attrs/text + a rect [x,y,w,h] from final_layout + children; Bliss anonymous block boxes are flagged 'anonymous'. 4 tests pin the shape. Lib 204 green with the feature; no new clippy warnings.
+
+Rejected alternatives:
+- **Gate inspect behind the existing 'reactive' feature**: rejected — reactive pulls winit/mustang/anyrender_vello for a pure read-only traversal. A standalone 'inspect = [dep:bliss-dom]' keeps it light; this required editing reactive's 'bliss-dom' entry to 'dep:bliss-dom' because Cargo drops a dependency's implicit feature once 'dep:' is used anywhere.
+- **Ship a portable '--tree' CLI binary now**: deferred — it needs viewport/layout plumbing (bliss-traits Viewport, font context) and a bin target; the library function is the first slice.
+- **Force layout inside the tests (call BaseDocument::resolve)**: deferred — resolve needs a Viewport (bliss-traits) and font context to produce real rects; rects are documented as zero until layout has run in the live (reactive) path.
+

@@ -104,7 +104,10 @@ mission is agent-facing, but it ships no dump/script harness of its own.
   rune's own `scripts/motion-audit` analogue.
 
 **First slice.** A `--tree <file>` equivalent: a function that serializes the arniko document
-tree + layout to JSON, plus a test that pins its shape.
+tree + layout to JSON, plus a test that pins its shape. **(✅ landed — `crates/arniko/src/inspect.rs`,
+feature `inspect`: `document_tree(&BaseDocument) -> serde_json::Value` and
+`document_tree_string` dump tag/attrs/text/rect + children, flagging anonymous block boxes;
+4 tests. A `--tree` CLI and layout-forcing are follow-ups.)**
 
 ### 3. Reactive / performance model
 
