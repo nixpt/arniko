@@ -477,3 +477,13 @@ Rejected alternatives:
 - **Sibling crate (mirroring rune-motion)**: rejected for now — overkill for ~700 lines of pure math; can be extracted later if bliss-engine wants to share it.
 - **Wire engine-side CSS transition timeline now (track 1a)**: deferred — the math must land and be testable before a driver consumes it.
 
+
+## 2026-11-06T04:54:15-06:00 — [TACTICAL] Motion Track driver landed — stateful retarget keeping position and velocity
+
+Reason:
+Second slice of RUNE_BORROW track 1. Adds crates/arniko/src/motion/track.rs: Track owns (curve, from, from_velocity, target, start, end, value, velocity, active), advances via tick(now), and retargets via animate_to(target, curve, now) starting the new segment from the exact current (value, velocity) so interrupting a spring never jumps. Settle time comes from per-curve logic (Spring::settling_duration_from, tween duration, decay's ln(v/eps)/k). 8 tests incl. continuity-in-position-and-velocity on retarget. Lib 200 green, doctests 50, zero motion clippy warnings.
+
+Rejected alternatives:
+- **AnimationStore (struct-of-arrays, many lanes keyed by id) now**: rejected — a single Track is the minimal testable unit that unblocks both consumers; a store can wrap N tracks when a consumer actually needs keyed multi-property animation.
+- **A Clock abstraction**: rejected for now — the driver takes a caller-supplied now: f64; the engine loop provides the timestamp, so a Clock type is premature.
+

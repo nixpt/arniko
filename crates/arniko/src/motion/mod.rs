@@ -4,9 +4,10 @@
 //! *shape* of the problem from Rune's `rune-motion` crate (see
 //! `docs/RUNE_BORROW.md`, track 1) but is an independent implementation: a
 //! damped-oscillator sampler, the CSS timing-function evaluator, a small curve
-//! enum, and a named motion palette. Nothing here touches the DOM, the reactor
-//! or the renderer, so it can drive either an engine-side CSS transition
-//! timeline or reactive spring bindings later.
+//! enum, a stateful [`Track`] that retargets without discontinuity, and a named
+//! motion palette. Nothing here touches the DOM, the reactor or the renderer, so
+//! it can drive either an engine-side CSS transition timeline or reactive spring
+//! bindings later.
 //!
 //! Every sampler is closed-form and exact at any `t`, so a driver can sample it
 //! at a frame timestamp and retarget from the current `(position, velocity)`
@@ -26,8 +27,10 @@ mod curve;
 mod easing;
 mod spring;
 mod tokens;
+mod track;
 
 pub use curve::{Curve, Decay};
 pub use easing::{CubicBezier, Easing, StepPosition};
 pub use spring::{Spring, SpringPair};
 pub use tokens::*;
+pub use track::{SETTLE_EPSILON, Track};
