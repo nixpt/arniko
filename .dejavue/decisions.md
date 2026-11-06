@@ -531,3 +531,13 @@ Rejected alternatives:
 - **A full type-select prefix/timeout buffer**: deferred — the first slice does 'next item starting with ch, wrapping'; a prefix buffer + repeat-timeout is a refinement noted in the function doc.
 - **Wire the routing wheel into the event sink now**: deferred — needs the engine focus manager; the spec + math are the slice, wiring is follow-up.
 
+
+## 2026-11-06T05:03:48-06:00 — [STRATEGIC] Track 5 (effects & lighting) is engine-side — no new arniko code
+
+Reason:
+Inspected the mustang 0.4 source (arniko-mustang-0.4.0): it already provides the effect-layer model rune-fx represents — typed Effect with BlurParams/TransformParams/ColorAdjustParams/DropShadowParams, a SceneScheduler with per-region dirty tracking, and skip/completion (SceneEffectResult::is_complete, deferred_count). arniko already integrates all of it (arniko::mustang re-export, reactive::SceneScheduler, reactive::direct_mut). What mustang lacks is rune-fx's effect-kind breadth and rune-light's SDF lighting, and those belong in the GPU compositor (nixpt/mustang), not the UI SDK. Recorded in docs/RUNE_BORROW.md track 5; the 'arniko gap' claim there was corrected.
+
+Rejected alternatives:
+- **Add an arniko::effects layer model**: rejected — would duplicate mustang's Effect + params + scheduler, creating two competing effect vocabularies.
+- **Port one effect (e.g. glow) in arniko**: rejected — the effect shaders live in the GPU compositor (mustang), not the UI SDK.
+
