@@ -498,3 +498,14 @@ Rejected alternatives:
 - **Ship a portable '--tree' CLI binary now**: deferred — it needs viewport/layout plumbing (bliss-traits Viewport, font context) and a bin target; the library function is the first slice.
 - **Force layout inside the tests (call BaseDocument::resolve)**: deferred — resolve needs a Viewport (bliss-traits) and font context to produce real rects; rects are documented as zero until layout has run in the live (reactive) path.
 
+
+## 2026-11-06T05:00:22-06:00 — [TACTICAL] arniko-tree CLI landed — track 2 complete (parse + layout + JSON dump)
+
+Reason:
+Finishes RUNE_BORROW track 2. New 'inspect-cli' feature enables optional deps bliss-html (HtmlDocument/HtmlProvider) + bliss-traits (Viewport/ColorScheme/DummyNetProvider) on top of inspect, and a [[bin]] arniko-tree (src/bin/arniko-tree.rs). The bin reads HTML from a FILE, --html, or stdin, builds an HtmlDocument at a --width x --height viewport, calls BaseDocument::resolve(0.0), and writes document_tree_string to --out or stdout. Verified end-to-end (help/output/unknown-option) and pinned by an inspect-cli lib test that parses, lays out, and asserts a 200x100 block rect. Lib 205 with the feature; default + reactive checks green; no new clippy warnings.
+
+Rejected alternatives:
+- **Depend on the whole 'bliss' re-export crate for the CLI**: rejected — it drags shell/paint/winit. Using bliss-dom + bliss-html + bliss-traits directly is the minimal headless parse+layout stack.
+- **Report inline (text/<b>/<span>) rects**: deferred — inline geometry lives in the element's inline_layout_data (parley lines/boxes), not Node::final_layout. Rects are documented as block-layout boxes; inline content reports zero.
+- **Silence the bliss-html 'parse error**: Unexpected token' line: not needed — it already goes to stderr (html_sink.rs eprintln!), so stdout JSON stays pipeable; confirmed clean under 2>/dev/null.
+

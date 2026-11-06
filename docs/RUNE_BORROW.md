@@ -104,10 +104,11 @@ mission is agent-facing, but it ships no dump/script harness of its own.
   rune's own `scripts/motion-audit` analogue.
 
 **First slice.** A `--tree <file>` equivalent: a function that serializes the arniko document
-tree + layout to JSON, plus a test that pins its shape. **(✅ landed — `crates/arniko/src/inspect.rs`,
-feature `inspect`: `document_tree(&BaseDocument) -> serde_json::Value` and
-`document_tree_string` dump tag/attrs/text/rect + children, flagging anonymous block boxes;
-4 tests. A `--tree` CLI and layout-forcing are follow-ups.)**
+tree + layout to JSON, plus a test that pins its shape. **(✅ landed — `crates/arniko/src/inspect.rs`
+(feature `inspect`): `document_tree` / `document_tree_string`; plus the **`arniko-tree` CLI**
+(feature `inspect-cli`): reads HTML from a FILE, `--html`, or stdin, lays it out at a
+`--width`×`--height` viewport, and writes the JSON to `--out` or stdout. 5 tests. Rects are
+block-layout boxes; inline content reports zero.)**
 
 ### 3. Reactive / performance model
 
@@ -215,7 +216,8 @@ over a static scene, with a determinism test (`(time, seed)` fixed → byte-iden
 ## Next steps
 
 1. Approve the track order; pick the first slice per track.
-2. ✅ Track 1's math-only slice landed (`crates/arniko/src/motion/`, 28 tests).
-3. Next: decide engine-side CSS driver (1a) vs reactive spring bindings (1b) for wiring
-   the math in; and add the `--tree` JSON dump (track 2), the smallest agent-facing win.
-4. Capture each decision in `.dejavue/` as it is made.
+2. ✅ Track 1's motion math + driver landed (`crates/arniko/src/motion/`, 36 tests).
+3. ✅ Track 2 landed (`crates/arniko/src/inspect.rs` + the `arniko-tree` CLI, 5 tests).
+4. Next: wire the motion math into the engine (1a) or the reactive layer (1b); then the
+   remaining tracks (reactive/perf, interaction/focus, effects/lighting).
+5. Capture each decision in `.dejavue/` as it is made.

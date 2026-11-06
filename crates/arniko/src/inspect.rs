@@ -10,7 +10,11 @@
 //! The dump is structural, not a rendering: elements that Bliss inserts for
 //! layout (anonymous block boxes) appear with an `"anonymous": true` flag, and
 //! whitespace-only text nodes are kept. Rect values come straight from
-//! `Node::final_layout` and are zero before layout has run.
+//! `Node::final_layout` and are the **block-layout** boxes — inline content
+//! (text runs and inline elements such as `<b>`/`<span>`) reports a zero rect,
+//! because inline geometry lives in the element's inline layout data, not in
+//! `final_layout`. Rects are zero before layout has run; the `arniko-tree` CLI
+//! runs layout first.
 //!
 //! ```rust,ignore
 //! use arniko::inspect::document_tree_string;
@@ -163,5 +167,51 @@ mod tests {
         let text = document_tree_string(&doc);
         let parsed: Value = serde_json::from_str(&text).expect("valid json");
         assert_eq!(parsed, tree);
+    }
+
+    #[cfg(feature = "inspect-cli")]
+    mod cli_path {
+        use super::*;
+        use bliss_dom::DocumentConfig;
+        use bliss_html::{HtmlDocument, HtmlProvider};
+        use bliss_traits::net::DummyNetProvider;
+        use bliss_traits::shell::{ColorScheme, Viewport};
+        use std::sync::Arc;
+
+        fn find<'a>(node: &'a Value, id: &str) -> Option<&'a Value> {
+            if node
+                .get("attrs")
+                .and_then(|a| a.get("id"))
+                .and_then(Value::as_str)
+                == Some(id)
+            {
+                return Some(node);
+            }
+            node.get("children")?
+                .as_array()?
+                .iter()
+                .find_map(|child| find(child, id))
+        }
+
+        #[test]
+        fn parses_lays_out_and_reports_block_rects() {
+            // The full `arniko-tree` path: parse -> viewport -> resolve -> dump.
+            let config = DocumentConfig {
+                viewport: Some(Viewport::new(400, 300, 1.0, ColorScheme::Light)),
+                ua_stylesheets: Some(Vec::new()),
+                net_provider: Some(Arc::new(DummyNetProvider)),
+                html_parser_provider: Some(Arc::new(HtmlProvider)),
+                ..Default::default()
+            };
+            let html = r#"<html><body><div id="box" style="width:200px;height:100px">x</div></body></html>"#;
+            let mut doc = HtmlDocument::from_html(html, config);
+            doc.resolve(0.0);
+
+            let tree = document_tree(&doc);
+            let node = find(&tree, "box").expect("box present");
+            let rect = node["rect"].as_array().expect("rect is an array");
+            assert_eq!(rect[2].as_f64(), Some(200.0), "width");
+            assert_eq!(rect[3].as_f64(), Some(100.0), "height");
+        }
     }
 }

@@ -27,6 +27,7 @@ relay = []
 launch = ["bliss"]           # Native window launch via bliss
 reactive = ["bliss", "dep:bliss-dom", "anyrender_vello", "winit", "keyboard-types", "mustang"]  # Reactive Signal + View + EventSink + launch (mustang: SceneScheduler hook)
 inspect = ["dep:bliss-dom"]  # DOM + resolved-layout JSON tree dump (agent tooling, `docs/RUNE_BORROW.md` track 2)
+inspect-cli = ["inspect", "dep:bliss-html", "dep:bliss-traits"]  # the `arniko-tree` bin (parse + viewport + layout)
 full = ["html", "components", "gpu", "networking", "launch", "reactive", "inspect"]
 
 [dependencies]
@@ -78,6 +79,15 @@ optional = true
 workspace = true
 optional = true
 
+# `arniko-tree` bin (`inspect-cli`): parse HTML and pick a viewport.
+[dependencies.bliss-html]
+workspace = true
+optional = true
+
+[dependencies.bliss-traits]
+workspace = true
+optional = true
+
 [dependencies.anyrender_vello]
 workspace = true
 optional = true
@@ -104,6 +114,12 @@ vello = { workspace = true }
 peniko = { workspace = true }
 kurbo = { workspace = true }
 bliss-html = { workspace = true }
+
+# `--tree` JSON dump CLI (track 2 of docs/RUNE_BORROW.md).
+[[bin]]
+name = "arniko-tree"
+path = "src/bin/arniko-tree.rs"
+required-features = ["inspect-cli"]
 
 [[test]]
 name = "reactive_components"
