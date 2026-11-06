@@ -509,3 +509,14 @@ Rejected alternatives:
 - **Report inline (text/<b>/<span>) rects**: deferred — inline geometry lives in the element's inline_layout_data (parley lines/boxes), not Node::final_layout. Rects are documented as block-layout boxes; inline content reports zero.
 - **Silence the bliss-html 'parse error**: Unexpected token' line: not needed — it already goes to stderr (html_sink.rs eprintln!), so stdout JSON stays pipeable; confirmed clean under 2>/dev/null.
 
+
+## 2026-11-06T05:02:16-06:00 — [TACTICAL] Live-value channel landed — track 3 first slice
+
+Reason:
+Adds crates/arniko/src/live.rs (always-on, zero deps beyond parking_lot which arniko already uses): Live<T> over an AtomicU32 (LiveValue for f32/u32/i32) with clone-to-share, change-detecting set()/update(), and an optional shared WakeFn fired only on change so a set can request a redraw without a reactor flush. SpringBinding smooths a Live<f32> onto a motion::Track (velocity-preserving retargets). 7 tests incl. waker-only-on-change and spring-follows-source. Lib 207 green; doctest added; no new clippy warnings.
+
+Rejected alternatives:
+- **64-bit values / AtomicU64**: rejected — some targets (notably wasm without atomics) lack AtomicU64; UI live values are f32/u32/i32, so an AtomicU32 keeps it portable. Documented.
+- **Reuse reactive::signal::WakeFn**: rejected — live is always-on but reactive is feature-gated, so live defines its own identically-shaped WakeFn alias rather than depending on the gated module.
+- **React on a reactor version bump test**: deferred — live never touches the reactor by construction (no reactor dependency); the meaningful integration test (set a live value and assert no view re-run) needs the engine loop, deferred with the wiring.
+

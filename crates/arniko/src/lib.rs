@@ -46,6 +46,7 @@ pub mod reactive;
 
 pub mod css;
 
+pub mod live;
 pub mod motion;
 
 // Agent tooling: DOM + layout JSON dump (feature `inspect`).

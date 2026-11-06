@@ -138,7 +138,10 @@ GPU-coupled item.
 
 **First slice.** The `live`/`live_only` channel: a `Live` type + a way to bind it to a
 property such that a set schedules a repaint, not a reactive flush. Test: setting a live
-value does not bump the Reactor version.
+value does not bump the Reactor version. **(✅ landed — `crates/arniko/src/live.rs`:
+`Live<T>` (f32/u32/i32, lock-free, change-detecting, waker on change) and `SpringBinding`
+(smooths a `Live<f32>` onto a `motion::Track`); 7 tests. Wiring a live value to a specific
+style property, and the reactor-version assertion, are follow-ups.)**
 
 ### 4. Interaction & focus
 
@@ -218,6 +221,7 @@ over a static scene, with a determinism test (`(time, seed)` fixed → byte-iden
 1. Approve the track order; pick the first slice per track.
 2. ✅ Track 1's motion math + driver landed (`crates/arniko/src/motion/`, 36 tests).
 3. ✅ Track 2 landed (`crates/arniko/src/inspect.rs` + the `arniko-tree` CLI, 5 tests).
-4. Next: wire the motion math into the engine (1a) or the reactive layer (1b); then the
-   remaining tracks (reactive/perf, interaction/focus, effects/lighting).
-5. Capture each decision in `.dejavue/` as it is made.
+4. ✅ Track 3's first slice landed (`crates/arniko/src/live.rs`, 7 tests).
+5. Next: wire the motion math and live values into the engine (1a/1b/3), then the remaining
+   tracks (interaction/focus, effects/lighting).
+6. Capture each decision in `.dejavue/` as it is made.
