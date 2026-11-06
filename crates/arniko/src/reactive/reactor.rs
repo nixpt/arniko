@@ -5,6 +5,9 @@ use std::sync::Arc;
 
 use bliss_dom::DocumentMutator;
 
+use crate::motion::Curve;
+
+use super::animation::{Animation, CssProperty};
 use super::signal::Reactive;
 use super::view::View;
 
@@ -348,6 +351,10 @@ pub struct Reactor {
     /// on `provide`, `Arc::clone` on `inject`. Out of scope per D3: nested
     /// scope semantics, intrusive dep tracking.
     pub(super) context: super::context::Context,
+    /// Track-driven CSS-property animations (see `super::animation`). Advanced
+    /// by [`Reactor::tick`], not by `flush` — animation is time-driven, not
+    /// version-driven.
+    animations: Vec<Animation>,
 }
 
 impl Reactor {
@@ -357,6 +364,7 @@ impl Reactor {
             next_handle: 0,
             parked_scopes: Vec::new(),
             context: super::context::Context::new(),
+            animations: Vec::new(),
         }
     }
 
@@ -437,6 +445,68 @@ impl Reactor {
     /// Get the current number of active bindings (for testing).
     pub fn binding_count(&self) -> usize {
         self.bindings.iter().filter(|b| b.is_some()).count()
+    }
+
+    // ── Motion wiring ───────────────────────────────────────────────────────
+
+    /// Animate the numeric CSS `property` of `node` toward `target`, on `curve`.
+    ///
+    /// The first call for a `(node, property)` sets the value instantly (nothing
+    /// animates on the first frame); a later call retargets the running spring
+    /// from the exact current `(value, velocity)`, so interrupting never jumps.
+    /// The value reaches the DOM on the next [`tick`](Reactor::tick).
+    pub fn animate(
+        &mut self,
+        node: usize,
+        property: CssProperty,
+        target: f32,
+        curve: Curve,
+        now: f64,
+    ) {
+        if let Some(animation) = self
+            .animations
+            .iter_mut()
+            .find(|a| a.node == node && a.property == property)
+        {
+            animation.track.animate_to(target, curve, now);
+        } else {
+            self.animations.push(Animation::new(node, property, target));
+        }
+    }
+
+    /// Advance every animation to clock time `now`, writing changed values to the
+    /// DOM through `mutator`. Returns `true` if anything changed (i.e. the shell
+    /// should redraw). Call once per frame.
+    pub fn tick(&mut self, now: f64, mutator: &mut DocumentMutator) -> bool {
+        let mut changed = false;
+        for animation in &mut self.animations {
+            changed |= animation.tick(now, mutator);
+        }
+        changed
+    }
+
+    /// Whether any animation is still running.
+    pub fn is_animating(&self) -> bool {
+        self.animations.iter().any(|a| a.track.is_active())
+    }
+
+    /// The current presented value of an animation, if one exists (for tests and
+    /// introspection).
+    pub fn animation_value(&self, node: usize, property: CssProperty) -> Option<f32> {
+        self.animations
+            .iter()
+            .find(|a| a.node == node && a.property == property)
+            .map(|a| a.track.value())
+    }
+
+    /// The number of registered animations.
+    pub fn animation_count(&self) -> usize {
+        self.animations.len()
+    }
+
+    /// Drop every animation targeting `node` (call when a node unmounts).
+    pub fn clear_animations_for(&mut self, node: usize) {
+        self.animations.retain(|a| a.node != node);
     }
 
     /// Register a list reconciliation binding for a `For` view.

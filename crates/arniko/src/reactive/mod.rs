@@ -1,3 +1,4 @@
+mod animation;
 mod app;
 mod batch;
 mod computed;
@@ -17,6 +18,8 @@ mod view;
 // Re-export renderer types needed to write set_scene_effects hooks.
 pub use crate::mustang::SceneScheduler;
 pub use anyrender_vello::{VelloScenePainter, VelloWindowRenderer};
+
+pub use animation::CssProperty;
 
 pub use app::{
     ReactiveRuntime, launch_reactive, launch_reactive_configured, launch_reactive_scheduled,

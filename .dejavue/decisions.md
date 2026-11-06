@@ -541,3 +541,14 @@ Rejected alternatives:
 - **Add an arniko::effects layer model**: rejected — would duplicate mustang's Effect + params + scheduler, creating two competing effect vocabularies.
 - **Port one effect (e.g. glow) in arniko**: rejected — the effect shaders live in the GPU compositor (mustang), not the UI SDK.
 
+
+## 2026-11-06T05:07:18-06:00 — [TACTICAL] Motion wired into the reactive layer — Reactor::animate/tick (track 1 wiring, first slice)
+
+Reason:
+Adds crates/arniko/src/reactive/animation.rs and Reactor methods: animate(node, CssProperty, target, curve, now) registers/retargets a motion::Track per (node, property); tick(now, &mut DocumentMutator) advances all animations and writes changed values via DocumentMutator::set_style_property; is_animating()/animation_value()/animation_count()/clear_animations_for(). Matches rune's 'nothing animates on the first frame': the first animate is instant, later calls spring, and retargets keep position+velocity. CssProperty (px/unitless) re-exported from reactive. 3 tests incl. retarget continuity and settle-stops-writing. reactive lib 219 + integration 66 + doctests 52 green; no new clippy warnings.
+
+Rejected alternatives:
+- **Wire the winit shell frame loop (app.rs) in this slice**: deferred — driving ticks + redraws needs a frame/redraw schedule in ReactiveApplication that can't be verified without a display; the reactor-level animate/tick boundary is the testable engine seam, and the shell loop is the documented next step.
+- **Read the applied value back from the DOM in tests**: rejected — bliss's set_style_property writes a parsed stylo declaration block, not the raw style attribute string, so there is nothing simple to read back; tests assert the reactor's presented value + the write-changed flag instead.
+- **Animate via the version-checked Binding::flush path**: rejected — animation is time-driven, not version-driven; a separate animations vec + tick(now) is the right seam.
+
