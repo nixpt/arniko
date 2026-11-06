@@ -583,3 +583,13 @@ Rejected alternatives:
 - **Propose a custom uber-quad renderer for bliss-engine**: rejected — bliss-paint pushes anyrender commands implemented by anyrender_vello; renderer internals are out of bliss-engine/mustang scope (noted as section G).
 - **Propose CSS-transition support as engine work**: rejected — the engine already supports it; the gap is arniko stripping transitions, so the fix is arniko-side (section B).
 
+
+## 2026-11-06T05:16:33-06:00 — [TACTICAL] Focus wiring landed — FocusManager + EventRouter::on_focus_nav (wheel step 5)
+
+Reason:
+Adds to crates/arniko/src/focus.rs a FocusManager (register FocusItems with tab_index/group/label; tab_order(); handle(FocusIntent) applying tab_step / roving / type_select; focused_node()/set_focused_node(); with_wrap) plus FocusItem/FocusIntent. Adds reactive/sink.rs: focus_intent(&BlissKeyEvent)->Option<FocusIntent> (Tab/Shift-Tab, arrows, Home/End, Character->Type) and EventRouter::on_focus_nav(Arc<Mutex<FocusManager>>, on_change) wiring it to the global keydown. Implements step 5 of docs/KEY_ROUTING.md. 5 new focus tests (11 total); reactive lib 227; doctest added; no new clippy warnings.
+
+Rejected alternatives:
+- **Implement the full 9-step wheel in the sink**: rejected — steps 1-4 and 6-9 need the app's own handlers, a default-button declaration, IME, and the engine's field editor; step 5 (focus navigation) is the arniko-ownable slice.
+- **Own DOM focus in FocusManager**: rejected — the engine (bliss-dom) owns DOM focus; FocusManager owns no DOM, the caller applies the result (style the focused node / move engine focus), so it composes rather than conflicts.
+

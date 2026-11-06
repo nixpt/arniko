@@ -52,6 +52,11 @@ A field's `on_input_key` sees Return before any of these.
 
 ## Status
 
-The `arniko::focus` math (tab order, roving, type-select) is implemented and tested.
-The routing *wheel* above is the target contract; wiring it into the event sink and the
-engine's focus manager is follow-up work (the engine owns focus state today).
+`arniko::focus` implements the math (tab order, roving, type-select) **and** a `FocusManager`
+that applies step 5 (Tab/Shift-Tab, arrow groups, Home/End, type-select) to a set of registered
+items. `EventRouter::on_focus_nav(manager, on_change)` wires it to the global keydown via
+`focus_intent` (a `BlissKeyEvent` → `FocusIntent` map).
+
+The rest of the wheel — steps 1–4 and 6–9 (IME, default button, field input, copy keys, page
+scroll) — needs the app's own handlers and a default-button declaration; the engine owns raw DOM
+focus state. This spec is the contract those handlers should follow.

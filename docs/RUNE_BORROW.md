@@ -236,5 +236,8 @@ effect kinds and lighting are follow-ups in `nixpt/mustang`.
    the shell frame loop (`about_to_wait` in `reactive/app.rs`) ticks each frame and schedules
    `WaitUntil` while animating; and `Reactor::bind_live` / `bind_live_smoothed` apply a
    `Live<f32>` (raw or spring-smoothed) each frame, with `ReactiveRuntime::wire_live` waking the
-   shell. Still next: routing keys through the `docs/KEY_ROUTING.md` wheel.
-8. Capture each decision in `.dejavue/` as it is made.
+   shell.
+8. ✅ Focus wiring: `arniko::focus::FocusManager` applies the key-routing wheel's step 5, and
+   `EventRouter::on_focus_nav` (with `focus_intent`) wires it to the global keydown — see
+   `docs/KEY_ROUTING.md`.
+9. Capture each decision in `.dejavue/` as it is made.

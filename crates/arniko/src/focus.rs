@@ -143,6 +143,180 @@ pub fn type_select(labels: &[&str], current: Option<usize>, ch: char) -> Option<
     })
 }
 
+/// One focusable item known to a [`FocusManager`].
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct FocusItem {
+    /// The caller's handle for the item (a DOM node id, a view id, …).
+    pub node: usize,
+    /// CSS `tabindex` value (see [`tab_order`]).
+    pub tab_index: i32,
+    /// An optional group for roving focus (a menu, list, segment, tab strip).
+    pub group: Option<u32>,
+    /// A label for type-select.
+    pub label: String,
+}
+
+impl FocusItem {
+    /// An item in the tab order, no group, no label.
+    pub fn new(node: usize) -> FocusItem {
+        FocusItem {
+            node,
+            tab_index: 0,
+            group: None,
+            label: String::new(),
+        }
+    }
+    /// Set the `tabindex`.
+    pub fn tab_index(mut self, tab_index: i32) -> Self {
+        self.tab_index = tab_index;
+        self
+    }
+    /// Put the item in a roving group.
+    pub fn group(mut self, group: u32) -> Self {
+        self.group = Some(group);
+        self
+    }
+    /// Give the item a type-select label.
+    pub fn label(mut self, label: impl Into<String>) -> Self {
+        self.label = label.into();
+        self
+    }
+}
+
+/// A focus-navigation intent, decoupled from any particular key type. Map a key
+/// event to one of these (see `reactive::sink::focus_intent`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum FocusIntent {
+    /// Tab.
+    TabForward,
+    /// Shift-Tab.
+    TabBackward,
+    /// An arrow / Home / End within a group.
+    Move(FocusMove),
+    /// A printable character for type-select.
+    Type(char),
+}
+
+/// Manages focus across a set of items using the focus math in this module.
+///
+/// This is step 5 of the key-routing wheel (`docs/KEY_ROUTING.md`) — Tab between
+/// Tab stops, arrows/Home/End within a `focus_group`, and type-select. It owns no
+/// DOM; the caller applies the result, e.g. by styling `focused_node()` or moving
+/// engine focus.
+#[derive(Default)]
+pub struct FocusManager {
+    items: Vec<FocusItem>,
+    focused: Option<usize>,
+    /// Whether roving groups wrap (menus/segments/tabs) or stop (lists/trees).
+    group_wrap: bool,
+}
+
+impl FocusManager {
+    /// A manager with no items.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Whether roving groups wrap. Default false (lists/trees stop at the ends).
+    pub fn with_wrap(mut self, wrap: bool) -> Self {
+        self.group_wrap = wrap;
+        self
+    }
+
+    /// Add a focusable item.
+    pub fn register(&mut self, item: FocusItem) {
+        self.items.push(item);
+    }
+
+    /// Remove every item and clear focus.
+    pub fn clear(&mut self) {
+        self.items.clear();
+        self.focused = None;
+    }
+
+    /// The handle of the focused item, if any.
+    pub fn focused_node(&self) -> Option<usize> {
+        self.focused
+            .and_then(|i| self.items.get(i))
+            .map(|item| item.node)
+    }
+
+    /// Focus the item with this handle. Returns whether focus changed.
+    pub fn set_focused_node(&mut self, node: usize) -> bool {
+        let idx = self.items.iter().position(|item| item.node == node);
+        let changed = idx != self.focused;
+        self.focused = idx;
+        changed
+    }
+
+    /// The Tab order over the registered items (item positions).
+    pub fn tab_order(&self) -> Vec<usize> {
+        let tab_indices: Vec<i32> = self.items.iter().map(|item| item.tab_index).collect();
+        tab_order(&tab_indices)
+    }
+
+    /// Handle a focus-navigation intent. Returns `true` if focus moved (the key
+    /// was consumed).
+    pub fn handle(&mut self, intent: FocusIntent) -> bool {
+        let before = self.focused;
+        match intent {
+            FocusIntent::TabForward | FocusIntent::TabBackward => {
+                let order = self.tab_order();
+                let forward = matches!(intent, FocusIntent::TabForward);
+                if let Some(next) = tab_step(&order, self.focused, forward) {
+                    self.focused = Some(next);
+                }
+            }
+            FocusIntent::Move(mv) => {
+                let group = self.group_indices(self.focused);
+                match self
+                    .focused
+                    .and_then(|f| group.iter().position(|&i| i == f))
+                {
+                    Some(pos) => {
+                        if let Some(next) = roving(group.len(), Some(pos), mv, self.group_wrap) {
+                            self.focused = Some(group[next]);
+                        }
+                    }
+                    None => {
+                        if let Some(&first) = group.first() {
+                            self.focused = Some(first);
+                        }
+                    }
+                }
+            }
+            FocusIntent::Type(ch) => {
+                let group = self.group_indices(self.focused);
+                let labels: Vec<&str> = group
+                    .iter()
+                    .map(|&i| self.items[i].label.as_str())
+                    .collect();
+                let pos = self
+                    .focused
+                    .and_then(|f| group.iter().position(|&i| i == f));
+                if let Some(next) = type_select(&labels, pos, ch) {
+                    self.focused = Some(group[next]);
+                }
+            }
+        }
+        self.focused != before
+    }
+
+    /// The item positions in the focused item's group, or all items when the
+    /// focused item has no group.
+    fn group_indices(&self, current: Option<usize>) -> Vec<usize> {
+        match current
+            .and_then(|i| self.items.get(i))
+            .and_then(|item| item.group)
+        {
+            Some(group) => (0..self.items.len())
+                .filter(|&i| self.items[i].group == Some(group))
+                .collect(),
+            None => (0..self.items.len()).collect(),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -206,5 +380,84 @@ mod tests {
         );
         assert_eq!(type_select(&labels, Some(0), 'z'), None);
         assert_eq!(type_select(&[], None, 'a'), None);
+    }
+
+    fn manager() -> FocusManager {
+        // Two tab stops (a, b), then a 3-item menu group (m1..m3), all with labels.
+        let mut m = FocusManager::new().with_wrap(true);
+        m.register(FocusItem::new(10).label("apple"));
+        m.register(FocusItem::new(20).label("banana"));
+        m.register(FocusItem::new(30).group(1).label("cat"));
+        m.register(FocusItem::new(40).group(1).label("dog"));
+        m.register(FocusItem::new(50).group(1).label("eel"));
+        m
+    }
+
+    #[test]
+    fn manager_tabs_in_order_and_wraps() {
+        let mut m = manager();
+        assert!(m.handle(FocusIntent::TabForward));
+        assert_eq!(m.focused_node(), Some(10));
+        m.handle(FocusIntent::TabForward);
+        assert_eq!(m.focused_node(), Some(20));
+        m.handle(FocusIntent::TabForward);
+        assert_eq!(m.focused_node(), Some(30), "third Tab lands in the group");
+        m.handle(FocusIntent::TabForward);
+        assert_eq!(m.focused_node(), Some(40));
+        m.handle(FocusIntent::TabForward);
+        assert_eq!(m.focused_node(), Some(50));
+        // Wraps back to the first Tab stop.
+        m.handle(FocusIntent::TabForward);
+        assert_eq!(m.focused_node(), Some(10));
+        m.handle(FocusIntent::TabBackward);
+        assert_eq!(m.focused_node(), Some(50));
+    }
+
+    #[test]
+    fn manager_roves_within_the_group() {
+        let mut m = manager();
+        m.set_focused_node(40); // "dog", middle of the menu group
+        assert!(m.handle(FocusIntent::Move(FocusMove::Next)));
+        assert_eq!(m.focused_node(), Some(50));
+        // group wraps (with_wrap(true)): from the last back to the first of the group.
+        m.handle(FocusIntent::Move(FocusMove::Next));
+        assert_eq!(m.focused_node(), Some(30));
+        m.handle(FocusIntent::Move(FocusMove::First));
+        assert_eq!(m.focused_node(), Some(30));
+        m.handle(FocusIntent::Move(FocusMove::Last));
+        assert_eq!(m.focused_node(), Some(50));
+    }
+
+    #[test]
+    fn manager_group_does_not_wrap_when_disabled() {
+        let mut m = manager().with_wrap(false);
+        m.set_focused_node(50);
+        m.handle(FocusIntent::Move(FocusMove::Next));
+        assert_eq!(m.focused_node(), Some(50), "list stops at the end");
+        m.set_focused_node(30);
+        m.handle(FocusIntent::Move(FocusMove::Prev));
+        assert_eq!(m.focused_node(), Some(30), "list stops at the start");
+    }
+
+    #[test]
+    fn manager_type_selects_within_the_group() {
+        let mut m = manager();
+        m.set_focused_node(30);
+        // From "cat", 'e' finds "eel".
+        assert!(m.handle(FocusIntent::Type('e')));
+        assert_eq!(m.focused_node(), Some(50));
+        // 'c' wraps back to "cat".
+        assert!(m.handle(FocusIntent::Type('c')));
+        assert_eq!(m.focused_node(), Some(30));
+        // No match: nothing moves.
+        assert!(!m.handle(FocusIntent::Type('z')));
+    }
+
+    #[test]
+    fn manager_set_focused_node_reports_change() {
+        let mut m = manager();
+        assert!(m.set_focused_node(20));
+        assert!(!m.set_focused_node(20));
+        assert_eq!(m.focused_node(), Some(20));
     }
 }

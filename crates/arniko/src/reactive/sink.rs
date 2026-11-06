@@ -3,6 +3,9 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use bliss::traits::events::{BlissKeyEvent, DomEvent, DomEventData, EventPhase, EventSink};
+use keyboard_types::{Key, Modifiers};
+
+use crate::focus::{FocusIntent, FocusManager, FocusMove};
 
 pub(super) type ClickHandler = Box<dyn Fn() + Send + Sync>;
 pub(super) type KeyEventHandler = Box<dyn Fn(&BlissKeyEvent) + Send + Sync>;
@@ -78,6 +81,64 @@ impl EventRouter {
     pub fn off_input(&self, node_id: usize) -> &Self {
         self.input_handlers.lock().remove(&node_id);
         self
+    }
+
+    /// Install focus navigation (step 5 of `docs/KEY_ROUTING.md`) on the global
+    /// keydown.
+    ///
+    /// Maps a key to a [`FocusIntent`] via [`focus_intent`], applies it to
+    /// `manager`, and calls `on_change` with the newly focused node when focus
+    /// moves. Returns whether the key was a navigation key (so a caller that
+    /// wants to also route the key elsewhere can tell).
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use parking_lot::Mutex;
+    /// use arniko::focus::{FocusItem, FocusManager};
+    /// # use arniko::reactive::event_router;
+    /// let (router, _sink) = event_router();
+    /// let manager = Arc::new(Mutex::new(FocusManager::new()));
+    /// manager.lock().register(FocusItem::new(1));
+    /// manager.lock().register(FocusItem::new(2));
+    /// router.on_focus_nav(manager, |_focused| {});
+    /// ```
+    pub fn on_focus_nav(
+        &self,
+        manager: Arc<Mutex<FocusManager>>,
+        on_change: impl Fn(usize) + Send + Sync + 'static,
+    ) -> &Self {
+        self.on_keydown(move |event| {
+            if let Some(intent) = focus_intent(event) {
+                let mut manager = manager.lock();
+                if manager.handle(intent)
+                    && let Some(node) = manager.focused_node()
+                {
+                    on_change(node);
+                }
+            }
+        })
+    }
+}
+
+/// Map a key event to a focus-navigation [`FocusIntent`], or `None` if it is not
+/// a navigation key.
+///
+/// Covers step 5 of `docs/KEY_ROUTING.md`: Tab / Shift-Tab, arrows, Home/End, and
+/// printable characters for type-select.
+pub fn focus_intent(event: &BlissKeyEvent) -> Option<FocusIntent> {
+    let shift = event.modifiers.contains(Modifiers::SHIFT);
+    match &event.key {
+        Key::Tab => Some(if shift {
+            FocusIntent::TabBackward
+        } else {
+            FocusIntent::TabForward
+        }),
+        Key::ArrowDown | Key::ArrowRight => Some(FocusIntent::Move(FocusMove::Next)),
+        Key::ArrowUp | Key::ArrowLeft => Some(FocusIntent::Move(FocusMove::Prev)),
+        Key::Home => Some(FocusIntent::Move(FocusMove::First)),
+        Key::End => Some(FocusIntent::Move(FocusMove::Last)),
+        Key::Character(text) => text.chars().next().map(FocusIntent::Type),
+        _ => None,
     }
 }
 

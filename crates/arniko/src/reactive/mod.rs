@@ -35,7 +35,7 @@ pub use reactor::{BindingHandle, Reactor, Scope};
 pub use resource::{Resource, ResourceState, create_resource};
 pub use show::{Show, Switch};
 pub use signal::{Reactive, Signal};
-pub use sink::{ArnikoEventSink, EventRouter, event_router};
+pub use sink::{ArnikoEventSink, EventRouter, event_router, focus_intent};
 pub use view::{Div, For, ReactiveText, Span, StaticHtml, Text, View};
 
 #[cfg(feature = "components")]
