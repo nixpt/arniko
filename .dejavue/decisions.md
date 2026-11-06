@@ -456,3 +456,13 @@ Artifacts: crates/bliss-html/src/html_sink.rs,crates/bliss-html/Cargo.toml
 Rejected alternatives:
 - **leave println! (breaks every stdio consumer); add a log dep + logger (heavier, and arniko's convention is optional tracing)**
 
+
+## 2026-11-06T04:46:20-06:00 — [STRATEGIC] Borrow Rune concepts into arniko — 5 tracks on ARNIKO-RUNE-BORROW-1
+
+Reason:
+arniko and Rune are the same category (Rust GPU UI + components + headless) with opposite architectures. Rune shows concrete, working solutions to five capability gaps arniko has: (1) no motion runtime (CSS transition/animation parsed then dropped, css/visitor.rs:14), (2) no agent-native headless dump/script harness, (3) poll-on-flush reactive with no live-value channel, virtualization or memo, (4) no first-class focus model / key-routing order, (5) effect layers only via mustang blur/transform. Design memo at docs/RUNE_BORROW.md; borrows are concept/API-shape only, not code (Rune is MIT/public).
+
+Rejected alternatives:
+- **Design-system tokens**: deferred to a later branch — the Kit schema + Theme::from_json change is orthogonal and larger than a concept borrow.
+- **Copy Rune code verbatim**: rejected — Rune is a Rust DSL while arniko is CSS-native; each borrow must be re-expressed as a CSS engine feature or a reactive-layer addition.
+
