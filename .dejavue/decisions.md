@@ -573,3 +573,13 @@ Rejected alternatives:
 - **A bespoke spring loop in LiveBinding**: rejected — reuse live::SpringBinding (already the Live→Track smoother) so there is one smoothing implementation.
 - **Treat raw live bindings as 'animating'**: rejected — a raw binding is a mirror; it should not force continuous frames. Only smoothed bindings mid-spring schedule frames; a raw change wakes the loop via wire_live instead.
 
+
+## 2026-11-06T05:13:48-06:00 — [STRATEGIC] Engine-borrow analysis written: what bliss-engine and mustang could take from Rune
+
+Reason:
+docs/RUNE_ENGINE_BORROW.md analyzes the reverse direction (rune -> engine repos). Key finding: bliss-dom ALREADY animates CSS (stylo.rs AnimationState, has_css_transitions, is_animating document.rs:1567, resolve(time) resolve.rs:41) plus fling + sticky, and mustang already has typed effects + scheduler + skip, but its animation layer is tween-only (easing.rs + AnimatedProperty::interpolate, linear from..to). Meanwhile arniko's own css::visitor::transform STRIPS transition*/animation*/@keyframes (rebuilds CSS, records in dropped_features, continue) — so the engine never sees them. Borrow candidates: (A) shared spring+retarget math for bliss-dom + mustang; (B) arniko stop stripping transitions (cheapest engine motion); (C) headless tree dump + virtual clock + scripted input in bliss-shell/bliss-dom; (D) scroll edge fade/snap/virtualization; (E) mustang effect breadth + (time,seed) determinism; (F) rune-light SDF lighting; (G) renderer internals (uber-quad/atlas/font-smoothing) belong to anyrender/vello, not these repos.
+
+Rejected alternatives:
+- **Propose a custom uber-quad renderer for bliss-engine**: rejected — bliss-paint pushes anyrender commands implemented by anyrender_vello; renderer internals are out of bliss-engine/mustang scope (noted as section G).
+- **Propose CSS-transition support as engine work**: rejected — the engine already supports it; the gap is arniko stripping transitions, so the fix is arniko-side (section B).
+

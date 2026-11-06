@@ -218,6 +218,11 @@ effect kinds and lighting are follow-ups in `nixpt/mustang`.
 3. Headless dump: JSON schema is ours to define — pin it with a test before components depend
    on it.
 
+## See also
+
+- [`RUNE_ENGINE_BORROW.md`](RUNE_ENGINE_BORROW.md) — the reverse direction: patterns worth
+  porting into `nixpt/bliss-engine` and `nixpt/mustang`.
+
 ## Next steps
 
 1. Approve the track order; pick the first slice per track.
