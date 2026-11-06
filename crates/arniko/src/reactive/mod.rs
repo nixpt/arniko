@@ -1,3 +1,4 @@
+mod animation;
 mod app;
 mod batch;
 mod computed;
@@ -18,6 +19,8 @@ mod view;
 pub use crate::mustang::SceneScheduler;
 pub use anyrender_vello::{VelloScenePainter, VelloWindowRenderer};
 
+pub use animation::CssProperty;
+
 pub use app::{
     ReactiveRuntime, launch_reactive, launch_reactive_configured, launch_reactive_scheduled,
 };
@@ -32,7 +35,7 @@ pub use reactor::{BindingHandle, Reactor, Scope};
 pub use resource::{Resource, ResourceState, create_resource};
 pub use show::{Show, Switch};
 pub use signal::{Reactive, Signal};
-pub use sink::{ArnikoEventSink, EventRouter, event_router};
+pub use sink::{ArnikoEventSink, EventRouter, event_router, focus_intent};
 pub use view::{Div, For, ReactiveText, Span, StaticHtml, Text, View};
 
 #[cfg(feature = "components")]
