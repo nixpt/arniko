@@ -11,23 +11,31 @@
 /// - grid-template-columns → dropped
 /// - backdrop-filter → dropped (tagged as synthetic)
 /// - transform → dropped (tagged as synthetic)
-/// - transition → dropped
-/// - animation / @keyframes → dropped
+/// - transition → kept (dropped when `NormalizeOptions::keep_animations` is false)
+/// - animation / @keyframes → kept (dropped when `keep_animations` is false)
 /// - ::before / ::after rules → dropped
 /// - :focus-within / :focus-visible rules → dropped
 /// - text-overflow: ellipsis → dropped
 /// - multi-layer box-shadow → first layer only
-use crate::css::{DroppedFeature, FeatureType, NormalizationMetadata, SyntheticFeature};
+use crate::css::{
+    DroppedFeature, FeatureType, NormalizationMetadata, NormalizeOptions, SyntheticFeature,
+};
 
-pub fn transform(css: &str) -> (String, NormalizationMetadata) {
+pub fn transform(css: &str, options: &NormalizeOptions) -> (String, NormalizationMetadata) {
     let mut metadata = NormalizationMetadata::default();
     let mut output = String::with_capacity(css.len());
 
-    // First pass: handle @keyframes removal
-    let css = remove_keyframes(&css, &mut metadata);
+    // First pass: handle @keyframes removal (only when animations are stripped).
+    let owned;
+    let css = if options.keep_animations {
+        css
+    } else {
+        owned = remove_keyframes(css, &mut metadata);
+        owned.as_str()
+    };
 
     // Process rule by rule
-    let mut rest = css.as_str();
+    let mut rest = css;
     while !rest.is_empty() {
         // Skip whitespace
         let trimmed = rest.trim_start();
@@ -41,10 +49,19 @@ pub fn transform(css: &str) -> (String, NormalizationMetadata) {
         // Check if this is a rule block (selector { ... })
         if let Some(brace_pos) = rest.find('{') {
             let selector = rest[..brace_pos].trim();
+            let block_end = find_block_end(&rest[brace_pos..]);
+
+            // @keyframes is not a declaration list — keep it verbatim when
+            // animations are kept, so its nested steps are not mis-parsed.
+            if options.keep_animations && selector.starts_with("@keyframes") {
+                output.push_str(&rest[..brace_pos + block_end + 1]);
+                output.push('\n');
+                rest = &rest[brace_pos + block_end + 1..];
+                continue;
+            }
 
             // Check if entire rule should be dropped
             if should_drop_rule(selector) {
-                let block_end = find_block_end(&rest[brace_pos..]);
                 let full_rule = &rest[..brace_pos + block_end + 1];
                 tag_dropped_rule(selector, full_rule, &mut metadata);
                 rest = &rest[brace_pos + block_end + 1..];
@@ -55,10 +72,9 @@ pub fn transform(css: &str) -> (String, NormalizationMetadata) {
             output.push_str(selector);
             output.push_str(" {\n");
 
-            let block_end = find_block_end(&rest[brace_pos..]);
             let block_body = &rest[brace_pos + 1..brace_pos + block_end];
 
-            transform_declarations(block_body, selector, &mut output, &mut metadata);
+            transform_declarations(block_body, selector, &mut output, &mut metadata, options);
 
             output.push_str("}\n");
             rest = &rest[brace_pos + block_end + 1..];
@@ -144,6 +160,7 @@ fn transform_declarations(
     selector: &str,
     output: &mut String,
     metadata: &mut NormalizationMetadata,
+    options: &NormalizeOptions,
 ) {
     for decl in split_declarations(block) {
         let decl = decl.trim();
@@ -180,12 +197,14 @@ fn transform_declarations(
             | "transition-duration"
             | "transition-timing-function"
             | "transition-delay" => {
-                metadata.dropped_features.push(DroppedFeature {
-                    feature_type: FeatureType::Transition,
-                    selector: selector.to_string(),
-                    original_value: format!("{}: {}", prop, value),
-                });
-                continue;
+                if !options.keep_animations {
+                    metadata.dropped_features.push(DroppedFeature {
+                        feature_type: FeatureType::Transition,
+                        selector: selector.to_string(),
+                        original_value: format!("{}: {}", prop, value),
+                    });
+                    continue;
+                }
             }
             "animation"
             | "animation-name"
@@ -194,12 +213,14 @@ fn transform_declarations(
             | "animation-delay"
             | "animation-iteration-count"
             | "animation-direction" => {
-                metadata.dropped_features.push(DroppedFeature {
-                    feature_type: FeatureType::Animation,
-                    selector: selector.to_string(),
-                    original_value: format!("{}: {}", prop, value),
-                });
-                continue;
+                if !options.keep_animations {
+                    metadata.dropped_features.push(DroppedFeature {
+                        feature_type: FeatureType::Animation,
+                        selector: selector.to_string(),
+                        original_value: format!("{}: {}", prop, value),
+                    });
+                    continue;
+                }
             }
             "text-overflow" => {
                 metadata.dropped_features.push(DroppedFeature {
@@ -572,7 +593,10 @@ mod tests {
 
     #[test]
     fn test_drop_rules() {
-        let (output, metadata) = transform("div::before { content: ''; } div { color: red; }");
+        let (output, metadata) = transform(
+            "div::before { content: ''; } div { color: red; }",
+            &NormalizeOptions::default(),
+        );
         assert!(!output.contains("::before"));
         assert!(output.contains("color: red"));
         assert!(
@@ -585,7 +609,10 @@ mod tests {
 
     #[test]
     fn test_transform_properties_dropped() {
-        let (output, metadata) = transform(".box { transform: scale(1.1); color: red; }");
+        let (output, metadata) = transform(
+            ".box { transform: scale(1.1); color: red; }",
+            &NormalizeOptions::default(),
+        );
         assert!(!output.contains("transform:"));
         assert!(output.contains("color: red"));
         assert!(
@@ -598,8 +625,10 @@ mod tests {
 
     #[test]
     fn test_grid_to_flex() {
-        let (output, metadata) =
-            transform(".grid { display: grid; grid-template-columns: 1fr 1fr; color: red; }");
+        let (output, metadata) = transform(
+            ".grid { display: grid; grid-template-columns: 1fr 1fr; color: red; }",
+            &NormalizeOptions::default(),
+        );
         assert!(output.contains("display: flex"));
         assert!(!output.contains("grid-template-columns"));
         assert!(!output.contains("display: grid"));

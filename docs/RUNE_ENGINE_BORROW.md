@@ -51,6 +51,13 @@ mustang's animation layer adopts so an `AnimatedProperty` retargets instead of r
 This is the cheap, in-arniko path to engine-driven motion: stop dropping them (or gate it),
 and the engine that already exists does the work.
 
+**✅ Done.** `normalize` now **keeps** `transition`/`animation`/`@keyframes` by default
+(they reach bliss-dom's animation engine); `NormalizeOptions { keep_animations: false }` /
+`normalize_with_options` restores the old drop-and-record behaviour. `@keyframes` bodies are
+passed through verbatim so their nested steps aren't mis-parsed. Tests: keep-by-default,
+opt-out-drops, and arniko's own component animations (`arniko-spin`, `arniko-pulse`) survive
+normalization.
+
 ### C. Headless agent tooling — bliss-shell + bliss-dom
 
 *Rune:* a fixed virtual clock, an element-tree JSON dump (`--tree`), a synthetic input script
@@ -115,7 +122,8 @@ Tracked in the engine repos so the items aren't lost:
 
 ## Priority (cheapest high-value first)
 
-1. **(arniko)** stop stripping `transition`/`animation`/`@keyframes` → instant engine motion.
+1. ✅ **(arniko)** stopped stripping `transition`/`animation`/`@keyframes` → the engine's
+   animation runtime now runs them.
 2. **(bliss-shell)** headless tree dump + virtual clock + synthetic input.
 3. **(shared)** spring timing + retarget in bliss-dom and mustang.
 4. **(mustang)** effect kinds + `(time, seed)` determinism.

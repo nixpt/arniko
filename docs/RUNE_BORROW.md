@@ -240,4 +240,7 @@ effect kinds and lighting are follow-ups in `nixpt/mustang`.
 8. ✅ Focus wiring: `arniko::focus::FocusManager` applies the key-routing wheel's step 5, and
    `EventRouter::on_focus_nav` (with `focus_intent`) wires it to the global keydown — see
    `docs/KEY_ROUTING.md`.
-9. Capture each decision in `.dejavue/` as it is made.
+9. ✅ Engine-motion enabler: `css::normalize` now keeps `transition`/`animation`/`@keyframes`
+   (opt out via `NormalizeOptions { keep_animations: false }`), so bliss-dom's existing
+   animation engine runs them — see `docs/RUNE_ENGINE_BORROW.md` §B.
+10. Capture each decision in `.dejavue/` as it is made.

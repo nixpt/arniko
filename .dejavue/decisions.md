@@ -603,3 +603,13 @@ Rejected alternatives:
 - **Open a PR to bliss-engine instead of issues**: rejected — the items are proposals/tracking, not a code change to review; the user asked for issues, and issues are the right tracking surface.
 - **Leave bliss-engine issues disabled and report only**: rejected — the user asked to open issues there and I have admin; enabling is minimal and reversible (flagged in the decision).
 
+
+## 2026-11-06T05:20:38-06:00 — [STRATEGIC] normalize() no longer strips CSS transitions/animations/@keyframes — engine motion enabled
+
+Reason:
+Implements RUNE_ENGINE_BORROW.md section B. css::visitor::transform rebuilt the stylesheet and dropped transition*/animation*/@keyframes (recording dropped_features), so bliss-dom's existing stylo animation engine never ran them — killing arniko's own component animations (arniko-spin, arniko-pulse, toast/progress transitions) in consumers that normalize (super-surfer layout.rs runs arniko::css::normalize on its themed CSS). Fix: normalize() now KEEPS them by default; NormalizeOptions{keep_animations:false} + normalize_with_options restore the old drop-and-record behaviour. @keyframes blocks are passed through verbatim (their body is not a declaration list). Tests: keep-by-default, opt-out-drops (+ metadata), and keeps_arniko_component_animations (the golden stylesheet's spinner/pulse survive). Lib 221 default / 230 reactive; doctests 52; no new clippy warnings.
+
+Rejected alternatives:
+- **Change behavior unconditionally with no opt-out**: rejected — a consumer targeting a renderer without animation support may want the old strip; keep_animations:false preserves it and still records dropped_features.
+- **Keep @keyframes but run declaration-transform over its body**: rejected — keyframe steps (0% { ... }) are not declarations; transform_declarations would corrupt them, so keyframes are emitted verbatim.
+
