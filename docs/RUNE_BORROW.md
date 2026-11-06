@@ -187,19 +187,17 @@ so engine-side work is out of arniko's tree.)**
   3D height + physical radius, sphere-traced through the field for soft shadows / bevels /
   specular highlights / bulb glow. Runs as passes over the frame already drawn.
 
-**Arniko gap.** `mustang` (0.4, separate repo) does blur/transform post-processing.
-There is no compositional effect-layer model and no lighting.
+**Arniko gap (corrected).** `mustang` 0.4 (separate repo) already provides the effect-layer
+*model* this track asks for: typed `Effect` (blur / transform / color / shadow params), a
+`SceneScheduler` with per-region dirty tracking, and skip/completion
+(`SceneEffectResult::is_complete`, `deferred_count`). What it lacks is rune-fx's *breadth*
+(glow / fire / liquid-metal / … kinds) and rune-light's SDF lighting — and those belong in
+the GPU compositor (`nixpt/mustang`), not in the UI SDK.
 
-**Proposed borrow.**
-
-- **Effect-layer model** — a typed-params layer abstraction over the frame, deterministic in
-  `(time, seed)`, with the off-screen/intensity-0 skip. Composes *with* mustang rather than
-  replacing it (mustang stays the blur/transform path; effect layers are additive passes).
-- **SDF lighting** — more speculative; borrow only after the layer model exists, since it
-  depends on elements being analytic rounded rects (arniko's DOM boxes are, via Bliss).
-
-**First slice.** An effect-layer trait + one ported effect (e.g. glow), rendered as a pass
-over a static scene, with a determinism test (`(time, seed)` fixed → byte-identical output).
+**Status — engine-side, no arniko code.** arniko's side of this track is already satisfied by
+the existing mustang integration (`arniko::mustang`, `reactive::SceneScheduler`,
+`reactive::direct_mut`); a parallel effect model in arniko would duplicate mustang. The
+effect kinds and lighting are follow-ups in `nixpt/mustang`.
 
 ## Deferred (not this branch)
 
@@ -227,6 +225,8 @@ over a static scene, with a determinism test (`(time, seed)` fixed → byte-iden
 3. ✅ Track 2 landed (`crates/arniko/src/inspect.rs` + the `arniko-tree` CLI, 5 tests).
 4. ✅ Track 3's first slice landed (`crates/arniko/src/live.rs`, 7 tests).
 5. ✅ Track 4's first slice landed (`crates/arniko/src/focus.rs` + `docs/KEY_ROUTING.md`, 6 tests).
-6. Next: wire the motion math and live values into the engine (1a/1b/3); then track 5
-   (effects/lighting), whose engine-side work is larger and partly out of arniko's tree.
-7. Capture each decision in `.dejavue/` as it is made.
+6. ✅ Track 5: engine-side — arniko's side is already met by the mustang integration; the
+   effect kinds and lighting live in `nixpt/mustang`.
+7. Next (post-merge): wire the motion math and live values into the engine (1a/1b/3), and
+   route keys through the `docs/KEY_ROUTING.md` wheel.
+8. Capture each decision in `.dejavue/` as it is made.
