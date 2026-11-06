@@ -552,3 +552,14 @@ Rejected alternatives:
 - **Read the applied value back from the DOM in tests**: rejected — bliss's set_style_property writes a parsed stylo declaration block, not the raw style attribute string, so there is nothing simple to read back; tests assert the reactor's presented value + the write-changed flag instead.
 - **Animate via the version-checked Binding::flush path**: rejected — animation is time-driven, not version-driven; a separate animations vec + tick(now) is the right seam.
 
+
+## 2026-11-06T05:10:11-06:00 — [TACTICAL] Shell frame loop wired — ReactiveApplication::about_to_wait drives reactor animations
+
+Reason:
+Adds about_to_wait to arniko's ReactiveApplication (crates/arniko/src/reactive/app.rs): tick the reactor's animations to the app clock (Instant since start), write changed values via the window's mutator, request_redraw() on change, and set ControlFlow::WaitUntil(+16ms) while is_animating() (else Wait). Pattern follows the super-surfer consumer (crates/super-surfer/src/app/event_handling.rs about_to_wait: WaitUntil deadline + explicit request_redraw because winit already dispatched this iteration's RedrawRequested). The paint itself is bliss-shell View::redraw (window.rs:272) which runs resolve+paint on RedrawRequested. Needed because the shell's own redraw loop keys off BaseDocument::is_animating, which does not see reactor animations.
+
+Rejected alternatives:
+- **ControlFlow::Poll (busy loop)**: rejected — WaitUntil(+16ms) gives the 60fps cadence without burning CPU; Poll would spin.
+- **Rely on the shell's own is_animating redraw loop**: rejected — BaseDocument::is_animating reflects document-internal animation only; reactor Track animations are invisible to it, so the loop would stop after one frame.
+- **Headless-test the frame loop**: rejected as out of scope — about_to_wait needs a winit ActiveEventLoop and a real window; verified by compiling the lib + the reactive examples, not by a unit test.
+
