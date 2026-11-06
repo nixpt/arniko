@@ -78,8 +78,8 @@ were deliberately deferred to a later branch.
 **First slice.** Port `Spring` + `Curve` math into a new `crates/arniko/src/motion/`
 with the token palette; unit-test `sample`/`settling_duration` against closed-form
 expectations. No engine wiring yet. **(✅ landed — `crates/arniko/src/motion/`:
-`Spring`/`SpringPair`, `Easing`/`CubicBezier`, `Curve`/`Decay`, the token palette;
-28 tests.)**
+`Spring`/`SpringPair`, `Easing`/`CubicBezier`, `Curve`/`Decay`, the token palette,
+and a stateful `Track` that retargets keeping position + velocity; 36 tests.)**
 
 ### 2. Agent-native headless tooling
 
