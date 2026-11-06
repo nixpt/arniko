@@ -520,3 +520,14 @@ Rejected alternatives:
 - **Reuse reactive::signal::WakeFn**: rejected — live is always-on but reactive is feature-gated, so live defines its own identically-shaped WakeFn alias rather than depending on the gated module.
 - **React on a reactor version bump test**: deferred — live never touches the reactor by construction (no reactor dependency); the meaningful integration test (set a live value and assert no view re-run) needs the engine loop, deferred with the wiring.
 
+
+## 2026-11-06T05:02:59-06:00 — [TACTICAL] Focus math + key-routing spec landed — track 4 first slice
+
+Reason:
+Adds crates/arniko/src/focus.rs (always-on, pure logic): tab_order()/tab_step() implement CSS tabindex semantics (positive first ascending, then 0 in doc order, negative excluded, wrap at ends); roving() moves within a focus group (wrap for menus/segments/tabs, stop for lists/trees/grids; First/Last/unfocused-start); type_select() (case-insensitive, wraps). Plus docs/KEY_ROUTING.md, the AppKit-faithful 9-step order keys are offered to handlers, referencing the focus math. 6 tests. Lib 213 green; doctest added; no new clippy warnings.
+
+Rejected alternatives:
+- **Implement the inert subtree in-tree**: rejected — inert is engine (bliss-dom) input routing, not arniko's tree; documented as engine-side work in docs/KEY_ROUTING.md and the track note.
+- **A full type-select prefix/timeout buffer**: deferred — the first slice does 'next item starting with ch, wrapping'; a prefix buffer + repeat-timeout is a refinement noted in the function doc.
+- **Wire the routing wheel into the event sink now**: deferred — needs the engine focus manager; the spec + math are the slice, wiring is follow-up.
+

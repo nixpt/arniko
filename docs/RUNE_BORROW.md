@@ -168,7 +168,11 @@ key-routing order matching the AppKit rules. `press_scale`/`scale`/`rotate` are 
 work (see track 1) and follow it.
 
 **First slice.** A written key-routing spec + an `inert` subtree implementation in the engine
-(input routing skips it), mirroring rune's `.inert()`.
+(input routing skips it), mirroring rune's `.inert()`. **(✅ partly landed —
+`docs/KEY_ROUTING.md` is the routing spec, and `crates/arniko/src/focus.rs` implements the
+focus math it references: `tab_order`/`tab_step` (CSS `tabindex`), `roving` and
+`type_select` (focus groups); 6 tests. The `inert` subtree lives in the engine (bliss-dom),
+so engine-side work is out of arniko's tree.)**
 
 ### 5. Effects & lighting
 
@@ -222,6 +226,7 @@ over a static scene, with a determinism test (`(time, seed)` fixed → byte-iden
 2. ✅ Track 1's motion math + driver landed (`crates/arniko/src/motion/`, 36 tests).
 3. ✅ Track 2 landed (`crates/arniko/src/inspect.rs` + the `arniko-tree` CLI, 5 tests).
 4. ✅ Track 3's first slice landed (`crates/arniko/src/live.rs`, 7 tests).
-5. Next: wire the motion math and live values into the engine (1a/1b/3), then the remaining
-   tracks (interaction/focus, effects/lighting).
-6. Capture each decision in `.dejavue/` as it is made.
+5. ✅ Track 4's first slice landed (`crates/arniko/src/focus.rs` + `docs/KEY_ROUTING.md`, 6 tests).
+6. Next: wire the motion math and live values into the engine (1a/1b/3); then track 5
+   (effects/lighting), whose engine-side work is larger and partly out of arniko's tree.
+7. Capture each decision in `.dejavue/` as it is made.

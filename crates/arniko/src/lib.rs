@@ -46,6 +46,7 @@ pub mod reactive;
 
 pub mod css;
 
+pub mod focus;
 pub mod live;
 pub mod motion;
 
