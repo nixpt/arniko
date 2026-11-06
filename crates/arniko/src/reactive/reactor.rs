@@ -5,9 +5,10 @@ use std::sync::Arc;
 
 use bliss_dom::DocumentMutator;
 
-use crate::motion::Curve;
+use crate::live::Live;
+use crate::motion::{Curve, Spring};
 
-use super::animation::{Animation, CssProperty};
+use super::animation::{Animation, CssProperty, LiveBinding};
 use super::signal::Reactive;
 use super::view::View;
 
@@ -355,6 +356,9 @@ pub struct Reactor {
     /// by [`Reactor::tick`], not by `flush` — animation is time-driven, not
     /// version-driven.
     animations: Vec<Animation>,
+    /// `Live<f32>` → CSS-property bindings, applied on every [`Reactor::tick`].
+    /// The live-only path: a fast value reaches the DOM without a reactive flush.
+    live_bindings: Vec<LiveBinding>,
 }
 
 impl Reactor {
@@ -365,6 +369,7 @@ impl Reactor {
             parked_scopes: Vec::new(),
             context: super::context::Context::new(),
             animations: Vec::new(),
+            live_bindings: Vec::new(),
         }
     }
 
@@ -474,20 +479,24 @@ impl Reactor {
         }
     }
 
-    /// Advance every animation to clock time `now`, writing changed values to the
-    /// DOM through `mutator`. Returns `true` if anything changed (i.e. the shell
-    /// should redraw). Call once per frame.
+    /// Advance every animation and live binding to clock time `now`, writing
+    /// changed values to the DOM through `mutator`. Returns `true` if anything
+    /// changed (i.e. the shell should redraw). Call once per frame.
     pub fn tick(&mut self, now: f64, mutator: &mut DocumentMutator) -> bool {
         let mut changed = false;
         for animation in &mut self.animations {
             changed |= animation.tick(now, mutator);
         }
+        for binding in &mut self.live_bindings {
+            changed |= binding.tick(now, mutator);
+        }
         changed
     }
 
-    /// Whether any animation is still running.
+    /// Whether any animation or smoothed live binding is still running.
     pub fn is_animating(&self) -> bool {
         self.animations.iter().any(|a| a.track.is_active())
+            || self.live_bindings.iter().any(LiveBinding::is_animating)
     }
 
     /// The current presented value of an animation, if one exists (for tests and
@@ -507,6 +516,55 @@ impl Reactor {
     /// Drop every animation targeting `node` (call when a node unmounts).
     pub fn clear_animations_for(&mut self, node: usize) {
         self.animations.retain(|a| a.node != node);
+    }
+
+    /// Bind a `Live<f32>` to the CSS `property` of `node`, applied on every tick.
+    ///
+    /// This is the live-only path: a change to `source` reaches the DOM without a
+    /// reactive flush or a view re-run. Attach a `Live` waker (see
+    /// `ReactiveRuntime::wire_live`) so a change also wakes the shell. Re-binding
+    /// the same `(node, property)` replaces the previous source.
+    pub fn bind_live(&mut self, node: usize, property: CssProperty, source: Live<f32>) {
+        self.live_bindings
+            .retain(|b| !(b.node() == node && b.property() == property));
+        self.live_bindings.push(LiveBinding::Raw {
+            node,
+            property,
+            source,
+            written: None,
+        });
+    }
+
+    /// Like [`bind_live`](Reactor::bind_live), but smooth the source through
+    /// `spring`, so a jumpy value animates (velocity-preserving retargets).
+    pub fn bind_live_smoothed(
+        &mut self,
+        node: usize,
+        property: CssProperty,
+        source: Live<f32>,
+        spring: Spring,
+    ) {
+        self.live_bindings
+            .retain(|b| !(b.node() == node && b.property() == property));
+        self.live_bindings.push(LiveBinding::Smoothed {
+            node,
+            property,
+            binding: crate::live::SpringBinding::new(source, spring),
+            written: None,
+        });
+    }
+
+    /// The current presented value of a live binding, if one exists.
+    pub fn live_value(&self, node: usize, property: CssProperty) -> Option<f32> {
+        self.live_bindings
+            .iter()
+            .find(|b| b.node() == node && b.property() == property)
+            .map(LiveBinding::value)
+    }
+
+    /// Drop every live binding targeting `node` (call when a node unmounts).
+    pub fn clear_live_bindings_for(&mut self, node: usize) {
+        self.live_bindings.retain(|b| b.node() != node);
     }
 
     /// Register a list reconciliation binding for a `For` view.

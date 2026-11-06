@@ -15,6 +15,7 @@
 
 use bliss_dom::DocumentMutator;
 
+use crate::live::{Live, SpringBinding};
 use crate::motion::Track;
 
 /// A numeric CSS property an animation can drive, with its unit.
@@ -85,6 +86,96 @@ impl Animation {
             true
         } else {
             false
+        }
+    }
+}
+
+/// A `Live<f32>` bound to a CSS property, applied on every [`Reactor::tick`].
+///
+/// A `Raw` binding writes the source value directly — the "live-only" path: a
+/// fast value (a scroll offset, a pointer-driven transform) reaches the DOM
+/// without a reactive flush or a view re-run. A `Smoothed` binding runs the
+/// source through a [`SpringBinding`], so a jumpy source still animates.
+///
+/// [`Reactor::tick`]: crate::reactive::Reactor::tick
+pub(crate) enum LiveBinding {
+    Raw {
+        node: usize,
+        property: CssProperty,
+        source: Live<f32>,
+        written: Option<f32>,
+    },
+    Smoothed {
+        node: usize,
+        property: CssProperty,
+        binding: SpringBinding,
+        written: Option<f32>,
+    },
+}
+
+impl LiveBinding {
+    /// The node this binding writes to.
+    pub fn node(&self) -> usize {
+        match self {
+            LiveBinding::Raw { node, .. } | LiveBinding::Smoothed { node, .. } => *node,
+        }
+    }
+
+    /// The property this binding writes.
+    pub fn property(&self) -> CssProperty {
+        match self {
+            LiveBinding::Raw { property, .. } | LiveBinding::Smoothed { property, .. } => *property,
+        }
+    }
+
+    /// Read the source (through the spring, if smoothed), write the value if it
+    /// changed. Returns `true` if the DOM was written.
+    pub fn tick(&mut self, now: f64, mutator: &mut DocumentMutator) -> bool {
+        match self {
+            LiveBinding::Raw {
+                node,
+                property,
+                source,
+                written,
+            } => {
+                let value = source.get();
+                if *written != Some(value) {
+                    *written = Some(value);
+                    mutator.set_style_property(*node, property.name, &property.format(value));
+                    true
+                } else {
+                    false
+                }
+            }
+            LiveBinding::Smoothed {
+                node,
+                property,
+                binding,
+                written,
+            } => {
+                binding.tick(now);
+                let value = binding.value();
+                if *written != Some(value) {
+                    *written = Some(value);
+                    mutator.set_style_property(*node, property.name, &property.format(value));
+                    true
+                } else {
+                    false
+                }
+            }
+        }
+    }
+
+    /// Whether this binding still needs frames (a smoothed binding mid-spring).
+    pub fn is_animating(&self) -> bool {
+        matches!(self, LiveBinding::Smoothed { binding, .. } if binding.is_animating())
+    }
+
+    /// The current presented value.
+    pub fn value(&self) -> f32 {
+        match self {
+            LiveBinding::Raw { source, .. } => source.get(),
+            LiveBinding::Smoothed { binding, .. } => binding.value(),
         }
     }
 }
@@ -163,5 +254,80 @@ mod tests {
             (after - before).abs() < 1e-4,
             "position jumped: {before} -> {after}"
         );
+    }
+
+    #[test]
+    fn raw_live_binding_writes_only_on_change() {
+        use crate::live::Live;
+
+        let (mut doc, node) = doc_with_div();
+        let prop = CssProperty::OPACITY;
+        let live = Live::new(0.0_f32);
+        let mut reactor = Reactor::new();
+        reactor.bind_live(node, prop, live.clone());
+        let mut mutator = doc.mutate();
+
+        // First tick writes the initial value.
+        assert!(reactor.tick(0.0, &mut mutator));
+        assert_eq!(reactor.live_value(node, prop), Some(0.0));
+        // Unchanged: no write, and a raw binding is never "animating".
+        assert!(!reactor.tick(0.1, &mut mutator));
+        assert!(!reactor.is_animating());
+
+        // A live set reaches the DOM on the next tick, with no reactive flush.
+        assert!(live.set(1.0));
+        assert!(reactor.tick(0.2, &mut mutator));
+        assert_eq!(reactor.live_value(node, prop), Some(1.0));
+    }
+
+    #[test]
+    fn smoothed_live_binding_springs_to_the_source() {
+        use crate::live::Live;
+
+        let (mut doc, node) = doc_with_div();
+        let prop = CssProperty::WIDTH;
+        let live = Live::new(0.0_f32);
+        let mut reactor = Reactor::new();
+        reactor.bind_live_smoothed(node, prop, live.clone(), STANDARD);
+        let mut mutator = doc.mutate();
+
+        reactor.tick(0.0, &mut mutator);
+        assert_eq!(reactor.live_value(node, prop), Some(0.0));
+        assert!(!reactor.is_animating());
+
+        live.set(100.0);
+        // The frame the change is seen retargets (no jump); movement starts the
+        // next frame.
+        reactor.tick(0.05, &mut mutator);
+        reactor.tick(0.10, &mut mutator);
+        let mid = reactor.live_value(node, prop).expect("value");
+        assert!(mid > 0.0 && mid < 100.0, "mid={mid}");
+        assert!(reactor.is_animating());
+
+        // The retarget happened at t = 0.05, so it settles by then + the spring's span.
+        let end = 0.05 + STANDARD.settling_duration_from(0.0, 0.0, 100.0, 1e-3) as f64 + 1e-3;
+        reactor.tick(end, &mut mutator);
+        assert_eq!(reactor.live_value(node, prop), Some(100.0));
+        assert!(!reactor.is_animating());
+    }
+
+    #[test]
+    fn rebinding_replaces_the_source() {
+        use crate::live::Live;
+
+        let (mut doc, node) = doc_with_div();
+        let prop = CssProperty::OPACITY;
+        let first = Live::new(0.25_f32);
+        let second = Live::new(0.75_f32);
+        let mut reactor = Reactor::new();
+        reactor.bind_live(node, prop, first.clone());
+        reactor.bind_live(node, prop, second.clone());
+        let mut mutator = doc.mutate();
+
+        reactor.tick(0.0, &mut mutator);
+        assert_eq!(reactor.live_value(node, prop), Some(0.75));
+        // The first source no longer drives the property.
+        first.set(0.1);
+        assert!(!reactor.tick(0.1, &mut mutator));
     }
 }

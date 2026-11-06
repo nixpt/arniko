@@ -563,3 +563,13 @@ Rejected alternatives:
 - **Rely on the shell's own is_animating redraw loop**: rejected — BaseDocument::is_animating reflects document-internal animation only; reactor Track animations are invisible to it, so the loop would stop after one frame.
 - **Headless-test the frame loop**: rejected as out of scope — about_to_wait needs a winit ActiveEventLoop and a real window; verified by compiling the lib + the reactive examples, not by a unit test.
 
+
+## 2026-11-06T05:12:53-06:00 — [TACTICAL] Live-value style bindings landed — raw and spring-smoothed (track 3 wiring)
+
+Reason:
+Reactor::bind_live(node, CssProperty, Live<f32>) writes the source value each tick with no reactive flush (the live-only path); bind_live_smoothed(...) runs it through a live::SpringBinding so a jumpy source animates; live_value()/clear_live_bindings_for() for introspection/cleanup; tick() advances both animations and live bindings; is_animating() also reports a smoothed binding mid-spring. ReactiveRuntime::wire_live attaches the shell waker to a Live so a set wakes the loop. Re-binding a (node, property) replaces the source. 3 tests (raw write-on-change, smoothed springs, rebind replaces). reactive lib 222; examples build; no new clippy warnings.
+
+Rejected alternatives:
+- **A bespoke spring loop in LiveBinding**: rejected — reuse live::SpringBinding (already the Live→Track smoother) so there is one smoothing implementation.
+- **Treat raw live bindings as 'animating'**: rejected — a raw binding is a mirror; it should not force continuous frames. Only smoothed bindings mid-spring schedule frames; a raw change wakes the loop via wire_live instead.
+

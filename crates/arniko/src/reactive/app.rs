@@ -17,6 +17,7 @@ use winit::window::WindowId;
 use super::Reactor;
 use super::signal::{Signal, WakeFn};
 use super::sink::{EventRouter, event_router};
+use crate::live::{Live, LiveValue};
 use crate::mustang::SceneScheduler;
 
 /// Reactive runtime context — holds a wake closure so `Signal::set()` can
@@ -31,6 +32,13 @@ impl ReactiveRuntime {
     /// every signal that may be mutated from a timer / async task / thread.
     pub fn wire<T: Clone + 'static>(&self, signal: &Signal<T>) {
         signal.set_waker(self.wake_fn.clone());
+    }
+
+    /// Wire a `Live` value so `Live::set` wakes the shell for a redraw, without a
+    /// reactor flush. The value reaches the DOM on the next frame's
+    /// [`Reactor::tick`] via a `bind_live` binding.
+    pub fn wire_live<T: LiveValue>(&self, live: &Live<T>) {
+        live.set_waker(self.wake_fn.clone());
     }
 }
 

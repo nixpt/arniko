@@ -227,9 +227,9 @@ effect kinds and lighting are follow-ups in `nixpt/mustang`.
 5. ✅ Track 4's first slice landed (`crates/arniko/src/focus.rs` + `docs/KEY_ROUTING.md`, 6 tests).
 6. ✅ Track 5: engine-side — arniko's side is already met by the mustang integration; the
    effect kinds and lighting live in `nixpt/mustang`.
-7. ✅ Motion→reactive wiring: `Reactor::animate` / `tick` drive a `Track` onto a CSS property
-   (`crates/arniko/src/reactive/animation.rs`), and the shell frame loop
-   (`ReactiveApplication::about_to_wait` in `reactive/app.rs`) ticks each frame, writes changed
-   values, requests a redraw, and schedules `WaitUntil` (~60 fps) while animating. Still next:
-   live-value style bindings, and routing keys through the `docs/KEY_ROUTING.md` wheel.
+7. ✅ Motion→reactive wiring: `Reactor::animate` / `tick` drive a `Track` onto a CSS property;
+   the shell frame loop (`about_to_wait` in `reactive/app.rs`) ticks each frame and schedules
+   `WaitUntil` while animating; and `Reactor::bind_live` / `bind_live_smoothed` apply a
+   `Live<f32>` (raw or spring-smoothed) each frame, with `ReactiveRuntime::wire_live` waking the
+   shell. Still next: routing keys through the `docs/KEY_ROUTING.md` wheel.
 8. Capture each decision in `.dejavue/` as it is made.
