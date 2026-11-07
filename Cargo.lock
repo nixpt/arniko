@@ -228,9 +228,9 @@ dependencies = [
 
 [[package]]
 name = "arniko-bliss"
-version = "0.3.1"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "32ae5cac0f414e00bc1c6481d34565ac5199648d36a77c409cbd29a593b0fcaf"
+checksum = "5b47a16cead85b95cb13db02cb7df4134350ed3bb5c1f526e860ed88cdd29c87"
 dependencies = [
  "bliss-anyrender-vello",
  "bliss-dom",
@@ -354,9 +354,9 @@ dependencies = [
 
 [[package]]
 name = "bliss-anyrender-vello"
-version = "0.3.1"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0f73f1bd5b814cbffdb37d226667d4104a7848b302ae5ddfabf6d555e1913c38"
+checksum = "12737d8b6599d7fc16787849174367cb2746e112bad51d0d94db2901c859af54"
 dependencies = [
  "anyrender",
  "debug_timer",
@@ -371,9 +371,9 @@ dependencies = [
 
 [[package]]
 name = "bliss-dom"
-version = "0.3.1"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b3ac38d87f31901caf8852b5866dcf14c19aa6454c3c30070b0474563b892ccc"
+checksum = "e54f821df3003f48f2a74ada5d1c4a5f7a6432de5b5e04880ae80aa7e6a911aa"
 dependencies = [
  "app_units",
  "atomic_refcell",
@@ -414,9 +414,9 @@ dependencies = [
 
 [[package]]
 name = "bliss-html"
-version = "0.3.1"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "907a7fb8c8e5543d6dc43c3094eec47c2adc0fd02b230f4c65d00cfda7f5e2ec"
+checksum = "b96075a1fd23d73fc68427686dd077de993faf0049d326f6cde88adf9dfce073"
 dependencies = [
  "bliss-dom",
  "bliss-traits",
@@ -426,9 +426,9 @@ dependencies = [
 
 [[package]]
 name = "bliss-net"
-version = "0.3.1"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0154a01556cfe914e3fb3e9fd44f3c0a57e569b334e9d0e871ea20ee4a085024"
+checksum = "2c7420ca00838de83ab5e0a73120d34f54bd5a99a95ed523d7656ff76eeca395"
 dependencies = [
  "bliss-traits",
  "data-url",
@@ -438,9 +438,9 @@ dependencies = [
 
 [[package]]
 name = "bliss-paint"
-version = "0.3.1"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a0a2ae3451f27dc358aa1e8800fc93c2bd2579c89b907aaaf5295b94b21c8b74"
+checksum = "476f2c91a316b1ff78c76bcc4b787cd18c95b13fc05e21a330f0ab85f9eff4b2"
 dependencies = [
  "anyrender",
  "anyrender_svg",
@@ -458,9 +458,9 @@ dependencies = [
 
 [[package]]
 name = "bliss-shell"
-version = "0.3.1"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "35a7ad10459847f6f9f4155d4b0de60334e6ec54d73d977a13f6d69872bb6b81"
+checksum = "ecde7a2683faecaacf27668267831f77d4826106fc939092cdb00f647f7d9117"
 dependencies = [
  "android-activity",
  "anyrender",
@@ -477,9 +477,9 @@ dependencies = [
 
 [[package]]
 name = "bliss-stylo-taffy"
-version = "0.3.1"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a129e54001283e11652f88e686519d62cf2964a83d6ddd4d0309046998827fa1"
+checksum = "34ee028db478e80cba806411c326656fd6f31816b58e802f3be7b359acbc3edd"
 dependencies = [
  "stylo",
  "stylo_atoms",
@@ -488,9 +488,9 @@ dependencies = [
 
 [[package]]
 name = "bliss-traits"
-version = "0.3.1"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9af232e62423edfd26477b4c6d9ef024afdbcf28dc90a1ed9ec7c5ce528be08a"
+checksum = "4d734bbe16b63312fdf8fd18dbf9f61a51604587a0908abfef2da39cb9787461"
 dependencies = [
  "bitflags 2.13.0",
  "bytes",
