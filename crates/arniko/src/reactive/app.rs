@@ -1,5 +1,6 @@
 use parking_lot::Mutex;
 use std::sync::Arc;
+use std::time::{Duration, Instant};
 
 use anyrender_vello::VelloWindowRenderer;
 use bliss::dom::{Document, DocumentConfig};
@@ -10,12 +11,13 @@ use bliss::shell::{
 use bliss::traits::net::DummyNetProvider;
 use winit::application::ApplicationHandler;
 use winit::event::WindowEvent;
-use winit::event_loop::ActiveEventLoop;
+use winit::event_loop::{ActiveEventLoop, ControlFlow};
 use winit::window::WindowId;
 
 use super::Reactor;
 use super::signal::{Signal, WakeFn};
 use super::sink::{EventRouter, event_router};
+use crate::live::{Live, LiveValue};
 use crate::mustang::SceneScheduler;
 
 /// Reactive runtime context — holds a wake closure so `Signal::set()` can
@@ -31,6 +33,13 @@ impl ReactiveRuntime {
     pub fn wire<T: Clone + 'static>(&self, signal: &Signal<T>) {
         signal.set_waker(self.wake_fn.clone());
     }
+
+    /// Wire a `Live` value so `Live::set` wakes the shell for a redraw, without a
+    /// reactor flush. The value reaches the DOM on the next frame's
+    /// [`Reactor::tick`] via a `bind_live` binding.
+    pub fn wire_live<T: LiveValue>(&self, live: &Live<T>) {
+        live.set_waker(self.wake_fn.clone());
+    }
 }
 
 /// ApplicationHandler that wraps BlissApplication and flushes the reactor
@@ -44,7 +53,12 @@ struct ReactiveApplication {
     inner: BlissApplication<VelloWindowRenderer>,
     reactor: Arc<Mutex<Reactor>>,
     scheduler: Option<SceneScheduler>,
+    /// App clock origin; animation time is seconds since this.
+    start: Instant,
 }
+
+/// The frame interval used while a reactor animation is running (~60 fps).
+const FRAME_INTERVAL: Duration = Duration::from_millis(16);
 
 impl ApplicationHandler for ReactiveApplication {
     fn can_create_surfaces(&mut self, event_loop: &dyn ActiveEventLoop) {
@@ -61,6 +75,36 @@ impl ApplicationHandler for ReactiveApplication {
 
     fn suspended(&mut self, event_loop: &dyn ActiveEventLoop) {
         self.inner.suspended(event_loop);
+    }
+
+    /// Frame loop for motion: advance the reactor's animations to the app clock,
+    /// write changed values to the DOM, and schedule the next frame while
+    /// anything is still animating.
+    ///
+    /// The shell's own redraw loop only knows about document-internal animation
+    /// (`BaseDocument::is_animating`); a reactor animation is invisible to it, so
+    /// the clock is driven here. The redraw itself (resolve + paint) happens on
+    /// the `RedrawRequested` requested here, matching how `BlissShell` paints:
+    /// a patch made in `about_to_wait` stays unpainted without an explicit
+    /// `request_redraw`.
+    fn about_to_wait(&mut self, event_loop: &dyn ActiveEventLoop) {
+        let now = self.start.elapsed().as_secs_f64();
+        if let Some(view) = self.inner.windows.values_mut().next() {
+            let mut inner = view.doc.inner_mut();
+            let mut mutator = inner.mutate();
+            let changed = self.reactor.lock().tick(now, &mut mutator);
+            drop(mutator);
+            drop(inner);
+            if changed {
+                view.request_redraw();
+            }
+        }
+
+        if self.reactor.lock().is_animating() {
+            event_loop.set_control_flow(ControlFlow::WaitUntil(Instant::now() + FRAME_INTERVAL));
+        } else {
+            event_loop.set_control_flow(ControlFlow::Wait);
+        }
     }
 
     fn proxy_wake_up(&mut self, event_loop: &dyn ActiveEventLoop) {
@@ -289,6 +333,7 @@ pub fn launch_reactive_scheduled(
             inner: application,
             reactor,
             scheduler: Some(scheduler),
+            start: Instant::now(),
         })
         .unwrap();
 }
