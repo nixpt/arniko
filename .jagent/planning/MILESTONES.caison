@@ -1,0 +1,56 @@
+@caison { version: "1.0" }
+
+schema: "milestones/1"
+
+project: {
+  name: "arniko"
+  kind: "repo"
+  lifecycle: "shipped" @verified { at: "2026-11-18", by: "altair" }
+  lifecycle_since: "2026-09-27"
+  home: "zorro"
+  ticket_prefix: "ARNIKO"
+  summary: "the arniko UI SDK layer over bliss/mustang (arniko, arniko-crush, exo-bliss-net on crates.io at 0.3.2); tag-driven release pipeline since 2026-10-31; main CI green; Rune-borrow work open in #29"
+  north_star: "one SDK for native, agent-inspectable UIs: bliss for the DOM/layout, mustang for paint, Crush for scripting"
+  stewards: ["altair"]
+  evidence: {
+    default_branch: "main"
+    registries: [{ registry: "crates.io", name: "arniko" }, { registry: "crates.io", name: "arniko-crush" }]
+  }
+}
+
+milestones: [
+  {
+    id: "A1"
+    title: "SDK layer on crates.io (0.3.x)"
+    status: "done" @verified { at: "2026-11-18", by: "altair" }
+    done_at: "2026-09-27"
+    version: "v0.3.0"
+    done_when: [
+      { claim: "arniko becomes the SDK layer (PR #16)", check: { kind: "merged", pr: "16" } },
+      { claim: "v0.3.0 tagged", check: { kind: "tag", pattern: "v0.3.0" } },
+      { claim: "arniko on crates.io", check: { kind: "published", registry: "crates.io", name: "arniko" } },
+    ]
+  },
+  {
+    id: "A2"
+    title: "publishing hygiene and a release pipeline"
+    status: "active" ~0.7 @verified { at: "2026-11-18", by: "altair" }
+    tickets: ["ARNIKO-001", "ARNIKO-002", "ARNIKO-003", "ARNIKO-004", "ARNIKO-005", "ARNIKO-006", "ARNIKO-007", "ARNIKO-008"]
+    done_when: [
+      { claim: "release pipeline publishes every crate together (ARNIKO-008, PR #28)", check: { kind: "merged", pr: "28" } },
+      { claim: "main CI green (ARNIKO-007)", check: { kind: "ci", branch: "main" } },
+      "publish rename map recorded (ARNIKO-001); path+version fork substitution fixed (ARNIKO-002); vendored Blitz fork drift resolved (ARNIKO-004)",
+    ]
+    notes: "2026-11-18: the ticket files lag reality: ARNIKO-003 (private repo, public crates) is moot since the repo is public, ARNIKO-007 CI is green, ARNIKO-008 merged in #28 yet its file says In review. 001/002/004/005/006 were not re-checked."
+  },
+  {
+    id: "A3"
+    title: "borrow Rune concepts: motion, agent tree dump, live values, focus"
+    status: "next" @verified { at: "2026-11-18", by: "altair" }
+    depends_on: ["bliss-engine:B4"]
+    done_when: [
+      { claim: "PR #29 merged", check: { kind: "merged", pr: "29" } },
+    ]
+    notes: "ARNIKO-RUNE-BORROW-1, PR #29 open and not draft; engine-side tickets in bliss-engine#18"
+  },
+]
