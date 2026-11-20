@@ -25,6 +25,30 @@
 //! with a `node_id` field (what `dom.query` returns). A node id that is not
 //! in the document, for example a removed node, is an error, not a no-op.
 //!
+//! ## Gating
+//!
+//! A host built with [`DomHost::new`] or [`DomHost::from_html`] is
+//! **ungated**: it carries an empty [`Gate`], an explicit [`AllowAll`]
+//! authorizer and the anonymous subject, so every read and write is allowed.
+//! [`DomHost::with_gate`] swaps in a real [`Gate`] (which nodes need which
+//! [`Scope`]), an [`Authorizer`] and the [`Subject`] the capsule acts as. The
+//! nearest guard at or above a node applies, so a guard on an ancestor covers
+//! its whole subtree. Call it before [`register_dom`]: caps registered earlier
+//! keep the access they were registered with.
+//!
+//! Writes (`dom.set_text`, `dom.set_attr`, `dom.set_style`,
+//! `dom.remove_style`) go through noonoo-caps' `GatedMutator`, which needs
+//! [`Action::Write`](noonoo_caps::Action::Write) on the target (and, for `dom.set_text`, on each child
+//! the new text replaces). A denied write returns `Err` naming the cap and
+//! the node and leaves the document unchanged.
+//!
+//! Reads are gated too, with [`Action::Read`](noonoo_caps::Action::Read). `dom.query` and
+//! `dom.query_all` skip nodes the subject cannot read; a direct target
+//! (`dom.text`, `dom.attr`, `dom.tag`, `dom.inner_html`) that is unreadable is
+//! an `Err`. Text a capsule reads elides unreadable descendants, and
+//! `dom.inner_html` errors if any node it would serialize is unreadable
+//! rather than emit a partial tree.
+//!
 //! `dom.set_style` and `dom.remove_style` edit the element's inline `style`
 //! attribute through `noonoo-style`, so the next style computation sees the
 //! change.
@@ -33,20 +57,68 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex, MutexGuard};
 
 use crush_lang_sdk::{HostCap, HostCapSpec, HostCaps, Value};
+use noonoo_caps::{
+    AllowAll, Authorizer, CapsError, Gate, GatedDocument, GatedMutator, Scope, Subject,
+};
 use noonoo_dom::{Document, NodeId};
 
+/// Who may do what to which node: a [`Gate`], the [`Authorizer`] that decides
+/// it, and the [`Subject`] the capsule acts as.
+struct Access {
+    gate: Gate,
+    authorizer: Box<dyn Authorizer + Send + Sync>,
+    subject: Subject,
+}
+
+impl Access {
+    /// The ungated default: no guards and an explicit [`AllowAll`].
+    fn open() -> Self {
+        Self {
+            gate: Gate::new(),
+            authorizer: Box::new(AllowAll),
+            subject: Subject::anonymous(),
+        }
+    }
+}
+
 /// A noonoo document shared between the host and its `dom.*` caps.
+///
+/// Ungated unless [`DomHost::with_gate`] is called; see the module docs.
 #[derive(Clone)]
 pub struct DomHost {
     document: Arc<Mutex<Document>>,
+    access: Arc<Access>,
 }
 
 impl DomHost {
-    /// Wrap an existing document.
+    /// Wrap an existing document. The host is ungated: every read and write
+    /// is allowed (an empty [`Gate`] with an [`AllowAll`] authorizer).
     pub fn new(document: Document) -> Self {
         Self {
             document: Arc::new(Mutex::new(document)),
+            access: Arc::new(Access::open()),
         }
+    }
+
+    /// Gate this host: nodes `gate` guards need a scope `authorizer` grants to
+    /// `subject`. Replaces any earlier gate. Call it before [`register_dom`];
+    /// caps already registered keep the access they had. Clones made earlier
+    /// share the document but not the new gate.
+    ///
+    /// Guards are keyed by node, so build the [`Gate`] from ids you looked up
+    /// with [`DomHost::with_document`].
+    pub fn with_gate(
+        mut self,
+        gate: Gate,
+        authorizer: impl Authorizer + Send + Sync + 'static,
+        subject: Subject,
+    ) -> Self {
+        self.access = Arc::new(Access {
+            gate,
+            authorizer: Box::new(authorizer),
+            subject,
+        });
+        self
     }
 
     /// Parse `html` into a new document.
@@ -167,33 +239,45 @@ impl HostCap for DomCap {
                 args.len()
             ));
         }
-        let mut doc = self.host.lock();
-        let doc = &mut *doc;
+        let mut guard = self.host.lock();
+        let doc: &mut Document = &mut guard;
+        let access = &*self.host.access;
         match self.op {
             DomOp::Query => {
                 let selector = arg_string(cap, &args, 0)?;
-                let found = noonoo_query::query_selector(doc, &selector)
-                    .map_err(|e| format!("{cap}: invalid selector {selector:?}: {e}"))?;
+                let view = view(access, doc);
+                let found = noonoo_query::query_selector_all(doc, &selector)
+                    .map_err(|e| format!("{cap}: invalid selector {selector:?}: {e}"))?
+                    .into_iter()
+                    .find(|&id| view.visible(id));
                 Ok(Some(match found {
-                    Some(id) => node_summary(doc, id),
+                    Some(id) => node_summary(&view, id),
                     None => Value::Null,
                 }))
             }
             DomOp::QueryAll => {
                 let selector = arg_string(cap, &args, 0)?;
+                let view = view(access, doc);
                 let found = noonoo_query::query_selector_all(doc, &selector)
                     .map_err(|e| format!("{cap}: invalid selector {selector:?}: {e}"))?;
                 Ok(Some(Value::new_array(
-                    found.into_iter().map(|id| node_summary(doc, id)).collect(),
+                    found
+                        .into_iter()
+                        .filter(|&id| view.visible(id))
+                        .map(|id| node_summary(&view, id))
+                        .collect(),
                 )))
             }
             DomOp::Text => {
                 let id = target(cap, doc, &args, 0)?;
-                Ok(Some(Value::Str(doc.text_content(id))))
+                let view = view(access, doc);
+                require_read(cap, &view, id)?;
+                Ok(Some(Value::Str(view.visible_text(id))))
             }
             DomOp::Attr => {
                 let id = target(cap, doc, &args, 0)?;
                 let name = arg_string(cap, &args, 1)?;
+                require_read(cap, &view(access, doc), id)?;
                 Ok(Some(
                     doc.element(id)
                         .and_then(|el| el.attr(&name))
@@ -202,6 +286,7 @@ impl HostCap for DomCap {
             }
             DomOp::Tag => {
                 let id = target(cap, doc, &args, 0)?;
+                require_read(cap, &view(access, doc), id)?;
                 Ok(Some(
                     doc.element(id)
                         .map_or(Value::Null, |el| Value::Str(el.name.clone())),
@@ -209,6 +294,16 @@ impl HostCap for DomCap {
             }
             DomOp::InnerHtml => {
                 let id = target(cap, doc, &args, 0)?;
+                let view = view(access, doc);
+                require_read(cap, &view, id)?;
+                // Serializing would leak an unreadable descendant, so refuse
+                // the whole call instead of returning a partial tree.
+                if view.visible_descendants(id).len() != doc.tree().descendants(id).len() {
+                    return Err(format!(
+                        "{cap}: node {} contains nodes this subject may not read",
+                        id.index()
+                    ));
+                }
                 Ok(Some(Value::Str(noonoo_html::serialize::inner_html(
                     doc, id,
                 ))))
@@ -216,36 +311,73 @@ impl HostCap for DomCap {
             DomOp::SetText => {
                 let id = target(cap, doc, &args, 0)?;
                 let text = arg_string(cap, &args, 1)?;
-                doc.mutate()
+                mutator(access, doc)
                     .set_text(id, text)
-                    .map_err(|e| format!("{cap}: {e:?}"))?;
+                    .map_err(|e| write_err(cap, id, e))?;
                 Ok(None)
             }
             DomOp::SetAttr => {
                 let id = target(cap, doc, &args, 0)?;
                 let name = arg_string(cap, &args, 1)?;
                 let value = arg_string(cap, &args, 2)?;
-                doc.mutate()
+                mutator(access, doc)
                     .set_attribute(id, &name, value)
-                    .map_err(|e| format!("{cap}: {e:?}"))?;
+                    .map_err(|e| write_err(cap, id, e))?;
                 Ok(None)
             }
             DomOp::SetStyle => {
                 let id = target(cap, doc, &args, 0)?;
                 let name = arg_string(cap, &args, 1)?;
                 let value = arg_string(cap, &args, 2)?;
-                noonoo_style::set_style_property(doc, id, &name, &value, false)
-                    .map_err(|e| format!("{cap}: {e}"))?;
+                mutator(access, doc)
+                    .set_style_property(id, &name, &value, false)
+                    .map_err(|e| write_err(cap, id, e))?;
                 Ok(None)
             }
             DomOp::RemoveStyle => {
                 let id = target(cap, doc, &args, 0)?;
                 let name = arg_string(cap, &args, 1)?;
-                noonoo_style::remove_style_property(doc, id, &name)
-                    .map_err(|e| format!("{cap}: {e:?}"))?;
+                mutator(access, doc)
+                    .remove_style_property(id, &name)
+                    .map_err(|e| write_err(cap, id, e))?;
                 Ok(None)
             }
         }
+    }
+}
+
+fn view<'a>(access: &'a Access, doc: &'a Document) -> GatedDocument<'a> {
+    GatedDocument::new(doc, &access.gate, &*access.authorizer, &access.subject)
+}
+
+fn mutator<'a>(access: &'a Access, doc: &'a mut Document) -> GatedMutator<'a> {
+    GatedMutator::new(doc, &access.gate, &*access.authorizer, &access.subject)
+}
+
+fn require_read(cap: &str, view: &GatedDocument<'_>, id: NodeId) -> Result<(), String> {
+    if view.visible(id) {
+        Ok(())
+    } else {
+        let scope = view.gate().required(view.document(), id);
+        Err(format!(
+            "{cap}: {} denied read on node {}{}",
+            view.subject(),
+            id.index(),
+            scope.map_or(String::new(), scope_note)
+        ))
+    }
+}
+
+fn scope_note(scope: &Scope) -> String {
+    format!(" ({scope})")
+}
+
+/// Name the cap and node in a refused write. Denials and mutation errors both
+/// leave the document untouched.
+fn write_err(cap: &str, id: NodeId, err: CapsError) -> String {
+    match err {
+        CapsError::Denied(denied) => format!("{cap}: node {}: {denied}", id.index()),
+        other => format!("{cap}: node {}: {other}", id.index()),
     }
 }
 
@@ -304,7 +436,8 @@ fn node_by_index(doc: &Document, n: usize) -> Option<NodeId> {
         .find(|id| id.index() == n)
 }
 
-fn node_summary(doc: &Document, id: NodeId) -> Value {
+fn node_summary(view: &GatedDocument<'_>, id: NodeId) -> Value {
+    let doc = view.document();
     let mut map = HashMap::new();
     map.insert("node_id".to_string(), Value::Int(id.index() as i64));
     map.insert(
@@ -314,7 +447,7 @@ fn node_summary(doc: &Document, id: NodeId) -> Value {
     );
     map.insert(
         "text".to_string(),
-        Value::Str(doc.text_content(id).trim().to_string()),
+        Value::Str(view.visible_text(id).trim().to_string()),
     );
     Value::new_map(map)
 }
@@ -335,6 +468,7 @@ fn kind(v: &Value) -> &'static str {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use noonoo_caps::{Grant, Policy};
     use noonoo_css::{Color, Stylesheet};
 
     const PAGE: &str = r#"<!doctype html><html><body>
@@ -601,6 +735,19 @@ mod tests {
                 .unwrap()
                 .expect("button rendered");
             assert!(styles.get(btn).is_some(), "button has no computed style");
+
+            // Layout and paint, with the stand-in metric shaper (no fonts).
+            let viewport = noonoo_geometry::Size::new(800.0, 600.0);
+            let layout =
+                noonoo_layout::layout(doc, &styles, viewport, &noonoo_layout::MetricShaper);
+            assert!(layout.roots().count() > 0, "layout produced no boxes");
+            let commands = noonoo_paint::paint(&styles, &layout);
+            assert!(!commands.is_empty(), "paint produced no commands");
+            let json = commands.to_json().to_string();
+            assert!(
+                json.contains("Save"),
+                "button label missing from paint: {json}"
+            );
         });
     }
 
@@ -645,5 +792,128 @@ mod tests {
         );
         assert!(err.is_err(), "{err:?}");
         assert!(err.unwrap_err().starts_with("dom.set_style: "));
+    }
+
+    // --- gating ---
+
+    const VAULT: &str = r#"<div id="vault"><p id="inner">secret <b id="deep">core</b></p></div>
+        <p id="open">hello</p>"#;
+
+    fn vault_scope() -> Scope {
+        Scope::path("noonoo.dom", "#vault")
+    }
+
+    /// A host with `#vault` guarded, acting as `subject`, granted `grants`.
+    fn gated(subject: &str, grants: Vec<Grant>) -> DomHost {
+        let host = DomHost::from_html(VAULT);
+        let vault = host.with_document(|d| d.get_element_by_id("vault").unwrap());
+        let mut gate = Gate::new();
+        gate.guard(vault, vault_scope());
+        let mut policy = Policy::new();
+        for g in grants {
+            policy.add(g);
+        }
+        host.with_gate(gate, policy, Subject::new(subject))
+    }
+
+    fn html_of(host: &DomHost) -> String {
+        host.with_document(|d| noonoo_html::serialize::inner_html(d, d.root()))
+    }
+
+    #[test]
+    fn gated_allowed_write_succeeds() {
+        let host = gated(
+            "did:exo:alice",
+            vec![Grant::all(Subject::new("did:exo:alice"), vault_scope())],
+        );
+        call(
+            &host,
+            "dom.set_attr",
+            vec![s("#inner"), s("data-x"), s("1")],
+        )
+        .unwrap();
+        call(
+            &host,
+            "dom.set_style",
+            vec![s("#vault"), s("color"), s("red")],
+        )
+        .unwrap();
+        call(&host, "dom.remove_style", vec![s("#vault"), s("color")]).unwrap();
+        call(&host, "dom.set_text", vec![s("#deep"), s("new")]).unwrap();
+        assert!(html_of(&host).contains(r#"data-x="1""#));
+        assert!(html_of(&host).contains(">new<"));
+    }
+
+    #[test]
+    fn gated_denied_write_errors_and_changes_nothing() {
+        let host = gated("did:exo:mallory", vec![]);
+        let before = html_of(&host);
+        for (cap, args) in [
+            ("dom.set_text", vec![s("#vault"), s("x")]),
+            ("dom.set_attr", vec![s("#vault"), s("a"), s("b")]),
+            ("dom.set_style", vec![s("#vault"), s("color"), s("red")]),
+            ("dom.remove_style", vec![s("#vault"), s("color")]),
+        ] {
+            let err = call(&host, cap, args).unwrap_err();
+            assert!(err.starts_with(&format!("{cap}: node ")), "{err}");
+            assert!(err.contains("did:exo:mallory denied write"), "{err}");
+        }
+        assert_eq!(html_of(&host), before, "a denied write changed the tree");
+        // Unguarded nodes stay writable.
+        call(&host, "dom.set_text", vec![s("#open"), s("ok")]).unwrap();
+    }
+
+    #[test]
+    fn read_only_grant_cannot_write() {
+        let host = gated(
+            "did:exo:bob",
+            vec![Grant::read(Subject::new("did:exo:bob"), vault_scope())],
+        );
+        assert_eq!(
+            str_of(call(&host, "dom.text", vec![s("#inner")]).unwrap()),
+            "secret core"
+        );
+        let err = call(&host, "dom.set_text", vec![s("#inner"), s("x")]).unwrap_err();
+        assert!(err.contains("denied write"), "{err}");
+    }
+
+    #[test]
+    fn guard_on_ancestor_covers_descendant() {
+        let host = gated("did:exo:mallory", vec![]);
+        // #deep has no guard of its own; the nearest guard is #vault.
+        let err = call(&host, "dom.set_attr", vec![s("#deep"), s("a"), s("b")]).unwrap_err();
+        assert!(err.contains("denied write"), "{err}");
+        let err = call(&host, "dom.text", vec![s("#deep")]).unwrap_err();
+        assert!(err.contains("denied read"), "{err}");
+    }
+
+    #[test]
+    fn gated_reads_elide_unreadable_nodes() {
+        let host = gated("did:exo:mallory", vec![]);
+        assert_eq!(
+            call(&host, "dom.query", vec![s("#inner")]).unwrap(),
+            Some(Value::Null)
+        );
+        let Some(Value::Array(all)) = call(&host, "dom.query_all", vec![s("p")]).unwrap() else {
+            panic!("expected an array")
+        };
+        assert_eq!(all.borrow().len(), 1, "only #open is readable");
+        // The page-level text drops the vault.
+        let body = str_of(call(&host, "dom.text", vec![s("body")]).unwrap());
+        assert!(!body.contains("secret") && body.contains("hello"), "{body}");
+        let err = call(&host, "dom.inner_html", vec![s("body")]).unwrap_err();
+        assert!(err.contains("may not read"), "{err}");
+        assert!(call(&host, "dom.inner_html", vec![s("#open")]).is_ok());
+    }
+
+    #[test]
+    fn ungated_host_is_unchanged() {
+        let host = DomHost::from_html(VAULT);
+        call(&host, "dom.set_text", vec![s("#deep"), s("x")]).unwrap();
+        assert_eq!(
+            str_of(call(&host, "dom.text", vec![s("#inner")]).unwrap()),
+            "secret x"
+        );
+        assert!(html_of(&host).contains(">x<"));
     }
 }
