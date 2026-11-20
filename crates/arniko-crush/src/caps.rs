@@ -152,7 +152,7 @@ impl HostCap for ArnikoCardCap {
     }
 
     fn call(&self, args: Vec<Value>) -> Result<Option<Value>, String> {
-        let title = args.get(0).map(text_arg).filter(|s| !s.is_empty());
+        let title = args.first().map(text_arg).filter(|s| !s.is_empty());
         let body = args.get(1).map(text_arg).filter(|s| !s.is_empty());
 
         let mut card = arniko::Card::new();
@@ -263,7 +263,7 @@ impl HostCap for ArnikoInputCap {
     }
 
     fn call(&self, args: Vec<Value>) -> Result<Option<Value>, String> {
-        let placeholder = args.get(0).map(text_arg).unwrap_or_default();
+        let placeholder = args.first().map(text_arg).unwrap_or_default();
         let value = args.get(1).map(text_arg).unwrap_or_default();
         let input_type = args
             .get(2)
@@ -307,7 +307,7 @@ impl HostCap for ArnikoSpinnerCap {
 
     fn call(&self, args: Vec<Value>) -> Result<Option<Value>, String> {
         let size = args
-            .get(0)
+            .first()
             .map(text_arg)
             .as_deref()
             .map(parse_spinner_size)
@@ -341,7 +341,7 @@ impl HostCap for ArnikoKbdCap {
 
     fn call(&self, args: Vec<Value>) -> Result<Option<Value>, String> {
         let key = args
-            .get(0)
+            .first()
             .map(text_arg)
             .unwrap_or_else(|| "key".to_string());
         Ok(Some(Value::Str(arniko::Kbd::new(&key).render())))
@@ -439,7 +439,7 @@ impl HostCap for ArnikoPanelCap {
     }
 
     fn call(&self, args: Vec<Value>) -> Result<Option<Value>, String> {
-        let title = args.get(0).map(text_arg).filter(|s| !s.is_empty());
+        let title = args.first().map(text_arg).filter(|s| !s.is_empty());
         let body = args.get(1).map(text_arg).filter(|s| !s.is_empty());
         let closable = args.get(2).map(text_arg).as_deref() == Some("true");
 
@@ -637,7 +637,7 @@ impl HostCap for ArnikoGlassCardCap {
     }
 
     fn call(&self, args: Vec<Value>) -> Result<Option<Value>, String> {
-        let title = args.get(0).map(text_arg).filter(|s| !s.is_empty());
+        let title = args.first().map(text_arg).filter(|s| !s.is_empty());
         let body = args.get(1).map(text_arg).filter(|s| !s.is_empty());
 
         let mut card = arniko::Card::new().class("arniko-glass");
