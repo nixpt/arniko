@@ -40,9 +40,16 @@ let mut caps = HostCapsBuilder::new().build();
 arniko_crush::register_dom(&mut caps, &host);
 ```
 
+A host from `DomHost::new` / `from_html` is ungated (an empty gate with an
+explicit `AllowAll`). `DomHost::with_gate(gate, authorizer, subject)` gates it
+with [`noonoo-caps`](https://crates.io/crates/noonoo-caps): the nearest guard
+at or above a node decides, writes need `Write`, reads need `Read`, and a denied
+call returns an `Err` naming the cap and node and leaves the document alone.
+Call `with_gate` before `register_dom`.
+
 This is the first step of moving arniko from bliss-engine to noonoo. It uses
-only the noonoo 0.20 crates already on crates.io (`noonoo-dom`, `-html`,
-`-query`, `-style`, `-css`).
+the noonoo 0.20 crates from crates.io (`noonoo-dom`, `-html`, `-query`,
+`-style`, `-css`, `-caps`).
 
 ## License
 

@@ -20,10 +20,16 @@ default = []
 arniko = { workspace = true, features = ["html", "components"] }
 crush-lang-sdk = { version = "0.8.0", default-features = false }
 serde_json = "1"
-# noonoo 0.20 (crates.io): the clean-room engine replacing bliss-engine. Only
-# the crates published so far; see README, "`dom.*` caps".
+# noonoo 0.20 (crates.io): the clean-room engine replacing bliss-engine.
+noonoo-caps = "0.20"
 noonoo-css = "0.20"
 noonoo-dom = "0.20"
 noonoo-html = "0.20"
 noonoo-query = "0.20"
 noonoo-style = "0.20"
+
+[dev-dependencies]
+# Layout + paint golden test only.
+noonoo-geometry = "0.20"
+noonoo-layout = "0.20"
+noonoo-paint = "0.20"

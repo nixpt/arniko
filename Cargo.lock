@@ -250,9 +250,13 @@ version = "0.3.2"
 dependencies = [
  "arniko",
  "crush-lang-sdk",
+ "noonoo-caps",
  "noonoo-css",
  "noonoo-dom",
+ "noonoo-geometry",
  "noonoo-html",
+ "noonoo-layout",
+ "noonoo-paint",
  "noonoo-query",
  "noonoo-style",
  "serde_json",
@@ -2481,6 +2485,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "650eef8c711430f1a879fdd01d4745a7deea475becfb90269c06775983bbf086"
 
 [[package]]
+name = "noonoo-caps"
+version = "0.20.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "db0d71eecabf662df913667c68ed00e90cbda7af705ed5645db08a8a3c04f302"
+dependencies = [
+ "noonoo-css",
+ "noonoo-dom",
+]
+
+[[package]]
 name = "noonoo-css"
 version = "0.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2496,6 +2510,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fbd0c592bbddac6546cb5694d7ed10b3978a5ec8e6a56d08d9aef41ba99f9fde"
 
 [[package]]
+name = "noonoo-geometry"
+version = "0.20.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "42c7d374be3cc26dcada2c867335aa6b799d0e9bc221d33cfe677c0c798bffa9"
+
+[[package]]
 name = "noonoo-html"
 version = "0.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2503,6 +2523,42 @@ checksum = "b821ec6c456cd77b12debe893e9ce5267805894fcfe4ca0d81478b9ce3b72ce9"
 dependencies = [
  "noonoo-dom",
  "noonoo-parse",
+]
+
+[[package]]
+name = "noonoo-json"
+version = "0.20.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "005e7d84ec1519fb85f10ed984be41aff52f3b2e43b2b611fc17339f2087b55d"
+dependencies = [
+ "noonoo-parse",
+]
+
+[[package]]
+name = "noonoo-layout"
+version = "0.20.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9f59bd88ff97f98eaee63633e2f40b0e5591e37737878b450531cd7f08659977"
+dependencies = [
+ "noonoo-css",
+ "noonoo-dom",
+ "noonoo-geometry",
+ "noonoo-style",
+ "noonoo-text",
+]
+
+[[package]]
+name = "noonoo-paint"
+version = "0.20.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a1520ca75bc3768bdbba124e2b939bba3f03dbd9dc57db1b15ecfd9710d9b2f7"
+dependencies = [
+ "noonoo-css",
+ "noonoo-geometry",
+ "noonoo-json",
+ "noonoo-layout",
+ "noonoo-style",
+ "noonoo-text",
 ]
 
 [[package]]
