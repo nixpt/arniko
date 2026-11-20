@@ -250,6 +250,11 @@ version = "0.3.2"
 dependencies = [
  "arniko",
  "crush-lang-sdk",
+ "noonoo-css",
+ "noonoo-dom",
+ "noonoo-html",
+ "noonoo-query",
+ "noonoo-style",
  "serde_json",
 ]
 
@@ -2474,6 +2479,77 @@ name = "new_debug_unreachable"
 version = "1.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "650eef8c711430f1a879fdd01d4745a7deea475becfb90269c06775983bbf086"
+
+[[package]]
+name = "noonoo-css"
+version = "0.20.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "64ecae5144231a2555e3097ea820250b34a6b98141e82999f0090db73e92ad32"
+dependencies = [
+ "noonoo-parse",
+]
+
+[[package]]
+name = "noonoo-dom"
+version = "0.20.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fbd0c592bbddac6546cb5694d7ed10b3978a5ec8e6a56d08d9aef41ba99f9fde"
+
+[[package]]
+name = "noonoo-html"
+version = "0.20.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b821ec6c456cd77b12debe893e9ce5267805894fcfe4ca0d81478b9ce3b72ce9"
+dependencies = [
+ "noonoo-dom",
+ "noonoo-parse",
+]
+
+[[package]]
+name = "noonoo-parse"
+version = "0.20.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "70b0576f4bfde97a51355c0265361162ba4d1a65c7edfd01bb370a173066cf64"
+
+[[package]]
+name = "noonoo-query"
+version = "0.20.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "72021cbc65fe8045d9787c5c8150107902d4e1afbbd8f7088e827d0e6fbe0e6c"
+dependencies = [
+ "noonoo-dom",
+ "noonoo-parse",
+ "noonoo-selectors",
+]
+
+[[package]]
+name = "noonoo-selectors"
+version = "0.20.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "583bc14b27693da482984752a0eb767ffd291e6401490308466eb935a55f41d7"
+dependencies = [
+ "noonoo-css",
+ "noonoo-parse",
+]
+
+[[package]]
+name = "noonoo-style"
+version = "0.20.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "30c74e5fdd8152807c2dbde18e7eb25b5d56c7fc9ea21a0a6eb591a9a576c821"
+dependencies = [
+ "noonoo-css",
+ "noonoo-dom",
+ "noonoo-query",
+ "noonoo-selectors",
+ "noonoo-text",
+]
+
+[[package]]
+name = "noonoo-text"
+version = "0.20.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2effc94d0617cfa1a1299a1f7eadfc60e373621271cd6d08539b82a225e4129d"
 
 [[package]]
 name = "num-derive"
